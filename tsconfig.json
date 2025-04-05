@@ -1,0 +1,19 @@
+{
+    "compilerOptions": {
+      "target": "ESNext",
+      "module": "ESNext",
+      "moduleResolution": "Node",
+      "strict": true,
+      "esModuleInterop": true,
+      "forceConsistentCasingInFileNames": true,
+      "skipLibCheck": true,
+      "declaration": true,
+      "declarationDir": "dist/types",
+      "outDir": "dist",
+      "sourceMap": true,
+      "resolveJsonModule": true,
+      "types": ["vitest/globals"]
+    },
+    "include": ["src", "test"]
+  }
+  

@@ -1,0 +1,27 @@
+{
+  "name": "infinite-list",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "dev": "vitest --ui",
+    "test": "vitest run",
+    "build": "tsup"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "vue": "^3.5.13"
+  },
+  "devDependencies": {
+    "@types/node": "^22.14.0",
+    "@vitejs/plugin-vue": "^5.2.3",
+    "@vitest/ui": "^3.1.1",
+    "happy-dom": "^17.4.4",
+    "tsup": "^8.4.0",
+    "typescript": "^5.8.3",
+    "vite": "^6.2.5",
+    "vitest": "^3.1.1"
+  }
+}
