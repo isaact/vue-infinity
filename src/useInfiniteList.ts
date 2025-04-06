@@ -52,6 +52,7 @@ export function useInfiniteList<T>(options: InfiniteListOptions<T>) {
       if ((err as Error)?.name !== 'AbortError') {
         const errorObj = err instanceof Error ? err : new Error(String(err))
         error.value = errorObj
+        updateDataArray() // Update data state on error
         throw errorObj
       }
     } finally {
@@ -101,10 +102,13 @@ export function useInfiniteList<T>(options: InfiniteListOptions<T>) {
     const page = Math.floor(index / itemsPerPage)
     const indexInPage = index % itemsPerPage
 
-    if (page > 0 && indexInPage < 2 && !pendingPages.has(page - 1)) {
+    // Always prefetch previous page if not first page
+    if (page > 0 && !pendingPages.has(page - 1)) {
       fetchAndCachePage(page - 1)
-    } else if (page < Math.ceil(getItemCount() / itemsPerPage) - 1 &&
-              indexInPage > itemsPerPage - 3 && !pendingPages.has(page + 1)) {
+    }
+    // Always prefetch next page if not last page
+    if (page < Math.ceil(getItemCount() / itemsPerPage) - 1 &&
+        !pendingPages.has(page + 1)) {
       fetchAndCachePage(page + 1)
     }
   }
