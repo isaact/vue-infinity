@@ -1,129 +1,115 @@
-import { ref, computed } from 'vue'
+import { reactive } from 'vue'
 
-interface InfiniteListOptions<T> {
-  fetchItems: (page: number) => Promise<T[]>
-  getItemCount: () => number
+export interface InfiniteListOptions<T> {
+  fetchItems: (page: number, signal: AbortSignal) => Promise<T[]>
+  getItemCount: () => Promise<number>
   itemsPerPage: number
   maxPages: number // max pages to keep in cache
 }
 
+export interface InfiniteListPage<T> {
+  pageNum: number
+  items: T[]
+  status: 'pending' | 'resolved' | 'error'
+  abortController?: AbortController
+}
+
 export function useInfiniteList<T>(options: InfiniteListOptions<T>) {
   const { fetchItems, getItemCount, itemsPerPage, maxPages } = options
-  type DataType = T | undefined
 
-  const pageCache = new Map<number, T[]>()
+  // const pageCache = new Map<number, T[]>()
+  const pages = reactive<Record<number, InfiniteListPage<T>>>({})
   const usageOrder: number[] = [] // LRU tracking
-  const pending = ref(false)
-  const error = ref<Error | null>(null)
-  const data = ref<DataType[]>([]) // Reactive data store
-
-  // AbortController per page for cancellation
-  const abortControllers = new Map<number, AbortController>()
-  const pendingPages = new Set<number>() // Track pages being fetched
 
   // Utility: Fetch and cache a page
-  async function fetchAndCachePage(pageNum: number) {
-    if (pageCache.has(pageNum)) {
-      markPageUsed(pageNum)
-      return pageCache.get(pageNum)
-    }
-
-    // Cancel any in-flight request for this page
-    if (abortControllers.has(pageNum)) {
-      abortControllers.get(pageNum)?.abort()
-      abortControllers.delete(pageNum)
-    }
-
-    if (pendingPages.has(pageNum)) return
-    pendingPages.add(pageNum)
-
-    const controller = new AbortController()
-    abortControllers.set(pageNum, controller)
-
-    pending.value = true
-    try {
-      const page = await fetchItemsWithAbort(pageNum, controller.signal)
-      pageCache.set(pageNum, page)
-      markPageUsed(pageNum)
-      cleanupCache()
-      updateDataArray()
-      return page
-    } catch (err) {
-      if ((err as Error)?.name !== 'AbortError') {
-        const errorObj = err instanceof Error ? err : new Error(String(err))
-        error.value = errorObj
-        updateDataArray() // Update data state on error
-        throw errorObj
+  async function fetchAndCachePage(pageNum: number): Promise<InfiniteListPage<T> | undefined> {
+    return new Promise<InfiniteListPage<T> | undefined>(async (resolve, reject) => {
+      if(pages[pageNum]){
+        if (pages[pageNum].status === 'resolved') {
+          markPageUsed(pageNum)
+          resolve(pages[pageNum])
+        }else if (pages[pageNum].status === 'pending') {
+          console.log('Aborted previous fetch for page:', pageNum)
+          pages[pageNum].abortController?.abort() // Abort the previous request if it's pending
+          pages[pageNum].abortController = new AbortController() // Create a new controller
+        }
+      } else {
+        pages[pageNum] = {
+          pageNum,
+          items: [],
+          status: 'pending',
+          abortController: new AbortController()
+        }
       }
-    } finally {
-      pending.value = false
-      pendingPages.delete(pageNum)
-      abortControllers.delete(pageNum)
-    }
+      const items = await fetchItems(pageNum, pages[pageNum].abortController!.signal)
+      if (items) {
+        pages[pageNum].items = items
+        pages[pageNum].status = 'resolved'
+        markPageUsed(pageNum)
+        resolve(pages[pageNum])
+      } else {
+        pages[pageNum].status = 'error'
+      }
+    })
   }
 
-  function updateDataArray() {
-    const newData: (T | undefined)[] = []
-    const totalItems = getItemCount()
-    for (let i = 0; i < totalItems; i++) {
-      const page = Math.floor(i / itemsPerPage)
-      const indexInPage = i % itemsPerPage
-      const pageItems = pageCache.get(page)
-      newData[i] = pageItems?.[indexInPage]
+  async function getItem(index: number): Promise<T | undefined> {
+    if (index < 0 || index >= await getItemCount()) {
+      return undefined // Index out of bounds
     }
-    data.value = newData
-  }
 
-  async function fetchItemsWithAbort(page: number, signal: AbortSignal): Promise<T[]> {
-    const result = await fetchItems(page)
-    if (signal.aborted) throw new DOMException('Aborted', 'AbortError')
-    return result
+    const pageNum = Math.floor(index / itemsPerPage)
+    const indexInPage = index % itemsPerPage
+
+    try {
+      // Ensure page is loaded, await the fetch if necessary
+      const page = await fetchAndCachePage(pageNum)
+
+      if (!page) {
+        // Fetch might have been aborted or failed, or is pending
+        console.warn('Page not loaded or fetch aborted:', pageNum)
+        return undefined
+      }
+      return page.items[indexInPage]
+
+    } catch (err) {
+      // Error already set in fetchAndCachePage, just return undefined
+      console.error('Error fetching item:', err)
+      return undefined
+    }
   }
 
   function markPageUsed(pageNum: number) {
     const index = usageOrder.indexOf(pageNum)
     if (index !== -1) usageOrder.splice(index, 1)
     usageOrder.push(pageNum)
+    cleanupCache()
   }
 
   function cleanupCache() {
     while (usageOrder.length > maxPages) {
       const oldest = usageOrder.shift()
       if (oldest !== undefined) {
-        pageCache.delete(oldest)
-        abortControllers.get(oldest)?.abort()
-        abortControllers.delete(oldest)
+        if(pages[oldest]?.status === 'pending') {
+          pages[oldest].abortController?.abort() // Abort the fetch if it's pending
+        }
+        delete pages[oldest] // Remove from cache
+        console.log('Evicted page from cache:', oldest)
       }
     }
   }
-
-  // Prefetch adjacent pages when near boundaries
-  function maybePrefetch(index: number) {
-    const page = Math.floor(index / itemsPerPage)
-    const indexInPage = index % itemsPerPage
-
-    // Always prefetch previous page if not first page
-    if (page > 0 && !pendingPages.has(page - 1)) {
-      fetchAndCachePage(page - 1)
+  function clearPages() {
+    for (const key in pages) {
+      delete pages[key]
     }
-    // Always prefetch next page if not last page
-    if (page < Math.ceil(getItemCount() / itemsPerPage) - 1 &&
-        !pendingPages.has(page + 1)) {
-      fetchAndCachePage(page + 1)
-    }
+    usageOrder.splice(0)
   }
 
   return {
-    data,
-    pending,
-    error,
-    fetchPage: fetchAndCachePage,
-    clearCache: () => {
-      pageCache.clear()
-      usageOrder.splice(0)
-      abortControllers.forEach(ctrl => ctrl.abort())
-      abortControllers.clear()
-      data.value = []
-    }
+    pages,
+    getItemCount,
+    getItem,
+    fetchPage: fetchAndCachePage, // Expose fetchPage for manual triggering if needed
+    clearPages
   }
 }
