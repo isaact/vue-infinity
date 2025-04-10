@@ -1,11 +1,24 @@
 <template>
   <div class="infinite-gallery" ref="container">
     <div class="gallery-grid">
-      <div v-for="(item, index) in visibleItems" :key="index" class="gallery-item">
-        <img :src="item.url" :alt="`Image ${index}`" @load="onImageLoad" />
-        <div v-if="item.loading" class="loading-overlay">Loading...</div>
+        <template v-for="pageNum in numPages" :key="pageNum">
+          <template v-if="pages[pageNum]?.status === 'resolved'">
+            <div v-for="(item, itemIndex) in pages[pageNum].items" :key="itemIndex" class="gallery-item">
+              <img :src="item.url" :alt="`Image ${pageNum}-${itemIndex}`" @load="" />
+            </div>
+          </template>
+          <template v-else-if="pages[pageNum]?.status === 'pending'">
+            <div v-for="(_, index) in Array(pages[pageNum].items.length)" :key="index" class="gallery-item">
+              <div class="loading-overlay">Loading...</div>
+            </div>
+          </template>
+          <template v-else>
+            <div class="gallery-item">
+              <div class="loading-overlay">Page not loaded</div>
+            </div>
+          </template>
+        </template>
       </div>
-    </div>
     <div v-if="loading" class="loading-indicator">Loading more images...</div>
     <div v-if="error" class="error-message">Error loading images</div>
   </div>
@@ -14,6 +27,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useInfiniteList } from './useInfiniteList'
+import { get } from 'http';
 
 interface GalleryItem {
   url: string
@@ -30,6 +44,8 @@ const props = defineProps<{
 const container = ref<HTMLElement | null>(null)
 const loading = ref(false)
 const error = ref(false)
+const numItems = ref(0)
+const startPage = ref(0)
 
 const { pages, getItem, getItemCount, fetchPage } = useInfiniteList<GalleryItem>({
   fetchItems: props.fetchItems,
@@ -37,53 +53,23 @@ const { pages, getItem, getItemCount, fetchPage } = useInfiniteList<GalleryItem>
   itemsPerPage: props.itemsPerPage || 20,
   maxPages: props.maxPages || 5
 })
+console.log('pages', pages)
 
-const visibleItems = computed(() => {
-  const items: GalleryItem[] = []
-  if (!pages.value) return items
-  
-  for (const pageNum in pages.value) {
-    const page = pages.value[pageNum]
-    if (page.status === 'resolved') {
-      items.push(...page.items)
-    } else if (page.status === 'pending') {
-      // Add placeholder items for pending pages
-      items.push(...Array(page.items.length).fill({ url: '', loading: true }))
-    }
-  }
-  return items
+const numPages = computed(() => {
+  return Math.ceil(numItems.value / (props.itemsPerPage || 20))
 })
 
 const loadMore = async () => {
-  if (loading.value) return
-  
-  loading.value = true
-  error.value = false
-  
-  try {
-    const currentCount = await getItemCount()
-    const loadedCount = pages.value ? Object.values(pages.value).reduce(
-      (sum, page) => sum + (page.status === 'resolved' ? page.items.length : 0),
-      0
-    ) : 0
-    
-    if (loadedCount < currentCount) {
-      const nextPage = Math.floor(loadedCount / (props.itemsPerPage || 20))
-      await fetchPage(nextPage)
-    }
-  } catch (err) {
-    console.error('Error loading more items:', err)
-    error.value = true
-  } finally {
-    loading.value = false
-  }
+  numItems.value = await props.getItemCount()
+  await fetchPage(startPage.value)
+  startPage.value += 1
 }
 
 const onScroll = () => {
   if (!container.value) return
   
   const { scrollTop, scrollHeight, clientHeight } = container.value
-  const threshold = 200 // pixels from bottom
+  const threshold = 700 // pixels from bottom
   
   if (scrollHeight - (scrollTop + clientHeight) < threshold) {
     loadMore()

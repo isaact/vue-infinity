@@ -27,6 +27,7 @@ import { fetchMockImages, getMockImageCount } from './mockApi'
 const itemsPerPage = ref(20)
 
 const fetchItems = async (page: number, signal: AbortSignal) => {
+    console.log('Fetching items for page:', page)
   return await fetchMockImages(page, itemsPerPage.value, signal)
 }
 

@@ -22,16 +22,20 @@ export function useInfiniteList<T>(options: InfiniteListOptions<T>) {
   const usageOrder: number[] = [] // LRU tracking
 
   // Utility: Fetch and cache a page
-  async function fetchAndCachePage(pageNum: number): Promise<InfiniteListPage<T> | undefined> {
+  async function fetchAndCachePage(pageNum: number, abortEarlierFetch: boolean = false): Promise<InfiniteListPage<T> | undefined> {
     return new Promise<InfiniteListPage<T> | undefined>(async (resolve, reject) => {
       if(pages[pageNum]){
         if (pages[pageNum].status === 'resolved') {
           markPageUsed(pageNum)
           resolve(pages[pageNum])
         }else if (pages[pageNum].status === 'pending') {
-          console.log('Aborted previous fetch for page:', pageNum)
-          pages[pageNum].abortController?.abort() // Abort the previous request if it's pending
-          pages[pageNum].abortController = new AbortController() // Create a new controller
+          if(abortEarlierFetch) {
+            console.log('Aborted previous fetch for page:', pageNum)
+            pages[pageNum].abortController?.abort() // Abort the previous request if it's pending
+            pages[pageNum].abortController = new AbortController() // Create a new controller
+          } else {
+            resolve(pages[pageNum]) // Return the pending page
+          }
         }
       } else {
         pages[pageNum] = {
