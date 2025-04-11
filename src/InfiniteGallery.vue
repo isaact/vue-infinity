@@ -1,21 +1,26 @@
 <template>
-  <div class="infinite-gallery" ref="container" v-resize-observer="onResizeObserver">
+  <div class="infinite-gallery" ref="container" v-resize-observer="onResizeObserver"
+    :style="{
+      '--item-width': `${itemWidth}px`,
+      '--not-loaded-width': `${notLoadedWidth}px`,
+      '--container-height': props.height,
+      '--container-width': props.width
+    }">
     <div class="gallery">
       <template v-for="(page_status, index) in pageStatuses" :key="`page-status-${index}`">
         <template v-if="page_status === 'resolved'">
           <div v-if="pages[index]" v-for="(item, itemIndex) in pages[index].items" :key="`${index}-${itemIndex}`"
-            class="gallery-item" :style="{ width: `${itemWidth}px` }">
+            class="gallery-item">
             <img :src="item.url" :alt="`Image ${index}-${itemIndex}`" />
           </div>
         </template>
         <template v-else-if="page_status === 'pending'">
-          <div v-for="(_, itemIdx) in itemsPerPage" :key="`${index}-loading-${itemIdx}`" class="gallery-item"
-            :style="{ width: `${itemWidth}px` }">
+          <div v-for="(_, itemIdx) in itemsPerPage" :key="`${index}-loading-${itemIdx}`" class="gallery-item">
             <div class="loading-overlay">Loading...</div>
           </div>
         </template>
         <template v-else>
-          <div class="gallery-item not-loaded" :style="{ width: `${itemWidth}px` }">
+          <div class="gallery-item not-loaded">
             <div class="loading-overlay">Page not loaded</div>
           </div>
         </template>
@@ -68,7 +73,13 @@ const { pages, getItem, fetchPage } = useInfiniteList<GalleryItem>({
 })
 
 const itemWidth = computed(() => {
-  return container_size.value.width / props.numItemsToShow
+  const gap = 16 // 1rem in pixels
+  return (container_size.value.width - (props.numItemsToShow - 1) * gap) / props.numItemsToShow
+})
+
+const notLoadedWidth = computed(() => {
+  const gap = 16 // 1rem in pixels
+  return itemWidth.value * props.itemsPerPage + (props.itemsPerPage - 1) * gap
 })
 
 const numPages = ref(0)
@@ -131,38 +142,46 @@ onUnmounted(() => {
 
 <style scoped>
 .infinite-gallery {
-  height: v-bind('props.height');
-  width: v-bind('props.width');
   overflow-y: auto;
 }
 
 .gallery {
   display: flex;
   gap: 1rem;
-  padding: 1rem;
   overflow-x: scroll;
-  height: 30vh;
+  height: var(--container-height);
+  width: var(--container-width);
 }
 
 .gallery-item {
   position: relative;
-  aspect-ratio: 1;
   background-color: #f0f0f0;
+  width: var(--item-width);
+  height: var(--container-height);
+}
+
+.gallery-item.not-loaded {
+  width: var(--not-loaded-width);
+  height: var(--container-height);
 }
 
 .gallery-item img {
-  width: 100%;
-  height: 100%;
+  width: var(--item-width);
+  height: var(--container-height);
   object-fit: cover;
 }
 
 .loading-overlay {
-  position: absolute;
-  inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
   background-color: rgba(0, 0, 0, 0.1);
+  width: var(--item-width);
+  height: var(--container-height);
+}
+.gallery-item.not-loaded .loading-overlay {
+  width: var(--not-loaded-width);
+  height: var(--container-height);
 }
 
 .loading-indicator,

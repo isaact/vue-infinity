@@ -13,9 +13,9 @@
     <InfiniteGallery
       :fetch-items="fetchItems"
       :total-items="numItems"
-      height="'33vh'"
-      width="auto"
-      :num-items-to-show="3"
+      height="33vh"
+      width="100%"
+      :num-items-to-show="1.1"
       :items-per-page="itemsPerPage"
       :maxPagesToCache="3"
     />
