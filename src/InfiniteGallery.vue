@@ -1,16 +1,15 @@
 <template>
-  <div class="infinite-gallery" ref="container">
+  <div class="infinite-gallery" ref="container" v-resize-observer="onResizeObserver">
     <div class="gallery">
       <template v-for="(page_status, index) in pageStatuses" :key="`page-status-${index}`">
         <template v-if="page_status === 'resolved'">
-          <div v-for="(item, itemIndex) in pages[index].items" :key="`${pages[index].pageNum}-${itemIndex}`"
+          <div v-if="pages[index]" v-for="(item, itemIndex) in pages[index].items" :key="`${index}-${itemIndex}`"
             class="gallery-item">
-            <img :src="item.url" :alt="`Image ${pages[index].pageNum}-${itemIndex}`" />
+            <img :src="item.url" :alt="`Image ${index}-${itemIndex}`" />
           </div>
         </template>
         <template v-else-if="page_status === 'pending'">
-          <div v-for="(_, itemIdx) in Array(pages[index].items.length)"
-            :key="`${pages[index].pageNum}-loading-${index}`" class="gallery-item">
+          <div v-for="(_, itemIdx) in itemsPerPage" :key="`${index}-loading-${itemIdx}`" class="gallery-item">
             <div class="loading-overlay">Loading...</div>
           </div>
         </template>
@@ -29,7 +28,9 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useInfiniteList } from './useInfiniteList'
+import { vResizeObserver } from '@vueuse/components'
 import { get } from 'http';
+import { an } from 'vitest/dist/chunks/reporters.d.CfRkRKN2';
 
 interface GalleryItem {
   url: string
@@ -52,6 +53,7 @@ const props = withDefaults(
 )
 
 const container = ref<HTMLElement | null>(null)
+const container_size = ref({ width: 0, height: 0 })
 const loading = ref(false)
 const error = ref(false)
 const startPage = ref(0)
@@ -74,6 +76,11 @@ const initPages = () => {
     pageStatuses.value[i] = 'not-loaded'
   }
   startPage.value = 0
+}
+const onResizeObserver = (entries: any) =>{
+  const [entry] = entries
+  const { width, height } = entry.contentRect
+  container_size.value = { width, height }
 }
 
 initPages()
