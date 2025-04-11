@@ -4,17 +4,18 @@
       <template v-for="(page_status, index) in pageStatuses" :key="`page-status-${index}`">
         <template v-if="page_status === 'resolved'">
           <div v-if="pages[index]" v-for="(item, itemIndex) in pages[index].items" :key="`${index}-${itemIndex}`"
-            class="gallery-item">
+            class="gallery-item" :style="{ width: `${itemWidth}px` }">
             <img :src="item.url" :alt="`Image ${index}-${itemIndex}`" />
           </div>
         </template>
         <template v-else-if="page_status === 'pending'">
-          <div v-for="(_, itemIdx) in itemsPerPage" :key="`${index}-loading-${itemIdx}`" class="gallery-item">
+          <div v-for="(_, itemIdx) in itemsPerPage" :key="`${index}-loading-${itemIdx}`" class="gallery-item"
+            :style="{ width: `${itemWidth}px` }">
             <div class="loading-overlay">Loading...</div>
           </div>
         </template>
         <template v-else>
-          <div class="gallery-item not-loaded">
+          <div class="gallery-item not-loaded" :style="{ width: `${itemWidth}px` }">
             <div class="loading-overlay">Page not loaded</div>
           </div>
         </template>
@@ -64,6 +65,10 @@ const { pages, getItem, fetchPage } = useInfiniteList<GalleryItem>({
   totalItems: props.totalItems,
   itemsPerPage: props.itemsPerPage,
   maxPagesToCache: props.maxPagesToCache
+})
+
+const itemWidth = computed(() => {
+  return container_size.value.width / props.numItemsToShow
 })
 
 const numPages = ref(0)
@@ -126,7 +131,8 @@ onUnmounted(() => {
 
 <style scoped>
 .infinite-gallery {
-  height: 100%;
+  height: v-bind('props.height');
+  width: v-bind('props.width');
   overflow-y: auto;
 }
 

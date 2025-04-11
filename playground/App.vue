@@ -15,7 +15,7 @@
       :total-items="numItems"
       height="'33vh'"
       width="auto"
-      :num-items-to-show="2"
+      :num-items-to-show="3"
       :items-per-page="itemsPerPage"
       :maxPagesToCache="3"
     />
