@@ -12,33 +12,38 @@
 
     <InfiniteGallery
       :fetch-items="fetchItems"
-      :get-item-count="getItemCount"
+      :total-items="numItems"
       :items-per-page="itemsPerPage"
-      :max-pages="3"
+      :maxPagesToCache="3"
     />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { onBeforeMount, ref } from 'vue'
 import InfiniteGallery from '../src/InfiniteGallery.vue'
 import { fetchMockImages, getMockImageCount } from './mockApi'
 
 const itemsPerPage = ref(20)
+const numItems = ref(0)
+
+onBeforeMount(async () => {
+  numItems.value = await getMockImageCount()
+})
 
 const fetchItems = async (page: number, signal: AbortSignal) => {
     console.log('Fetching items for page:', page)
   return await fetchMockImages(page, itemsPerPage.value, signal)
 }
 
-const getItemCount = async () => {
-  return await getMockImageCount()
-}
-
 const resetGallery = () => {
   // This would need to be implemented if we expose a reset method
   window.location.reload()
 }
+
+// onBeforeMount(async () => {
+//   numItems.value = await getMockImageCount()
+// })
 </script>
 
 <style scoped>

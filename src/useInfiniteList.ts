@@ -2,9 +2,9 @@ import { reactive } from 'vue'
 
 export interface InfiniteListOptions<T> {
   fetchItems: (page: number, signal: AbortSignal) => Promise<T[]>
-  getItemCount: () => Promise<number>
+  totalItems: number
   itemsPerPage: number
-  maxPages: number // max pages to keep in cache
+  maxPagesToCache: number // max pages to keep in cache
 }
 
 export interface InfiniteListPage<T> {
@@ -15,11 +15,13 @@ export interface InfiniteListPage<T> {
 }
 
 export function useInfiniteList<T>(options: InfiniteListOptions<T>) {
-  const { fetchItems, getItemCount, itemsPerPage, maxPages } = options
+  const { fetchItems, totalItems, itemsPerPage, maxPagesToCache } = options
 
-  // const pageCache = new Map<number, T[]>()
   const pages = reactive<Record<number, InfiniteListPage<T>>>({})
   const usageOrder: number[] = [] // LRU tracking
+
+  // Initialize all pages
+  const totalPages = Math.ceil(totalItems / itemsPerPage)
 
   // Utility: Fetch and cache a page
   async function fetchAndCachePage(pageNum: number, abortEarlierFetch: boolean = false): Promise<InfiniteListPage<T> | undefined> {
@@ -38,27 +40,28 @@ export function useInfiniteList<T>(options: InfiniteListOptions<T>) {
           }
         }
       } else {
-        pages[pageNum] = {
+        pages[pageNum] = reactive({
           pageNum,
           items: [],
           status: 'pending',
           abortController: new AbortController()
-        }
+        })
       }
       const items = await fetchItems(pageNum, pages[pageNum].abortController!.signal)
       if (items) {
-        pages[pageNum].items = items
-        pages[pageNum].status = 'resolved'
+        // Use splice to maintain reactivity for array updates
+        pages[pageNum].items.splice(0, pages[pageNum].items.length, ...items)
+        Object.assign(pages[pageNum], { status: 'resolved' })
         markPageUsed(pageNum)
         resolve(pages[pageNum])
       } else {
-        pages[pageNum].status = 'error'
+        Object.assign(pages[pageNum], { status: 'error' })
       }
     })
   }
 
   async function getItem(index: number): Promise<T | undefined> {
-    if (index < 0 || index >= await getItemCount()) {
+    if (index < 0 || index >= totalItems) {
       return undefined // Index out of bounds
     }
 
@@ -91,7 +94,7 @@ export function useInfiniteList<T>(options: InfiniteListOptions<T>) {
   }
 
   function cleanupCache() {
-    while (usageOrder.length > maxPages) {
+    while (usageOrder.length > maxPagesToCache) {
       const oldest = usageOrder.shift()
       if (oldest !== undefined) {
         if(pages[oldest]?.status === 'pending') {
@@ -111,7 +114,6 @@ export function useInfiniteList<T>(options: InfiniteListOptions<T>) {
 
   return {
     pages,
-    getItemCount,
     getItem,
     fetchPage: fetchAndCachePage, // Expose fetchPage for manual triggering if needed
     clearPages
