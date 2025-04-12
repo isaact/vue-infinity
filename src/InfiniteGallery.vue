@@ -14,13 +14,13 @@
             <img :src="item.url" :alt="`Image ${index}-${itemIndex}`" />
           </div>
         </template>
-        <template v-else-if="page_status === 'pending'">
+        <template v-else-if="page_status === 'pending'" ref="pendingPages">
           <div v-for="(_, itemIdx) in itemsPerPage" :key="`${index}-loading-${itemIdx}`" class="gallery-item">
             <div class="loading-overlay">Loading...</div>
           </div>
         </template>
         <template v-else>
-          <div class="gallery-item not-loaded">
+          <div class="gallery-item not-loaded" ref="notLoadedPages">
             <div class="loading-overlay">Page not loaded</div>
           </div>
         </template>
@@ -58,7 +58,7 @@ const props = withDefaults(
     maxPagesToCache: 5}
 )
 
-const container = ref<HTMLElement | null>(null)
+const container = useTemplateRef('container')
 const container_size = ref({ width: 0, height: 0 })
 const loading = ref(false)
 const error = ref(false)
@@ -114,29 +114,41 @@ const loadMore = async () => {
   console.log('numPages2:', numPages.value)
 }
 
-const onScroll = () => {
+let observer: IntersectionObserver | null = null
+
+const setupObserver = () => {
   if (!container.value) return
 
-  const { scrollTop, scrollHeight, clientHeight } = container.value
-  const threshold = 700 // pixels from bottom
+  observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const pageIndex = parseInt(entry.target.getAttribute('data-page-index') || '0')
+        if (pageStatuses.value[pageIndex] === 'not-loaded') {
+          loadMore()
+        }
+      }
+    })
+  }, {
+    root: container.value,
+    threshold: 0.1
+  })
 
-  if (scrollHeight - (scrollTop + clientHeight) < threshold) {
-    loadMore()
-  }
+  // Observe all not-loaded pages
+  const notLoadedPages = container.value.querySelectorAll('[ref="notLoadedPage"]')
+  notLoadedPages.forEach((page, index) => {
+    page.setAttribute('data-page-index', index.toString())
+    observer?.observe(page)
+  })
 }
 
 onMounted(() => {
   console.log('InfiniteGallery props:', props)
-  if (container.value) {
-    container.value.addEventListener('scroll', onScroll)
-  }
+  setupObserver()
   loadMore() // Initial load
 })
 
 onUnmounted(() => {
-  if (container.value) {
-    container.value.removeEventListener('scroll', onScroll)
-  }
+  observer?.disconnect()
 })
 </script>
 
