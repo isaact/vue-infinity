@@ -146,15 +146,31 @@ const setupObserver = () => {
   })
 }
 
+const observedPages = new Set<Element>()
+
+const observeNewPages = (newPages: Element[]) => {
+  if (!observer) return
+  
+  newPages.forEach(page => {
+    const pageNum = parseInt(page.getAttribute('data-page-index') || '0')
+    if (pages[pageNum]?.status === 'not-loaded' && !observedPages.has(page)) {
+      console.log('Observing new page:', pageNum)
+      observer?.observe(page)
+      observedPages.add(page)
+    }
+  })
+}
+
 onMounted(() => {
   numPages.value = Math.ceil(props.totalItems / (props.itemsPerPage || 20))
   console.log('Number of pages:', numPages.value, 'Items per page:', props.itemsPerPage, 'Total items:', props.totalItems)
-  console.log(pages)
-  // loadMore()
-  // nextTick(() => {
-    setupObserver()
-  // })
+  setupObserver()
+  observeNewPages(notLoadedPages.value)
 })
+
+watch(notLoadedPages, (newPages) => {
+  observeNewPages(newPages)
+}, { deep: true })
 
 onUnmounted(() => {
   observer?.disconnect()
