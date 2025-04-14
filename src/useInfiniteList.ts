@@ -61,59 +61,61 @@ export function useInfiniteList<T>(options: InfiniteListOptions<T>) {
   // const pages = reactive<Record<number, InfiniteListPage<T>>>({})
   // Create a defaultDict-like object for pages
   // Create a defaultDict-like object for pages
-  const pages = createDefaultRecordProxy<number, InfiniteListPage<T>>((pageNum) => ({
-    pageNum,               // Set the requested page number
-    items: [],             // Default items as an empty array
-    status: 'not-loaded',  // Default status as 'not-loaded'
-    abortController: undefined, // Default abort controller
-  }));
+  const pages = createDefaultRecordProxy<number, InfiniteListPage<T>>((key) => {
+    const pageNum = Number(key); // 👈 Coerce the key back to a number
+    return {
+      pageNum,
+      items: [],
+      status: 'not-loaded',
+      abortController: undefined
+    }
+  });
 
   const usageOrder: number[] = [] // LRU tracking
 
   // Initialize all pages
-  const totalPages = Math.ceil(totalItems / itemsPerPage)
+  // const totalPages = Math.ceil(totalItems / itemsPerPage)
 
-  function initializePages() {
-    for (let i = 0; i < totalPages; i++) {
-      pages[i] = reactive({
-        pageNum: i,
-        items: [],
-        status: 'not-loaded',
-        abortController: undefined
-      })
-    }
-  }
-  initializePages()
+  // function initializePages() {
+  //   for (let i = 0; i < totalPages; i++) {
+  //     pages[i] = reactive({
+  //       pageNum: i,
+  //       items: [],
+  //       status: 'not-loaded',
+  //       abortController: undefined
+  //     })
+  //   }
+  // }
+  // initializePages()
 
   // Utility: Fetch and cache a page
   async function fetchAndCachePage(pageNum: number, abortEarlierFetch: boolean = false): Promise<InfiniteListPage<T> | undefined> {
     return new Promise<InfiniteListPage<T> | undefined>(async (resolve, reject) => {
-      if(pages[pageNum]){
-        if (pages[pageNum].status === 'resolved') {
-          markPageUsed(pageNum)
-          resolve(pages[pageNum])
-        }else if (pages[pageNum].status === 'pending') {
-          if(abortEarlierFetch) {
-            console.log('Aborted previous fetch for page:', pageNum)
-            pages[pageNum].abortController?.abort() // Abort the previous request if it's pending
-            pages[pageNum].abortController = new AbortController() // Create a new controller
-          } else {
-            resolve(pages[pageNum]) // Return the pending page
-          }
+      if (pages[pageNum].status === 'resolved') {
+        markPageUsed(pageNum)
+        resolve(pages[pageNum])
+      }else if (pages[pageNum].status === 'pending') {
+        if(abortEarlierFetch) {
+          console.log('Aborted previous fetch for page:', pageNum)
+          pages[pageNum].abortController?.abort() // Abort the previous request if it's pending
+          pages[pageNum].abortController = new AbortController() // Create a new controller
+        } else {
+          resolve(pages[pageNum]) // Return the pending page
         }
       } else {
-        pages[pageNum] = reactive({
-          pageNum,
-          items: [],
-          status: 'pending',
-          abortController: new AbortController()
-        })
+        const page = pages[pageNum]
+        page.items.splice(0) // clear array if needed
+        page.status = 'pending'
+        page.abortController = new AbortController()
       }
       const items = await fetchItems(pageNum, pages[pageNum].abortController!.signal)
+      console.log('Fetched items:', items)
+      console.log('Page:', pages[pageNum])
       if (items) {
         // Use splice to maintain reactivity for array updates
-        pages[pageNum].items.splice(0, pages[pageNum].items.length, ...items)
-        Object.assign(pages[pageNum], { status: 'resolved' })
+        pages[pageNum].items = items
+        pages[pageNum].status = 'resolved'
+        // Object.assign(pages[pageNum], { status: 'resolved' })
         markPageUsed(pageNum)
         resolve(pages[pageNum])
       } else {
@@ -166,7 +168,7 @@ export function useInfiniteList<T>(options: InfiniteListOptions<T>) {
   }
 
   function clearPage(pageNum: number) {
-    if (pages[pageNum].status in ['resolved', 'error', 'pending']) {
+    if (['resolved', 'error', 'pending'].includes(pages[pageNum].status)) {
       if(pages[pageNum].status === 'pending') {
         pages[pageNum].abortController?.abort() // Abort the fetch if it's pending
       }
@@ -182,6 +184,7 @@ export function useInfiniteList<T>(options: InfiniteListOptions<T>) {
     }
     usageOrder.splice(0)
   }
+  console.log('pages', pages)
 
   return {
     pages,

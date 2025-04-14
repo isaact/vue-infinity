@@ -29,7 +29,7 @@
         </template>
 
         <template v-else>
-          <div class="gallery-item not-loaded" :ref="notLoadedPages.set">
+          <div class="gallery-item not-loaded" :ref="notLoadedPages.set" :data-page-index="pageNum">
             <div class="loading-overlay">Page not loaded</div>
           </div>
         </template>
@@ -110,10 +110,10 @@ const onResizeObserver = (entries: any) => {
   container_size.value = { width, height }
 }
 
-// watch(() => props.totalItems, () => {
-//   initPages()
-//   loadMore()
-// })
+watch(() => props.totalItems, () => {
+  // initPages()
+  loadMore()
+})
 
 const loadMore = async () => {
   // pageStatuses.value[startPage.value] = 'pending'
@@ -144,7 +144,10 @@ const setupObserver = () => {
 
   // Observe all not-loaded pages
   notLoadedPages.value.forEach((page, index) => {
-    page.setAttribute('data-page-index', index.toString())
+    const pageNum = parseInt(page.getAttribute('data-page-index') || '0')
+    if (pages[pageNum]?.status === 'not-loaded') {
+      observer?.observe(page)
+    }
     observer?.observe(page)
   })
 }
@@ -152,9 +155,19 @@ const setupObserver = () => {
 onMounted(() => {
   numPages.value = Math.ceil(props.totalItems / (props.itemsPerPage || 20))
   console.log('Number of pages:', numPages.value, 'Items per page:', props.itemsPerPage, 'Total items:', props.totalItems)
-  setupObserver()
+  console.log(pages)
   // loadMore()
 })
+
+watch(numPages, () => {
+  observer?.disconnect()
+  setupObserver()
+}, { immediate: true })
+
+watch(() => pages, () => {
+  observer?.disconnect()
+  setupObserver()
+}, { deep: true })
 
 onUnmounted(() => {
   observer?.disconnect()
