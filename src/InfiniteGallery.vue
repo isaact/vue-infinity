@@ -20,7 +20,7 @@
             :ref="galleryImages.set"
             class="gallery-item"
           >
-            <img v-if="visibleImages[`${index}-${itemIndex}`]" :src="item.url" :alt="`Image ${index}-${itemIndex}`" />
+            <img v-if="visibleImages.has(`${index}-${itemIndex}`)" :src="item.url" :alt="`Image ${index}-${itemIndex}`" />
             <div v-else class="loading-overlay">Loading...</div>
           </div>
         </template>
@@ -76,7 +76,7 @@ const gallery = useTemplateRef('gallery')
 const container_size = ref({ width: 0, height: 0 })
 const loading = ref(false)
 const error = ref(false)
-const visibleImages = ref<Record<string, boolean>>({})
+const visibleImages = ref(new Set<string>())
 // const pageStatuses = ref<Record<number, string>>({})
 
 const notLoadedPages = useTemplateRefsList()
@@ -134,13 +134,11 @@ const setupObserver = () => {
     entries.forEach(entry => {
       // console.log('Page is in view:', entry)
       if (entry.isIntersecting) {
-        console.log('Image is in view:', entry.target)
-        const imgIndex = parseInt(entry.target.getAttribute('data-img-index') || '0')
-        visibleImages.value[imgIndex] = true
-      }else{
-        console.log('Image is not in view:', entry.target)
-        const imgIndex = parseInt(entry.target.getAttribute('data-img-index') || '0')
-        visibleImages.value[imgIndex] = false
+        const imgIndex = entry.target.getAttribute('data-img-index') || ''
+        visibleImages.value.add(imgIndex)
+      } else {
+        const imgIndex = entry.target.getAttribute('data-img-index') || ''
+        visibleImages.value.delete(imgIndex)
       }
     })
   }, {
@@ -216,6 +214,7 @@ onMounted(() => {
 
 onUnmounted(() => {
   pageObserver?.disconnect()
+  galleryItemObserver?.disconnect()
 })
 </script>
 
