@@ -11,25 +11,25 @@
     }"
   >
     <div class="gallery">
-      <template v-for="pageNum in numPages" :key="`page-status-${pageNum}`">
-        <template v-if="pages[pageNum].status === 'resolved'">
+      <template v-for="(page, index) in pages" :key="`page-status-${index}`">
+        <template v-if="page.status === 'resolved'">
           <div
-            v-for="(item, itemIndex) in pages[pageNum].items"
-            :key="`${pageNum}-${itemIndex}`"
+            v-for="(item, itemIndex) in pages[index].items"
+            :key="`${index}-${itemIndex}`"
             class="gallery-item"
           >
-            <img :src="item.url" :alt="`Image ${pageNum}-${itemIndex}`" />
+            <img :src="item.url" :alt="`Image ${index}-${itemIndex}`" />
           </div>
         </template>
 
-        <template v-else-if="pages[pageNum].status === 'pending'">
-          <div v-for="(_, itemIdx) in itemsPerPage" :key="`${pageNum}-loading-${itemIdx}`" class="gallery-item">
+        <template v-else-if="page.status === 'pending'">
+          <div v-for="(_, itemIdx) in itemsPerPage" :key="`${index}-loading-${itemIdx}`" class="gallery-item">
             <div class="loading-overlay">Loading...</div>
           </div>
         </template>
 
         <template v-else>
-          <div class="gallery-item not-loaded" :ref="notLoadedPages.set" :data-page-index="pageNum">
+          <div class="gallery-item not-loaded" :ref="notLoadedPages.set" :data-page-index="index">
             <div class="loading-overlay">Page not loaded</div>
           </div>
         </template>
@@ -95,14 +95,6 @@ const notLoadedWidth = computed(() => {
 })
 
 const numPages = ref(0)
-// const initPages = () => {
-//   numPages.value = Math.ceil(props.totalItems / (props.itemsPerPage || 20))
-//   pageStatuses.value = {}
-//   for (let i = 0; i < numPages.value; i++) {
-//     pageStatuses.value[i] = 'not-loaded'
-//   }
-//   startPage.value = 0
-// }
 
 const onResizeObserver = (entries: any) => {
   const [entry] = entries
@@ -111,14 +103,12 @@ const onResizeObserver = (entries: any) => {
 }
 
 watch(() => props.totalItems, () => {
-  // initPages()
   loadMore()
 })
 
 const loadMore = async () => {
-  // pageStatuses.value[startPage.value] = 'pending'
   await fetchPage(startPage.value)
-  // pageStatuses.value[startPage.value] = 'resolved'
+  console.log('Page loaded:', startPage.value)
   startPage.value += 1
 }
 
@@ -156,18 +146,9 @@ onMounted(() => {
   numPages.value = Math.ceil(props.totalItems / (props.itemsPerPage || 20))
   console.log('Number of pages:', numPages.value, 'Items per page:', props.itemsPerPage, 'Total items:', props.totalItems)
   console.log(pages)
-  // loadMore()
+  loadMore()
+  setupObserver()
 })
-
-watch(numPages, () => {
-  observer?.disconnect()
-  setupObserver()
-}, { immediate: true })
-
-watch(() => pages, () => {
-  observer?.disconnect()
-  setupObserver()
-}, { deep: true })
 
 onUnmounted(() => {
   observer?.disconnect()
