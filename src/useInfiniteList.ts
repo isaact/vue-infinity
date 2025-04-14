@@ -90,6 +90,7 @@ export function useInfiniteList<T>(options: InfiniteListOptions<T>) {
   function cleanupCache() {
     while (usageOrder.length > maxPagesToCache) {
       const oldest = usageOrder.shift()
+      console.log(`Clearing page ${oldest} from cache...`)
       if (oldest !== undefined) {
         clearPage(oldest)
       }

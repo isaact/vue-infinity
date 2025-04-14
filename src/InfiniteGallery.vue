@@ -10,7 +10,7 @@
       '--container-width': props.width
     }"
   >
-    <div class="gallery">
+    <div class="gallery" ref="gallery">
       <template v-for="(page, index) in pages" :key="`page-status-${index}`">
         <template v-if="page.status === 'resolved'">
           <div
@@ -42,7 +42,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch, useTemplateRef } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch, useTemplateRef, nextTick } from 'vue'
 import { useTemplateRefsList } from '@vueuse/core'
 import { vResizeObserver } from '@vueuse/components'
 import { useInfiniteList } from './useInfiniteList'
@@ -69,6 +69,7 @@ const props = withDefaults(
 )
 
 const container = useTemplateRef('container')
+const gallery = useTemplateRef('gallery')
 const container_size = ref({ width: 0, height: 0 })
 const loading = ref(false)
 const error = ref(false)
@@ -102,23 +103,24 @@ const onResizeObserver = (entries: any) => {
   container_size.value = { width, height }
 }
 
-watch(() => props.totalItems, () => {
-  loadMore()
-})
+// watch(() => props.totalItems, () => {
+//   loadMore()
+// })
 
-const loadMore = async () => {
-  await fetchPage(startPage.value)
-  console.log('Page loaded:', startPage.value)
-  startPage.value += 1
-}
+// const loadMore = async () => {
+//   await fetchPage(startPage.value)
+//   // console.log('Page loaded:', startPage.value)
+//   startPage.value += 1
+// }
 
 let observer: IntersectionObserver | null = null
 
 const setupObserver = () => {
-  if (!container.value) return
-  console.log('Setting up observer for container:', container.value)
+  if (!gallery.value) return
+  // console.log('Setting up observer for container:', gallery.value)
   observer = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
+      // console.log('Page is in view:', entry)
       if (entry.isIntersecting) {
         console.log('Page is in view:', entry.target)
         const pageIndex = parseInt(entry.target.getAttribute('data-page-index') || '0')
@@ -128,17 +130,19 @@ const setupObserver = () => {
       }
     })
   }, {
-    root: container.value,
-    threshold: 0.1
+    root: gallery.value,
+    rootMargin: "1220px",
   })
 
   // Observe all not-loaded pages
   notLoadedPages.value.forEach((page, index) => {
     const pageNum = parseInt(page.getAttribute('data-page-index') || '0')
+    // console.log('Observing page:', page, 'Page number:', pageNum)
     if (pages[pageNum]?.status === 'not-loaded') {
+      console.log('Observing page:', page)
       observer?.observe(page)
     }
-    observer?.observe(page)
+    // observer?.observe(page)
   })
 }
 
@@ -146,8 +150,10 @@ onMounted(() => {
   numPages.value = Math.ceil(props.totalItems / (props.itemsPerPage || 20))
   console.log('Number of pages:', numPages.value, 'Items per page:', props.itemsPerPage, 'Total items:', props.totalItems)
   console.log(pages)
-  loadMore()
-  setupObserver()
+  // loadMore()
+  // nextTick(() => {
+    setupObserver()
+  // })
 })
 
 onUnmounted(() => {
