@@ -16,17 +16,20 @@
           <div
             v-for="(item, itemIndex) in pages[index].items"
             :key="`${index}-${itemIndex}`"
+            :data-img-index="`${index}-${itemIndex}`"
+            :ref="galleryImages.set"
             class="gallery-item"
           >
-            <img :src="item.url" :alt="`Image ${index}-${itemIndex}`" />
+            <img v-if="visibleImages[`${index}-${itemIndex}`]" :src="item.url" :alt="`Image ${index}-${itemIndex}`" />
+            <div v-else class="loading-overlay">Loading...</div>
           </div>
         </template>
 
-        <template v-else-if="page.status === 'pending'">
+        <!-- <template v-else-if="page.status === 'pending'">
           <div v-for="(_, itemIdx) in itemsPerPage" :key="`${index}-loading-${itemIdx}`" class="gallery-item">
             <div class="loading-overlay">Loading...</div>
           </div>
-        </template>
+        </template> -->
 
         <template v-else>
           <div class="gallery-item not-loaded" :ref="notLoadedPages.set" :data-page-index="index">
@@ -73,10 +76,14 @@ const gallery = useTemplateRef('gallery')
 const container_size = ref({ width: 0, height: 0 })
 const loading = ref(false)
 const error = ref(false)
-const startPage = ref(0)
+const visibleImages = ref<Record<string, boolean>>({})
 // const pageStatuses = ref<Record<number, string>>({})
 
 const notLoadedPages = useTemplateRefsList()
+const galleryImages = useTemplateRefsList()
+
+let pageObserver: IntersectionObserver | null = null
+let galleryItemObserver: IntersectionObserver | null = null
 
 const { pages, getItem, fetchPage } = useInfiniteList<GalleryItem>({
   fetchItems: props.fetchItems,
@@ -103,26 +110,15 @@ const onResizeObserver = (entries: any) => {
   container_size.value = { width, height }
 }
 
-// watch(() => props.totalItems, () => {
-//   loadMore()
-// })
-
-// const loadMore = async () => {
-//   await fetchPage(startPage.value)
-//   // console.log('Page loaded:', startPage.value)
-//   startPage.value += 1
-// }
-
-let observer: IntersectionObserver | null = null
 
 const setupObserver = () => {
   if (!gallery.value) return
   // console.log('Setting up observer for container:', gallery.value)
-  observer = new IntersectionObserver((entries) => {
+  pageObserver = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
       // console.log('Page is in view:', entry)
       if (entry.isIntersecting) {
-        console.log('Page is in view:', entry.target)
+        // console.log('Page is in view:', entry.target)
         const pageIndex = parseInt(entry.target.getAttribute('data-page-index') || '0')
         if (pages[pageIndex].status === 'not-loaded') {
           fetchPage(pageIndex)
@@ -131,35 +127,85 @@ const setupObserver = () => {
     })
   }, {
     root: gallery.value,
-    rootMargin: "1220px",
+    rootMargin: `${container_size.value.width * 3}px`,
   })
+
+  galleryItemObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      // console.log('Page is in view:', entry)
+      if (entry.isIntersecting) {
+        console.log('Image is in view:', entry.target)
+        const imgIndex = parseInt(entry.target.getAttribute('data-img-index') || '0')
+        visibleImages.value[imgIndex] = true
+      }else{
+        console.log('Image is not in view:', entry.target)
+        const imgIndex = parseInt(entry.target.getAttribute('data-img-index') || '0')
+        visibleImages.value[imgIndex] = false
+      }
+    })
+  }, {
+    root: gallery.value,
+    rootMargin: `${container_size.value.width * 3}px`,
+  }) 
+
 
   // Observe all not-loaded pages
   notLoadedPages.value.forEach((page, index) => {
     const pageNum = parseInt(page.getAttribute('data-page-index') || '0')
     // console.log('Observing page:', page, 'Page number:', pageNum)
     if (pages[pageNum]?.status === 'not-loaded') {
-      console.log('Observing page:', page)
-      observer?.observe(page)
+      // console.log('Observing page:', page)
+      pageObserver?.observe(page)
     }
-    // observer?.observe(page)
   })
+
+  // Observe all not-loaded images
+  galleryImages.value.forEach((image, index) => {
+    const imgIndex = image.getAttribute('data-img-index') || '0'
+    // console.log('Observing image:', image, 'Image index:', imgIndex)
+    if (!observedImages.has(image)) {
+      // console.log('Observing image:', image)
+      galleryItemObserver?.observe(image)
+    }
+  })
+
 }
 
 const observedPages = new Set<Element>()
+const observedImages = new Set<Element>()
 
 const observeNewPages = (newPages: Element[]) => {
-  if (!observer) return
+  if (!pageObserver) return
   
   newPages.forEach(page => {
     const pageNum = parseInt(page.getAttribute('data-page-index') || '0')
     if (pages[pageNum]?.status === 'not-loaded' && !observedPages.has(page)) {
-      console.log('Observing new page:', pageNum)
-      observer?.observe(page)
+      // console.log('Observing new page:', pageNum)
+      pageObserver?.observe(page)
       observedPages.add(page)
     }
   })
 }
+
+watch(notLoadedPages, (newPages) => {
+  observeNewPages(newPages)
+}, { deep: true })
+
+const observeNewImages = (newImages: Element[]) => {
+  if (!galleryItemObserver) return
+  
+  newImages.forEach(image => {
+    const imgIndex = image.getAttribute('data-img-index') || '0'
+    if (!observedImages.has(image)) {
+      // console.log('Observing new image:', imgIndex)
+      galleryItemObserver?.observe(image)
+      observedImages.add(image)
+    }
+  })
+}
+watch(galleryImages, (newImages) => {
+  observeNewImages(newImages)
+}, { deep: true })
 
 onMounted(() => {
   numPages.value = Math.ceil(props.totalItems / (props.itemsPerPage || 20))
@@ -168,12 +214,8 @@ onMounted(() => {
   observeNewPages(notLoadedPages.value)
 })
 
-watch(notLoadedPages, (newPages) => {
-  observeNewPages(newPages)
-}, { deep: true })
-
 onUnmounted(() => {
-  observer?.disconnect()
+  pageObserver?.disconnect()
 })
 </script>
 
