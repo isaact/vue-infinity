@@ -23,16 +23,12 @@
 </template>
 
 <script setup lang="ts">
-import { onBeforeMount, ref } from 'vue'
+import { onBeforeMount, onMounted, ref } from 'vue'
 import InfiniteGallery from '../src/InfiniteGallery.vue'
-import { fetchMockImages, getMockImageCount } from './mockApi'
+import { fetchMockImages } from './mockApi'
 
 const itemsPerPage = ref(20)
-const numItems = ref(0)
-
-onBeforeMount(async () => {
-  numItems.value = await getMockImageCount()
-})
+const numItems = ref(1000)
 
 const fetchItems = async (page: number, signal: AbortSignal) => {
     console.log('Fetching items for page:', page)
@@ -44,9 +40,6 @@ const resetGallery = () => {
   window.location.reload()
 }
 
-// onBeforeMount(async () => {
-//   numItems.value = await getMockImageCount()
-// })
 </script>
 
 <style scoped>

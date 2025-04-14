@@ -1,42 +1,51 @@
 <template>
-  <div class="infinite-gallery" ref="container" v-resize-observer="onResizeObserver"
+  <div
+    class="infinite-gallery"
+    ref="container"
+    v-resize-observer="onResizeObserver"
     :style="{
       '--item-width': `${itemWidth}px`,
       '--not-loaded-width': `${notLoadedWidth}px`,
       '--container-height': props.height,
       '--container-width': props.width
-    }">
+    }"
+  >
     <div class="gallery">
-      <template v-for="(page_status, index) in pageStatuses" :key="`page-status-${index}`">
-        <template v-if="page_status === 'resolved'">
-          <div v-if="pages[index]" v-for="(item, itemIndex) in pages[index].items" :key="`${index}-${itemIndex}`"
-            class="gallery-item">
-            <img :src="item.url" :alt="`Image ${index}-${itemIndex}`" />
+      <template v-for="pageNum in numPages" :key="`page-status-${pageNum}`">
+        <template v-if="pages[pageNum].status === 'resolved'">
+          <div
+            v-for="(item, itemIndex) in pages[pageNum].items"
+            :key="`${pageNum}-${itemIndex}`"
+            class="gallery-item"
+          >
+            <img :src="item.url" :alt="`Image ${pageNum}-${itemIndex}`" />
           </div>
         </template>
-        <template v-else-if="page_status === 'pending'" ref="pendingPages">
-          <div v-for="(_, itemIdx) in itemsPerPage" :key="`${index}-loading-${itemIdx}`" class="gallery-item">
+
+        <template v-else-if="pages[pageNum].status === 'pending'">
+          <div v-for="(_, itemIdx) in itemsPerPage" :key="`${pageNum}-loading-${itemIdx}`" class="gallery-item">
             <div class="loading-overlay">Loading...</div>
           </div>
         </template>
+
         <template v-else>
-          <div class="gallery-item not-loaded" ref="notLoadedPages">
+          <div class="gallery-item not-loaded" :ref="notLoadedPages.set">
             <div class="loading-overlay">Page not loaded</div>
           </div>
         </template>
       </template>
     </div>
+
     <div v-if="loading" class="loading-indicator">Loading more images...</div>
     <div v-if="error" class="error-message">Error loading images</div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
-import { useInfiniteList } from './useInfiniteList'
+import { ref, computed, onMounted, onUnmounted, watch, useTemplateRef } from 'vue'
+import { useTemplateRefsList } from '@vueuse/core'
 import { vResizeObserver } from '@vueuse/components'
-import { get } from 'http';
-import { an } from 'vitest/dist/chunks/reporters.d.CfRkRKN2';
+import { useInfiniteList } from './useInfiniteList'
 
 interface GalleryItem {
   url: string
@@ -55,7 +64,8 @@ const props = withDefaults(
   }>(), 
   {
     itemsPerPage: 20,
-    maxPagesToCache: 5}
+    maxPagesToCache: 5
+  }
 )
 
 const container = useTemplateRef('container')
@@ -63,7 +73,9 @@ const container_size = ref({ width: 0, height: 0 })
 const loading = ref(false)
 const error = ref(false)
 const startPage = ref(0)
-const pageStatuses = ref<Record<number, string>>({})
+// const pageStatuses = ref<Record<number, string>>({})
+
+const notLoadedPages = useTemplateRefsList()
 
 const { pages, getItem, fetchPage } = useInfiniteList<GalleryItem>({
   fetchItems: props.fetchItems,
@@ -83,48 +95,45 @@ const notLoadedWidth = computed(() => {
 })
 
 const numPages = ref(0)
-const initPages = () => {
-  numPages.value = Math.ceil(props.totalItems / (props.itemsPerPage || 20))
-  console.log('numPages:', numPages.value, props.totalItems, props.itemsPerPage)
-  // Initialize all pages with not-loaded status
-  pageStatuses.value = {}
-  for (let i = 0; i < numPages.value; i++) {
-    pageStatuses.value[i] = 'not-loaded'
-  }
-  startPage.value = 0
-}
-const onResizeObserver = (entries: any) =>{
+// const initPages = () => {
+//   numPages.value = Math.ceil(props.totalItems / (props.itemsPerPage || 20))
+//   pageStatuses.value = {}
+//   for (let i = 0; i < numPages.value; i++) {
+//     pageStatuses.value[i] = 'not-loaded'
+//   }
+//   startPage.value = 0
+// }
+
+const onResizeObserver = (entries: any) => {
   const [entry] = entries
   const { width, height } = entry.contentRect
   container_size.value = { width, height }
 }
 
-initPages()
-
-watch(() => props.totalItems, () => {
-  initPages()
-  loadMore() // Trigger initial load
-})
+// watch(() => props.totalItems, () => {
+//   initPages()
+//   loadMore()
+// })
 
 const loadMore = async () => {
-  pageStatuses.value[startPage.value] = 'pending'
+  // pageStatuses.value[startPage.value] = 'pending'
   await fetchPage(startPage.value)
-  pageStatuses.value[startPage.value] = 'resolved'
+  // pageStatuses.value[startPage.value] = 'resolved'
   startPage.value += 1
-  console.log('numPages2:', numPages.value)
 }
 
 let observer: IntersectionObserver | null = null
 
 const setupObserver = () => {
   if (!container.value) return
-
+  console.log('Setting up observer for container:', container.value)
   observer = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
       if (entry.isIntersecting) {
+        console.log('Page is in view:', entry.target)
         const pageIndex = parseInt(entry.target.getAttribute('data-page-index') || '0')
-        if (pageStatuses.value[pageIndex] === 'not-loaded') {
-          loadMore()
+        if (pages[pageIndex].status === 'not-loaded') {
+          fetchPage(pageIndex)
         }
       }
     })
@@ -134,17 +143,17 @@ const setupObserver = () => {
   })
 
   // Observe all not-loaded pages
-  const notLoadedPages = container.value.querySelectorAll('[ref="notLoadedPage"]')
-  notLoadedPages.forEach((page, index) => {
+  notLoadedPages.value.forEach((page, index) => {
     page.setAttribute('data-page-index', index.toString())
     observer?.observe(page)
   })
 }
 
 onMounted(() => {
-  console.log('InfiniteGallery props:', props)
+  numPages.value = Math.ceil(props.totalItems / (props.itemsPerPage || 20))
+  console.log('Number of pages:', numPages.value, 'Items per page:', props.itemsPerPage, 'Total items:', props.totalItems)
   setupObserver()
-  loadMore() // Initial load
+  // loadMore()
 })
 
 onUnmounted(() => {
@@ -191,6 +200,7 @@ onUnmounted(() => {
   width: var(--item-width);
   height: var(--container-height);
 }
+
 .gallery-item.not-loaded .loading-overlay {
   width: var(--not-loaded-width);
   height: var(--container-height);

@@ -42,9 +42,3 @@ export async function fetchMockImages(
     })
   })
 }
-
-export async function getMockImageCount(): Promise<number> {
-  return new Promise(resolve => {
-    setTimeout(() => resolve(TOTAL_IMAGES), NETWORK_DELAY)
-  })
-}
