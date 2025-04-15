@@ -1,6 +1,6 @@
 <template>
   <div
-    class="infinite-gallery"
+    class="infinite-carousel"
     ref="container"
     v-resize-observer="onResizeObserver"
     :style="{
@@ -10,15 +10,15 @@
       '--container-width': props.width
     }"
   >
-    <div class="gallery" ref="gallery">
+    <div class="carousel" ref="carousel">
       <template v-for="(page, index) in pages" :key="`page-status-${index}`">
         <template v-if="page.status === 'resolved'">
           <div
             v-for="(item, itemIndex) in pages[index].items"
             :key="`${index}-${itemIndex}`"
             :data-img-index="`${index}-${itemIndex}`"
-            :ref="galleryImages.set"
-            class="gallery-item"
+            :ref="carouselItems.set"
+            class="carousel-item"
           >
             <img v-if="visibleImages.has(`${index}-${itemIndex}`)" :src="item.url" :alt="`Image ${index}-${itemIndex}`" />
             <div v-else class="loading-overlay">Loading...</div>
@@ -26,13 +26,13 @@
         </template>
 
         <!-- <template v-else-if="page.status === 'pending'">
-          <div v-for="(_, itemIdx) in itemsPerPage" :key="`${index}-loading-${itemIdx}`" class="gallery-item">
+          <div v-for="(_, itemIdx) in itemsPerPage" :key="`${index}-loading-${itemIdx}`" class="carousel-item">
             <div class="loading-overlay">Loading...</div>
           </div>
         </template> -->
 
         <template v-else>
-          <div class="gallery-item not-loaded" :ref="notLoadedPages.set" :data-page-index="index">
+          <div class="carousel-item not-loaded" :ref="notLoadedPages.set" :data-page-index="index">
             <div class="loading-overlay">Page not loaded</div>
           </div>
         </template>
@@ -72,7 +72,7 @@ const props = withDefaults(
 )
 
 const container = useTemplateRef('container')
-const gallery = useTemplateRef('gallery')
+const carousel = useTemplateRef('carousel')
 const container_size = ref({ width: 0, height: 0 })
 const loading = ref(false)
 const error = ref(false)
@@ -80,10 +80,10 @@ const visibleImages = ref(new Set<string>())
 // const pageStatuses = ref<Record<number, string>>({})
 
 const notLoadedPages = useTemplateRefsList()
-const galleryImages = useTemplateRefsList()
+const carouselItems = useTemplateRefsList()
 
 let pageObserver: IntersectionObserver | null = null
-let galleryItemObserver: IntersectionObserver | null = null
+let carouselItemObserver: IntersectionObserver | null = null
 
 const { pages, getItem, fetchPage } = useInfiniteList<GalleryItem>({
   fetchItems: props.fetchItems,
@@ -92,10 +92,10 @@ const { pages, getItem, fetchPage } = useInfiniteList<GalleryItem>({
   maxPagesToCache: props.maxPagesToCache,
   onPageUnloaded: (pageNum) => {
     // Unobserve all images from the unloaded page
-    galleryImages.value.forEach(image => {
+    carouselItems.value.forEach(image => {
       const imgIndex = image.getAttribute('data-img-index') || ''
       if (imgIndex.startsWith(`${pageNum}-`)) {
-        galleryItemObserver?.unobserve(image)
+        carouselItemObserver?.unobserve(image)
         observedImages.delete(image)
       }
     })
@@ -122,8 +122,8 @@ const onResizeObserver = (entries: any) => {
 
 
 const setupObserver = () => {
-  if (!gallery.value) return
-  // console.log('Setting up observer for container:', gallery.value)
+  if (!carousel.value) return
+  // console.log('Setting up observer for container:', carousel.value)
   pageObserver = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
       // console.log('Page is in view:', entry)
@@ -136,11 +136,11 @@ const setupObserver = () => {
       }
     })
   }, {
-    root: gallery.value,
+    root: carousel.value,
     rootMargin: '200%'
   })
 
-  galleryItemObserver = new IntersectionObserver((entries) => {
+  carouselItemObserver = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
       // console.log('Page is in view:', entry)
       if (entry.isIntersecting) {
@@ -154,7 +154,7 @@ const setupObserver = () => {
       }
     })
   }, {
-    root: gallery.value,
+    root: carousel.value,
     rootMargin: "200%" //`${container_size.value.width * 3}px`,
   }) 
 
@@ -170,12 +170,12 @@ const setupObserver = () => {
   })
 
   // Observe all not-loaded images
-  galleryImages.value.forEach((image, index) => {
+  carouselItems.value.forEach((image, index) => {
     const imgIndex = image.getAttribute('data-img-index') || '0'
     // console.log('Observing image:', image, 'Image index:', imgIndex)
     if (!observedImages.has(image)) {
       // console.log('Observing image:', image)
-      galleryItemObserver?.observe(image)
+      carouselItemObserver?.observe(image)
     }
   })
 
@@ -202,18 +202,18 @@ watch(notLoadedPages, (newPages) => {
 }, { deep: true })
 
 const observeNewImages = (newImages: Element[]) => {
-  if (!galleryItemObserver) return
+  if (!carouselItemObserver) return
   
   newImages.forEach(image => {
     const imgIndex = image.getAttribute('data-img-index') || '0'
     if (!observedImages.has(image)) {
       // console.log('Observing new image:', imgIndex)
-      galleryItemObserver?.observe(image)
+      carouselItemObserver?.observe(image)
       observedImages.add(image)
     }
   })
 }
-watch(galleryImages, (newImages) => {
+watch(carouselItems, (newImages) => {
   observeNewImages(newImages)
 }, { deep: true })
 
@@ -226,16 +226,16 @@ onMounted(() => {
 
 onUnmounted(() => {
   pageObserver?.disconnect()
-  galleryItemObserver?.disconnect()
+  carouselItemObserver?.disconnect()
 })
 </script>
 
 <style scoped>
-.infinite-gallery {
+.infinite-carousel {
   overflow-y: auto;
 }
 
-.gallery {
+.carousel {
   display: flex;
   gap: 1rem;
   overflow-x: scroll;
@@ -245,7 +245,7 @@ onUnmounted(() => {
   width: var(--container-width);
 }
 
-.gallery-item {
+.carousel-item {
   position: relative;
   background-color: #f0f0f0;
   width: var(--item-width);
@@ -253,12 +253,12 @@ onUnmounted(() => {
   scroll-snap-align: start;
 }
 
-.gallery-item.not-loaded {
+.carousel-item.not-loaded {
   width: var(--not-loaded-width);
   height: var(--container-height);
 }
 
-.gallery-item img {
+.carousel-item img {
   width: var(--item-width);
   height: var(--container-height);
   object-fit: cover;
@@ -273,7 +273,7 @@ onUnmounted(() => {
   height: var(--container-height);
 }
 
-.gallery-item.not-loaded .loading-overlay {
+.carousel-item.not-loaded .loading-overlay {
   width: var(--not-loaded-width);
   height: var(--container-height);
 }

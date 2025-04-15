@@ -24,7 +24,7 @@
 
 <script setup lang="ts">
 import { onBeforeMount, onMounted, ref } from 'vue'
-import InfiniteGallery from '../src/InfiniteGallery.vue'
+import InfiniteGallery from '../src/InfiniteCarousel.vue'
 import { fetchMockImages } from './mockApi'
 
 const itemsPerPage = ref(20)
