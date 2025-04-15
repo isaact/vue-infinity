@@ -5,6 +5,7 @@ export interface InfiniteListOptions<T> {
   totalItems: number
   itemsPerPage: number
   maxPagesToCache: number
+  onPageUnloaded?: (pageNum: number) => void
 }
 
 export interface InfiniteListPage<T> {
@@ -99,8 +100,11 @@ export function useInfiniteList<T>(options: InfiniteListOptions<T>) {
 
   function clearPage(pageNum: number) {
     const page = pages[pageNum]
+    const wasResolved = page.status === 'resolved'
     if (page.status === 'pending') {
       page.abortController?.abort()
+    } else if (wasResolved && options.onPageUnloaded) {
+      options.onPageUnloaded(pageNum)
     }
     page.items.splice(0)
     page.status = 'not-loaded'

@@ -89,7 +89,17 @@ const { pages, getItem, fetchPage } = useInfiniteList<GalleryItem>({
   fetchItems: props.fetchItems,
   totalItems: props.totalItems,
   itemsPerPage: props.itemsPerPage,
-  maxPagesToCache: props.maxPagesToCache
+  maxPagesToCache: props.maxPagesToCache,
+  onPageUnloaded: (pageNum) => {
+    // Unobserve all images from the unloaded page
+    galleryImages.value.forEach(image => {
+      const imgIndex = image.getAttribute('data-img-index') || ''
+      if (imgIndex.startsWith(`${pageNum}-`)) {
+        galleryItemObserver?.unobserve(image)
+        observedImages.delete(image)
+      }
+    })
+  }
 })
 
 const itemWidth = computed(() => {
