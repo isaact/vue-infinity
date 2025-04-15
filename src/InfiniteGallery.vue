@@ -127,23 +127,25 @@ const setupObserver = () => {
     })
   }, {
     root: gallery.value,
-    rootMargin: `${container_size.value.width * 3}px`,
+    rootMargin: '200%'
   })
 
   galleryItemObserver = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
       // console.log('Page is in view:', entry)
       if (entry.isIntersecting) {
+        // console.log('Image is in view:', entry)
         const imgIndex = entry.target.getAttribute('data-img-index') || ''
         visibleImages.value.add(imgIndex)
       } else {
+        // console.log('Image is not in view:', entry)
         const imgIndex = entry.target.getAttribute('data-img-index') || ''
         visibleImages.value.delete(imgIndex)
       }
     })
   }, {
     root: gallery.value,
-    rootMargin: `${container_size.value.width * 3}px`,
+    rootMargin: "200%" //`${container_size.value.width * 3}px`,
   }) 
 
 
@@ -227,6 +229,7 @@ onUnmounted(() => {
   display: flex;
   gap: 1rem;
   overflow-x: scroll;
+  overflow-y: hidden;
   scroll-snap-type: x mandatory;
   height: var(--container-height);
   width: var(--container-width);
