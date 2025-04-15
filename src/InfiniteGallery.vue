@@ -227,6 +227,7 @@ onUnmounted(() => {
   display: flex;
   gap: 1rem;
   overflow-x: scroll;
+  scroll-snap-type: x mandatory;
   height: var(--container-height);
   width: var(--container-width);
 }
@@ -236,6 +237,7 @@ onUnmounted(() => {
   background-color: #f0f0f0;
   width: var(--item-width);
   height: var(--container-height);
+  scroll-snap-align: start;
 }
 
 .gallery-item.not-loaded {
