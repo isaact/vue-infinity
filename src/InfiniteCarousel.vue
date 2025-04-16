@@ -26,7 +26,7 @@
             </slot>
           </div>
         </template>
-        
+
         <template v-else>
           <div class="carousel-item not-loaded" :ref="notLoadedPages.set" :data-page-index="index">
             <div class="loading-overlay">Page not loaded</div>
@@ -216,6 +216,8 @@ onUnmounted(() => {
   scroll-snap-type: x mandatory;
   height: var(--container-height);
   width: var(--container-width);
+  flex-direction: column;
+  flex-wrap: wrap;
 }
 
 .carousel-item {

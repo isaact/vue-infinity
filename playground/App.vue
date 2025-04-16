@@ -17,7 +17,7 @@
       :num-items-to-show="1.1"
     >
       <template #item="{ item, index }">
-        <img :src="item.url" :alt="item.title || `Image ${index}`" />
+        <img :src="item.url" :alt="item.title || `Image ${index}`" class="carousel-img"/>
       </template>
     </InfiniteCarousel>
   </div>
@@ -64,5 +64,13 @@ const resetGallery = () => {
   display: flex;
   gap: 20px;
   align-items: center;
+}
+.carousel-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 8px;
+  /* box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); */
+  display: block;
 }
 </style>
