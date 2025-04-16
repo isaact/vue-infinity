@@ -250,6 +250,11 @@ onUnmounted(() => {
   width: var(--item-width);
   height: var(--container-height);
   scroll-snap-align: start;
+  transition: transform 0.2s ease;
+}
+
+.carousel-item.currentSlide {
+  transform: scale(1.03);
 }
 
 .carousel-item.not-loaded {
