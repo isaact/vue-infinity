@@ -1,12 +1,13 @@
 export interface GalleryItem {
   url: string
-  id: string
+  thumbUrl: string
+  title?: string
 }
 
-const TOTAL_IMAGES = 1000
 const NETWORK_DELAY = 300 // ms
 
 export async function fetchMockImages(
+  totalImages: number,
   page: number, 
   itemsPerPage: number,
   signal?: AbortSignal
@@ -24,13 +25,15 @@ export async function fetchMockImages(
       }
 
       const startIndex = page * itemsPerPage
-      const endIndex = Math.min(startIndex + itemsPerPage, TOTAL_IMAGES)
+      const endIndex = Math.min(startIndex + itemsPerPage, totalImages)
       
       const items: GalleryItem[] = []
       for (let i = startIndex; i < endIndex; i++) {
+        const seed = Math.floor(Math.random() * 1000)
         items.push({
-          url: `https://picsum.photos/500/500?random=${i}`,
-          id: `img-${i}`
+          url: `https://picsum.photos/seed/${seed}/500/500?random=${i}`,
+          thumbUrl: `https://picsum.photos/seed/${seed}/100/100?random=${i}`,
+          title: `img-${i}`
         })
       }
       resolve(items)

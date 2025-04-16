@@ -20,17 +20,13 @@
             :ref="carouselItems.set"
             class="carousel-item"
           >
-            <img v-if="visibleImages.has(`${index}-${itemIndex}`)" :src="item.url" :alt="`Image ${index}-${itemIndex}`" />
-            <div v-else class="loading-overlay">Loading...</div>
+            <slot name="item" v-if="visibleImages.has(`${index}-${itemIndex}`)" :item="item" :index="`${index}-${itemIndex}`" />
+            <slot name="loading" v-else :item="item" :index="`${index}-${itemIndex}`">
+              <div class="loading-overlay">Loading...</div>
+            </slot>
           </div>
         </template>
-
-        <!-- <template v-else-if="page.status === 'pending'">
-          <div v-for="(_, itemIdx) in itemsPerPage" :key="`${index}-loading-${itemIdx}`" class="carousel-item">
-            <div class="loading-overlay">Loading...</div>
-          </div>
-        </template> -->
-
+        
         <template v-else>
           <div class="carousel-item not-loaded" :ref="notLoadedPages.set" :data-page-index="index">
             <div class="loading-overlay">Page not loaded</div>
@@ -45,26 +41,19 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch, useTemplateRef, nextTick } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch, useTemplateRef } from 'vue'
 import { useTemplateRefsList } from '@vueuse/core'
 import { vResizeObserver } from '@vueuse/components'
-import { useInfiniteList } from './useInfiniteList'
-
-interface GalleryItem {
-  url: string
-  loading?: boolean
-}
+import { InfiniteList } from './useInfiniteList'
 
 const props = withDefaults(
   defineProps<{
-    fetchItems: (page: number, signal: AbortSignal) => Promise<GalleryItem[]>
-    totalItems: number
+    infiniteList: InfiniteList<any>
     height: string
     width: string
     numItemsToShow: number
     itemsPerPage?: number
-    maxPagesToCache?: number
-  }>(), 
+  }>(),
   {
     itemsPerPage: 20,
     maxPagesToCache: 5
@@ -84,22 +73,7 @@ const carouselItems = useTemplateRefsList()
 let pageObserver: IntersectionObserver | null = null
 let carouselItemObserver: IntersectionObserver | null = null
 
-const { pages, getItem, fetchPage } = useInfiniteList<GalleryItem>({
-  fetchItems: props.fetchItems,
-  totalItems: props.totalItems,
-  itemsPerPage: props.itemsPerPage,
-  maxPagesToCache: props.maxPagesToCache,
-  onPageUnloaded: (pageNum) => {
-    // Unobserve all images from the unloaded page
-    carouselItems.value.forEach(image => {
-      const imgIndex = image.getAttribute('data-img-index') || ''
-      if (imgIndex.startsWith(`${pageNum}-`)) {
-        carouselItemObserver?.unobserve(image)
-        observedImages.delete(image)
-      }
-    })
-  }
-})
+const { pages, getItem, fetchPage } = props.infiniteList
 
 const itemWidth = computed(() => {
   const gap = 16 // 1rem in pixels
@@ -217,8 +191,8 @@ watch(carouselItems, (newImages) => {
 }, { deep: true })
 
 onMounted(() => {
-  numPages.value = Math.ceil(props.totalItems / (props.itemsPerPage || 20))
-  console.log('Number of pages:', numPages.value, 'Items per page:', props.itemsPerPage, 'Total items:', props.totalItems)
+  numPages.value = Object.keys(pages).length
+  console.log('Number of pages:', numPages.value)
   setupObserver()
   observeNewPages(notLoadedPages.value)
 })
