@@ -1,5 +1,12 @@
 import { reactive } from 'vue'
 
+export interface InfiniteList<T> {
+  pages: Record<number, InfiniteListPage<T>>
+  getItem: (index: number) => Promise<T | undefined>
+  fetchPage: (pageNum: number, abortEarlierFetch?: boolean) => Promise<InfiniteListPage<T> | undefined>
+  clearPages: () => void
+}
+
 export interface InfiniteListOptions<T> {
   fetchItems: (page: number, signal: AbortSignal) => Promise<T[]>
   totalItems: number
@@ -15,7 +22,7 @@ export interface InfiniteListPage<T> {
   abortController?: AbortController
 }
 
-export function useInfiniteList<T>(options: InfiniteListOptions<T>) {
+export function useInfiniteList<T>(options: InfiniteListOptions<T>): InfiniteList<T> {
   const { fetchItems, totalItems, itemsPerPage, maxPagesToCache } = options
 
   const pages = reactive<Record<number, InfiniteListPage<T>>>({})
