@@ -76,7 +76,7 @@ let carouselItemObserver: IntersectionObserver | null = null
 const { pages, getItem, fetchPage } = props.infiniteList
 
 const itemWidth = computed(() => {
-  const gap = 16 // 1rem in pixels
+  const gap = 0 // 1rem in pixels
   return (container_size.value.width - (props.numItemsToShow - 1) * gap) / props.numItemsToShow
 })
 
@@ -210,7 +210,6 @@ onUnmounted(() => {
 
 .carousel {
   display: flex;
-  gap: 1rem;
   overflow-x: scroll;
   overflow-y: hidden;
   scroll-snap-type: x mandatory;
@@ -222,7 +221,6 @@ onUnmounted(() => {
 
 .carousel-item {
   position: relative;
-  background-color: #f0f0f0;
   width: var(--item-width);
   height: var(--container-height);
   scroll-snap-align: start;

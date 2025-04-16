@@ -5,16 +5,28 @@
     <div class="controls">
       <button @click="resetGallery">Reset Gallery</button>
       <label>
-        Items per page:
-        <input type="number" v-model.number="itemsPerPage" min="1" max="100" />
+        Slides to show:
+        <input type="number" v-model.number="numItemsToShow" min="1" max="10" step="0.1" />
+      </label>
+      <label>
+        Height:
+        <input type="text" v-model="carouselHeight" />
+      </label>
+      <label>
+        Width:
+        <input type="text" v-model="carouselWidth" />
+      </label>
+      <label>
+        Total items:
+        <input type="number" v-model.number="numItems" min="1" max="10000" />
       </label>
     </div>
 
     <InfiniteCarousel
       :infinite-list="infiniteList"
-      height="33vh"
-      width="100%"
-      :num-items-to-show="1.1"
+      :height="carouselHeight"
+      :width="carouselWidth"
+      :num-items-to-show="numItemsToShow"
     >
       <template #item="{ item, index }">
         <img :src="item.url" :alt="item.title || `Image ${index}`" class="carousel-img"/>
@@ -32,8 +44,11 @@ import { fetchMockImages } from './mockApi'
 import type { GalleryItem } from './mockApi'
 
 
-const itemsPerPage = ref(20)
+const numItemsToShow = ref(1.1)
+const carouselHeight = ref('33vh')
+const carouselWidth = ref('100%')
 const numItems = ref(1000)
+const itemsPerPage = ref(20) // Still needed for the infinite list
 
 const fetchItems = async (page: number, signal: AbortSignal) => {
     console.log('Fetching items for page:', page)
@@ -62,8 +77,23 @@ const resetGallery = () => {
 .controls {
   margin: 20px 0;
   display: flex;
+  flex-wrap: wrap;
   gap: 20px;
   align-items: center;
+}
+
+.controls label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.controls input[type="number"],
+.controls input[type="text"] {
+  padding: 6px 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  width: 80px;
 }
 .carousel-img {
   width: 100%;
