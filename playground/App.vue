@@ -1,6 +1,6 @@
 <template>
   <div class="playground">
-    <h1>InfiniteGallery Playground</h1>
+    <h1>InfiniteCarousel Playground</h1>
     
     <div class="controls">
       <button @click="resetGallery">Reset Gallery</button>
@@ -10,7 +10,7 @@
       </label>
     </div>
 
-    <InfiniteGallery
+    <InfiniteCarousel
       :fetch-items="fetchItems"
       :total-items="numItems"
       height="33vh"
@@ -24,7 +24,7 @@
 
 <script setup lang="ts">
 import { onBeforeMount, onMounted, ref } from 'vue'
-import InfiniteGallery from '../src/InfiniteCarousel.vue'
+import InfiniteCarousel from '../src/InfiniteCarousel.vue'
 import { fetchMockImages } from './mockApi'
 
 const itemsPerPage = ref(20)

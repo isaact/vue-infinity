@@ -71,7 +71,6 @@ const props = withDefaults(
   }
 )
 
-const container = useTemplateRef('container')
 const carousel = useTemplateRef('carousel')
 const container_size = ref({ width: 0, height: 0 })
 const loading = ref(false)
