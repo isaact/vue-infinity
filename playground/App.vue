@@ -49,11 +49,11 @@ import { fetchMockImages } from './mockApi'
 import type { GalleryItem } from './mockApi'
 
 
-const numRowsToShow = ref(1)
-const numColsToShow = ref(1.1)
+const numRowsToShow = ref(2)
+const numColsToShow = ref(2.1)
 const carouselHeight = ref('33vh')
 const carouselWidth = ref('100%')
-const numItems = ref(200)
+const numItems = ref(300)
 const itemsPerPage = ref(20) // Still needed for the infinite list
 const maxPagesToCache = ref(5)//ref(Math.ceil(numRowsToShow.value * numColsToShow.value * 3 / itemsPerPage.value) + 2) // 3 pages of items to cache
 

@@ -15,15 +15,14 @@
       <template v-for="(page, index) in pages" :key="`page-status-${index}`">
         <template v-if="page.status === 'resolved' || page.status === 'pending'">
           <div
-            v-for="(item, itemIndex) in pages[index].items"
+            v-for="(item, itemIndex) in getPageItems(index)"
             :key="`${index}-${itemIndex}`"
             :data-img-index="`${index}-${itemIndex}`"
-            :data-page-status="page.status"
             :ref="carouselItems.set"
             class="carousel-item"
           >
             <slot name="item" v-if="visibleImages.has(`${index}-${itemIndex}`) && page.status === 'resolved'" :item="item" :index="`${index}-${itemIndex}`" />
-            <slot name="loading" v-else :item="item" :index="`${index}-${itemIndex}`">
+            <slot name="loading" v-else :index="`${index}-${itemIndex}`">
               <div class="loading-overlay">Loading...</div>
             </slot>
           </div>
@@ -80,6 +79,13 @@ let carouselItemObserver: IntersectionObserver | null = null
 
 const { pages, getItem, fetchPage } = props.infiniteList
 
+const getPageItems = (index: number) => {
+  if (pages[index].status === 'pending') {
+    return Array(props.itemsPerPage).fill(null)
+  }
+  return pages[index].items
+}
+
 const itemWidth = computed(() => {
   const gap = 0 // 1rem in pixels
   return (container_size.value.width - (props.numColsToShow - 1) * gap) / props.numColsToShow
@@ -129,10 +135,7 @@ const setupObserver = () => {
       if (entry.isIntersecting) {
         // console.log('Image is in view:', entry)
         const imgIndex = entry.target.getAttribute('data-img-index') || ''
-        const pageStatus = entry.target.getAttribute('data-page-status') || ''
-        if(pageStatus === 'resolved') {
-          visibleImages.value.add(imgIndex)
-        }
+        visibleImages.value.add(imgIndex)
       } else {
         // console.log('Image is not in view:', entry)
         const imgIndex = entry.target.getAttribute('data-img-index') || ''
@@ -180,6 +183,7 @@ const observeNewPages = (newPages: Element[]) => {
       // console.log('Observing new page:', pageNum)
       pageObserver?.observe(page)
       observedPages.add(page)
+      console.log('number of observed pages:', observedPages.size)
     }
   })
 }
@@ -207,6 +211,7 @@ watch(carouselItems, (newImages) => {
 onMounted(() => {
   numPages.value = Object.keys(pages).length
   console.log('Number of pages:', numPages.value)
+  console.log('notLoadedPages:', notLoadedPages.value)
   setupObserver()
   observeNewPages(notLoadedPages.value)
 })
