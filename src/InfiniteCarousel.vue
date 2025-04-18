@@ -111,7 +111,8 @@ const setupObserver = () => {
     entries.forEach(entry => {
       // console.log('Page is in view:', entry)
       if (entry.isIntersecting) {
-        console.log('Page is in view:', entry.target)
+        console.log('Page is in view:', entry)
+        console.log('Intersection ratio:', entry.intersectionRatio)
         const pageIndex = parseInt(entry.target.getAttribute('data-page-index') || '0')
         if (pages[pageIndex].status === 'not-loaded') {
           fetchPage(pageIndex)
@@ -120,7 +121,7 @@ const setupObserver = () => {
     })
   }, {
     root: carousel.value,
-    rootMargin: '200%'
+    rootMargin: '100%'
   })
 
   carouselItemObserver = new IntersectionObserver((entries) => {
@@ -171,6 +172,7 @@ const observedImages = new Set<Element>()
 
 const observeNewPages = (newPages: Element[]) => {
   if (!pageObserver) return
+  console.log('Observing new pages:', newPages)
   
   newPages.forEach(page => {
     const pageNum = parseInt(page.getAttribute('data-page-index') || '0')
@@ -217,7 +219,7 @@ onUnmounted(() => {
 
 <style scoped>
 .infinite-carousel {
-  overflow-y: auto;
+  overflow: hidden;
 }
 
 .carousel {
