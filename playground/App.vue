@@ -5,8 +5,12 @@
     <div class="controls">
       <button @click="resetGallery">Reset Gallery</button>
       <label>
-        Slides to show:
-        <input type="number" v-model.number="numItemsToShow" min="1" max="10" step="0.1" />
+        Slides to show per row:
+        <input type="number" v-model.number="numColsToShow" :min="1" :max="maxSlides" step="0.1" />
+      </label>
+      <label>
+        Number of rows:
+        <input type="number" v-model.number="numRowsToShow" :min="1" :max="maxSlides" step="1" />
       </label>
       <label>
         Height:
@@ -26,7 +30,8 @@
       :infinite-list="infiniteList"
       :height="carouselHeight"
       :width="carouselWidth"
-      :num-items-to-show="numItemsToShow"
+      :numColsToShow="numColsToShow"
+      :numRowsToShow="numRowsToShow"
     >
       <template #item="{ item, index }">
         <img :src="item.url" :alt="item.title || `Image ${index}`" class="carousel-img"/>
@@ -36,7 +41,7 @@
 </template>
 
 <script setup lang="ts">
-import { onBeforeMount, onMounted, ref } from 'vue'
+import { computed, watch, ref } from 'vue'
 import type { InfiniteList } from '../src/useInfiniteList'
 import { useInfiniteList } from '../src/useInfiniteList'
 import InfiniteCarousel from '../src/InfiniteCarousel.vue'
@@ -44,11 +49,22 @@ import { fetchMockImages } from './mockApi'
 import type { GalleryItem } from './mockApi'
 
 
-const numItemsToShow = ref(1.1)
+const numRowsToShow = ref(2)
+const numColsToShow = ref(1)
 const carouselHeight = ref('33vh')
 const carouselWidth = ref('100%')
 const numItems = ref(1000)
 const itemsPerPage = ref(20) // Still needed for the infinite list
+const maxPagesToCache = ref(10)//ref(Math.ceil(numRowsToShow.value * numColsToShow.value * 3 / itemsPerPage.value) + 2) // 3 pages of items to cache
+
+const maxSlides = computed(() => itemsPerPage.value * maxPagesToCache.value)
+
+watch(numRowsToShow, (newVal) => {
+  if (newVal > maxSlides.value) {
+    console.warn(`Cannot show more than ${maxSlides.value} slides (itemsPerPage * maxPagesToCache)`)
+    numRowsToShow.value = Math.min(newVal, maxSlides.value)
+  }
+})
 
 const fetchItems = async (page: number, signal: AbortSignal) => {
     console.log('Fetching items for page:', page)
@@ -58,7 +74,7 @@ const infiniteList = useInfiniteList<GalleryItem>({
   fetchItems,
   totalItems: numItems.value,
   itemsPerPage: itemsPerPage.value,
-  maxPagesToCache: 3
+  maxPagesToCache: maxPagesToCache.value
 })
 const resetGallery = () => {
   // This would need to be implemented if we expose a reset method

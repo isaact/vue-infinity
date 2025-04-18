@@ -5,6 +5,7 @@
     v-resize-observer="onResizeObserver"
     :style="{
       '--item-width': `${itemWidth}px`,
+      '--item-height': `${itemHeight}px`,
       '--not-loaded-width': `${notLoadedWidth}px`,
       '--container-height': props.height,
       '--container-width': props.width
@@ -12,15 +13,16 @@
   >
     <div class="carousel" ref="carousel">
       <template v-for="(page, index) in pages" :key="`page-status-${index}`">
-        <template v-if="page.status === 'resolved'">
+        <template v-if="page.status === 'resolved' || page.status === 'pending'">
           <div
             v-for="(item, itemIndex) in pages[index].items"
             :key="`${index}-${itemIndex}`"
             :data-img-index="`${index}-${itemIndex}`"
+            :data-page-status="page.status"
             :ref="carouselItems.set"
             class="carousel-item"
           >
-            <slot name="item" v-if="visibleImages.has(`${index}-${itemIndex}`)" :item="item" :index="`${index}-${itemIndex}`" />
+            <slot name="item" v-if="visibleImages.has(`${index}-${itemIndex}`) && page.status === 'resolved'" :item="item" :index="`${index}-${itemIndex}`" />
             <slot name="loading" v-else :item="item" :index="`${index}-${itemIndex}`">
               <div class="loading-overlay">Loading...</div>
             </slot>
@@ -51,10 +53,13 @@ const props = withDefaults(
     infiniteList: InfiniteList<any>
     height: string
     width: string
-    numItemsToShow: number
+    numColsToShow?: number
+    numRowsToShow?: number
     itemsPerPage?: number
   }>(),
   {
+    numColsToShow: 1,
+    numRowsToShow: 1,
     itemsPerPage: 20,
     maxPagesToCache: 5
   }
@@ -77,11 +82,16 @@ const { pages, getItem, fetchPage } = props.infiniteList
 
 const itemWidth = computed(() => {
   const gap = 0 // 1rem in pixels
-  return (container_size.value.width - (props.numItemsToShow - 1) * gap) / props.numItemsToShow
+  return (container_size.value.width - (props.numColsToShow - 1) * gap) / props.numColsToShow
+})
+
+const itemHeight = computed(() => {
+  const gap = 0 // 1rem in pixels
+  return Math.floor((container_size.value.height - (props.numRowsToShow - 1) * gap) / props.numRowsToShow)
 })
 
 const notLoadedWidth = computed(() => {
-  const gap = 16 // 1rem in pixels
+  const gap = 0 // 1rem in pixels
   return itemWidth.value * props.itemsPerPage + (props.itemsPerPage - 1) * gap
 })
 
@@ -101,7 +111,7 @@ const setupObserver = () => {
     entries.forEach(entry => {
       // console.log('Page is in view:', entry)
       if (entry.isIntersecting) {
-        // console.log('Page is in view:', entry.target)
+        console.log('Page is in view:', entry.target)
         const pageIndex = parseInt(entry.target.getAttribute('data-page-index') || '0')
         if (pages[pageIndex].status === 'not-loaded') {
           fetchPage(pageIndex)
@@ -115,11 +125,13 @@ const setupObserver = () => {
 
   carouselItemObserver = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
-      // console.log('Page is in view:', entry)
       if (entry.isIntersecting) {
         // console.log('Image is in view:', entry)
         const imgIndex = entry.target.getAttribute('data-img-index') || ''
-        visibleImages.value.add(imgIndex)
+        const pageStatus = entry.target.getAttribute('data-page-status') || ''
+        if(pageStatus === 'resolved') {
+          visibleImages.value.add(imgIndex)
+        }
       } else {
         // console.log('Image is not in view:', entry)
         const imgIndex = entry.target.getAttribute('data-img-index') || ''
@@ -222,9 +234,8 @@ onUnmounted(() => {
 .carousel-item {
   position: relative;
   width: var(--item-width);
-  height: var(--container-height);
+  height: var(--item-height);
   scroll-snap-align: start;
-  transition: transform 0.2s ease;
 }
 
 .carousel-item.currentSlide {
