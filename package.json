@@ -1,16 +1,17 @@
 {
-  "name": "infinite-list",
+  "name": "vue-infinity",
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
     "dev": "vitest --ui",
     "test": "vitest run",
-    "build": "tsup"
+    "build": "tsup",
+    "playground": "cd playground && vite dev"
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
-  "description": "",
+  "license": "MIT",
+  "description": "A collection of composables and components for Vue 3 to improve app performance and memory usage.",
   "dependencies": {
     "@vueuse/components": "^13.1.0",
     "vue": "^3.5.13"

@@ -4,7 +4,7 @@ export interface GalleryItem {
   title?: string
 }
 
-const NETWORK_DELAY = 3000 // ms
+const NETWORK_DELAY = 200 // ms
 
 export async function fetchMockImages(
   totalImages: number,
