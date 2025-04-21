@@ -5,6 +5,11 @@
     <div class="controls">
       <button @click="resetGallery">Reset Gallery</button>
       <label>
+        Scroll to item:
+        <input type="number" v-model.number="scrollToIndex" :min="0" :max="numItems - 1" />
+        <button @click="scrollToItem">Go</button>
+      </label>
+      <label>
         Slides to show per row:
         <input type="number" v-model.number="numColsToShow" :min="1" :max="maxSlides" step="0.1" />
       </label>
@@ -27,6 +32,7 @@
     </div>
 
     <InfiniteCarousel
+      ref="carouselRef"
       :infinite-list="infiniteList"
       :height="carouselHeight"
       :width="carouselWidth"
@@ -55,6 +61,14 @@ const carouselHeight = ref('33vh')
 const carouselWidth = ref('100%')
 const numItems = ref(300)
 const itemsPerPage = ref(20) // Still needed for the infinite list
+const scrollToIndex = ref(0)
+const carouselRef = ref<InstanceType<typeof InfiniteCarousel>>()
+
+const scrollToItem = () => {
+  if (carouselRef.value) {
+    carouselRef.value.scrollToItem(scrollToIndex.value)
+  }
+}
 const maxPagesToCache = ref(5)//ref(Math.ceil(numRowsToShow.value * numColsToShow.value * 3 / itemsPerPage.value) + 2) // 3 pages of items to cache
 
 const maxSlides = computed(() => itemsPerPage.value * maxPagesToCache.value)

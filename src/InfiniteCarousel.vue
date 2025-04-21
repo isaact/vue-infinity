@@ -220,6 +220,45 @@ onUnmounted(() => {
   pageObserver?.disconnect()
   carouselItemObserver?.disconnect()
 })
+
+const scrollToItem = async (itemIndex: number) => {
+  if (!carousel.value) return
+  
+  const pageIndex = Math.floor(itemIndex / props.itemsPerPage)
+  const itemInPage = itemIndex % props.itemsPerPage
+  
+  // First ensure the page is loaded
+  if (pages[pageIndex]?.status !== 'resolved') {
+    await fetchPage(pageIndex)
+  }
+
+  // Wait for the item to be rendered
+  const checkItem = () => {
+    return new Promise<void>((resolve) => {
+      const itemElement = carouselItems.value.find(el =>
+        el?.getAttribute('data-img-index') === `${pageIndex}-${itemInPage}`
+      )
+      
+      if (itemElement) {
+        itemElement.scrollIntoView({
+          behavior: 'smooth',
+          block: 'nearest',
+          inline: 'start'
+        })
+        resolve()
+      } else {
+        // If not found yet, wait and check again
+        setTimeout(() => checkItem().then(resolve), 50)
+      }
+    })
+  }
+
+  await checkItem()
+}
+
+defineExpose({
+  scrollToItem
+})
 </script>
 
 <style scoped>
