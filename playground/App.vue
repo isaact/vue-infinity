@@ -88,6 +88,15 @@ const resetGallery = () => {
   max-width: 1200px;
   margin: 0 auto;
   padding: 20px;
+  background-color: #1a1a1a;
+  color: #ffffff;
+  min-height: 100vh;
+}
+
+h1 {
+  color: #42b883;
+  font-weight: 500;
+  margin-bottom: 1.5rem;
 }
 
 .controls {
@@ -102,21 +111,39 @@ const resetGallery = () => {
   display: flex;
   align-items: center;
   gap: 8px;
+  color: #e0e0e0;
 }
 
 .controls input[type="number"],
 .controls input[type="text"] {
   padding: 6px 8px;
-  border: 1px solid #ccc;
+  border: 1px solid #35495e;
   border-radius: 4px;
+  background-color: #2c3e50;
+  color: #ffffff;
   width: 80px;
 }
+
+button {
+  background-color: #42b883;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+button:hover {
+  background-color: #3aa876;
+}
+
 .carousel-img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   border-radius: 8px;
-  /* box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
   display: block;
 }
 </style>
