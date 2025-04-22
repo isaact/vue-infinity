@@ -1,20 +1,20 @@
-# Vue Infinity
+# 🚀 Vue Infinity
 
 Vue 3 utilities for efficient memory management of large datasets and infinite lists.
 
-## Core Features
+## 🧠 Core Features
 
 ### Memory Management
-- Automatically unloads non-visible items from memory
-- Configurable caching limits
-- Clean resource disposal
+- 🧹 Automatically unloads non-visible items from memory
+- ⚙️ Configurable caching limits
+- 🧼 Clean resource disposal
 
-## Components
+## 📦 Components
 
-### InfiniteCarousel
-- Renders only visible items (+ configurable buffer)
-- Integrates with useInfiniteList for data management
-- Supports custom item templates
+### ♾️ InfiniteCarousel
+- 👁️ Renders only visible items (+ configurable buffer)
+- 🔗 Integrates with useInfiniteList for data management
+- 🎨 Supports custom item templates
 
 ```vue
 <template>
@@ -43,10 +43,10 @@ const infiniteList = useInfiniteList({
 </script>
 ```
 
-### useInfiniteList
-- Manages paginated data loading
-- Automatically unloads oldest pages when cache limit reached
-- Provides item access by index
+### 🔄 useInfiniteList
+- 📦 Manages paginated data loading
+- 🗑️ Automatically unloads oldest pages when cache limit reached
+- 🔍 Provides item access by index
 
 ```ts
 const { pages, getItem, fetchPage } = useInfiniteList({
@@ -60,17 +60,17 @@ const { pages, getItem, fetchPage } = useInfiniteList({
 })
 ```
 
-### Observer Utilities
-- `useAutoObserver`: Clean IntersectionObserver wrapper
+### 👀 Observer Utilities
+- 🔭 `useAutoObserver`: Clean IntersectionObserver wrapper
 
 ```ts
 const { isVisible } = useAutoObserver(ref)
 ```
 
-## Installation
+## 📥 Installation
 ```bash
 npm install vue-infinity
 ```
 
-## API Documentation
+## 📚 API Documentation
 See [API Reference](#) for detailed usage.
