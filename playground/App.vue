@@ -98,6 +98,8 @@ const resetGallery = () => {
 </script>
 
 <style scoped>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+
 .playground {
   max-width: 1200px;
   margin: 0 auto;
@@ -105,12 +107,15 @@ const resetGallery = () => {
   background-color: #1a1a1a;
   color: #ffffff;
   min-height: 100vh;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
 }
 
 h1 {
   color: #42b883;
-  font-weight: 500;
+  font-weight: 600;
   margin-bottom: 1.5rem;
+  font-size: 2rem;
+  line-height: 1.2;
 }
 
 .controls {
