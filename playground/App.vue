@@ -25,10 +25,6 @@
         Width:
         <input type="text" v-model="carouselWidth" />
       </label>
-      <label>
-        Total items:
-        <input type="number" v-model.number="numItems" min="1" max="10000" />
-      </label>
     </div>
 
     <InfiniteCarousel
