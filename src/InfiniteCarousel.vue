@@ -47,7 +47,7 @@ import { ref, computed, onMounted, onUnmounted, watch, useTemplateRef } from 'vu
 import { useTemplateRefsList } from '@vueuse/core'
 import { vResizeObserver } from '@vueuse/components'
 import { InfiniteList } from './useInfiniteList'
-import { useTidyObserver, type TidyObserver } from './useTidyObserver'
+import { useAutoObserver, type AutoObserver } from './useAutoObserver'
 
 const props = withDefaults(
   defineProps<{
@@ -76,8 +76,8 @@ const visibleImages = ref(new Set<string>())
 const notLoadedPages = useTemplateRefsList()
 const carouselItems = useTemplateRefsList()
 
-let pageObserver: TidyObserver | null = null
-let carouselItemObserver: TidyObserver | null = null
+let pageObserver: AutoObserver | null = null
+let carouselItemObserver: AutoObserver | null = null
 
 const { pages, getItem, fetchPage } = props.infiniteList
 
@@ -115,7 +115,7 @@ const onResizeObserver = (entries: any) => {
 const setupObserver = () => {
   if (!carousel.value) return
   // console.log('Setting up observer for container:', carousel.value)
-  pageObserver =  useTidyObserver(carousel, (entries) => {
+  pageObserver =  useAutoObserver(carousel, (entries) => {
     entries.forEach(entry => {
       // console.log('Page is in view:', entry)
       if (entry.isIntersecting) {
@@ -136,7 +136,7 @@ const setupObserver = () => {
     rootMargin: '300%'
   })
 
-  carouselItemObserver = useTidyObserver(carousel, (entries) => {
+  carouselItemObserver = useAutoObserver(carousel, (entries) => {
     entries.forEach(entry => {
       if (entry.isIntersecting) {
         // console.log('Image is in view:', entry)

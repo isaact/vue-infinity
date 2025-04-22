@@ -1,22 +1,22 @@
 import { onBeforeUnmount, watch, type Ref } from 'vue'
 
-export interface TidyObserverOptions extends IntersectionObserverInit {
+export interface AutoObserverOptions extends IntersectionObserverInit {
   selector?: string
   filter?: (el: Element) => boolean
 }
 
-export interface TidyObserver {
+export interface AutoObserver {
   observedElements: Set<Element>,
   intersectionObserver: IntersectionObserver,
   mutationObserver: MutationObserver,
   disconnect: () => void
 }
 
-export function useTidyObserver(
+export function useAutoObserver(
   containerRef: Ref<HTMLElement | null>,
   callback: IntersectionObserverCallback,
-  options: TidyObserverOptions = {}
-): TidyObserver {
+  options: AutoObserverOptions = {}
+): AutoObserver {
   const {
     selector = '*',
     filter = () => true,
