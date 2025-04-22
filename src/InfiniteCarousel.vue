@@ -119,8 +119,8 @@ const setupObserver = () => {
     entries.forEach(entry => {
       // console.log('Page is in view:', entry)
       if (entry.isIntersecting) {
-        console.log('Page is in view:', entry)
-        console.log('Intersection ratio:', entry.intersectionRatio)
+        // console.log('Page is in view:', entry)
+        // console.log('Intersection ratio:', entry.intersectionRatio)
         const pageIndex = entry.target.getAttribute('data-page-index')
         if (pageIndex && pages[+pageIndex].status === 'not-loaded') {
           // observedPages.delete(entry.target)
@@ -229,8 +229,8 @@ const setupObserver = () => {
 
 onMounted(() => {
   numPages.value = Object.keys(pages).length
-  console.log('Number of pages:', numPages.value)
-  console.log('notLoadedPages:', notLoadedPages.value)
+  // console.log('Number of pages:', numPages.value)
+  // console.log('notLoadedPages:', notLoadedPages.value)
   setupObserver()
   // updateObservedPages(notLoadedPages.value, [])
 })

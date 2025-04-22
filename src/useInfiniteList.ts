@@ -45,7 +45,7 @@ export function useInfiniteList<T>(options: InfiniteListOptions<T>): InfiniteLis
 
   async function fetchAndCachePage(pageNum: number, abortEarlierFetch = false): Promise<InfiniteListPage<T> | undefined> {
     const page = pages[pageNum]
-    console.log(`Fetching page ${pageNum}...`, page)
+    // console.log(`Fetching page ${pageNum}...`, page)
 
     if (page.status === 'resolved') {
       markPageUsed(pageNum)
@@ -63,7 +63,7 @@ export function useInfiniteList<T>(options: InfiniteListOptions<T>): InfiniteLis
 
     page.status = 'pending'
     page.abortController = new AbortController()
-    console.log(`Fetching page ${pageNum}...`)
+    // console.log(`Fetching page ${pageNum}...`)
 
     notLoadedPages.delete(pageNum)
 
@@ -75,9 +75,9 @@ export function useInfiniteList<T>(options: InfiniteListOptions<T>): InfiniteLis
       return page
     } catch (err) {
       if (err instanceof DOMException && err.name === 'AbortError') {
-        console.log(`Fetch aborted for page ${pageNum}`)
+        // console.log(`Fetch aborted for page ${pageNum}`)
       } else {
-        console.error(`Error fetching page ${pageNum}:`, err)
+        // console.error(`Error fetching page ${pageNum}:`, err)
         page.status = 'error'
       }
       return undefined
@@ -104,7 +104,7 @@ export function useInfiniteList<T>(options: InfiniteListOptions<T>): InfiniteLis
   function cleanupCache() {
     while (usageOrder.length > maxPagesToCache) {
       const oldest = usageOrder.shift()
-      console.log(`Clearing page ${oldest} from cache...`)
+      // console.log(`Clearing page ${oldest} from cache...`)
       if (oldest !== undefined) {
         clearPage(oldest)
       }

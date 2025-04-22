@@ -77,7 +77,7 @@ watch(numRowsToShow, (newVal) => {
 })
 
 const fetchItems = async (page: number, signal: AbortSignal) => {
-    console.log('Fetching items for page:', page)
+  // console.log('Fetching items for page:', page)
   return await fetchMockImages(numItems.value, page, itemsPerPage.value, signal)
 }
 const infiniteList = useInfiniteList<GalleryItem>({

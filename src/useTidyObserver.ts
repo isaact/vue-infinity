@@ -6,7 +6,9 @@ export interface TidyObserverOptions extends IntersectionObserverInit {
 }
 
 export interface TidyObserver {
-  observedElements: Set<Element>
+  observedElements: Set<Element>,
+  intersectionObserver: IntersectionObserver,
+  mutationObserver: MutationObserver,
   disconnect: () => void
 }
 
@@ -83,6 +85,8 @@ export function useTidyObserver(
 
   return {
     observedElements,
+    intersectionObserver: observer,
+    mutationObserver,
     disconnect: cleanup,
   }
 }
