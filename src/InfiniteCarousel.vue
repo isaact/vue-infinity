@@ -18,6 +18,7 @@
             v-for="(item, itemIndex) in getPageItems(index)"
             :key="`${index}-${itemIndex}`"
             :data-img-index="`${index}-${itemIndex}`"
+            :data-page-index="index"
             :ref="carouselItems.set"
             class="carousel-item"
           >
@@ -46,6 +47,7 @@ import { ref, computed, onMounted, onUnmounted, watch, useTemplateRef } from 'vu
 import { useTemplateRefsList } from '@vueuse/core'
 import { vResizeObserver } from '@vueuse/components'
 import { InfiniteList } from './useInfiniteList'
+import { useTidyObserver, type TidyObserver } from './useTidyObserver'
 
 const props = withDefaults(
   defineProps<{
@@ -74,8 +76,8 @@ const visibleImages = ref(new Set<string>())
 const notLoadedPages = useTemplateRefsList()
 const carouselItems = useTemplateRefsList()
 
-let pageObserver: IntersectionObserver | null = null
-let carouselItemObserver: IntersectionObserver | null = null
+let pageObserver: TidyObserver | null = null
+let carouselItemObserver: TidyObserver | null = null
 
 const { pages, getItem, fetchPage } = props.infiniteList
 
@@ -113,24 +115,28 @@ const onResizeObserver = (entries: any) => {
 const setupObserver = () => {
   if (!carousel.value) return
   // console.log('Setting up observer for container:', carousel.value)
-  pageObserver = new IntersectionObserver((entries) => {
+  pageObserver =  useTidyObserver(carousel, (entries) => {
     entries.forEach(entry => {
       // console.log('Page is in view:', entry)
       if (entry.isIntersecting) {
         console.log('Page is in view:', entry)
         console.log('Intersection ratio:', entry.intersectionRatio)
-        const pageIndex = parseInt(entry.target.getAttribute('data-page-index') || '0')
-        if (pages[pageIndex].status === 'not-loaded') {
-          fetchPage(pageIndex)
+        const pageIndex = entry.target.getAttribute('data-page-index')
+        if (pageIndex && pages[+pageIndex].status === 'not-loaded') {
+          // observedPages.delete(entry.target)
+          // pageObserver?.unobserve(entry.target)
+          fetchPage(+pageIndex)
+          // console.log('Unobserved page:', pageIndex)
         }
       }
     })
   }, {
+    filter: el => notLoadedPages.value.includes(el),
     root: carousel.value,
-    rootMargin: '100%'
+    rootMargin: '300%'
   })
 
-  carouselItemObserver = new IntersectionObserver((entries) => {
+  carouselItemObserver = useTidyObserver(carousel, (entries) => {
     entries.forEach(entry => {
       if (entry.isIntersecting) {
         // console.log('Image is in view:', entry)
@@ -144,76 +150,89 @@ const setupObserver = () => {
     })
   }, {
     root: carousel.value,
+    filter: el => carouselItems.value.includes(el),
     rootMargin: "200%" //`${container_size.value.width * 3}px`,
   }) 
 
 
   // Observe all not-loaded pages
-  notLoadedPages.value.forEach((page, index) => {
-    const pageNum = parseInt(page.getAttribute('data-page-index') || '0')
-    // console.log('Observing page:', page, 'Page number:', pageNum)
-    if (pages[pageNum]?.status === 'not-loaded') {
-      // console.log('Observing page:', page)
-      pageObserver?.observe(page)
-    }
-  })
+  // notLoadedPages.value.forEach((page, index) => {
+  //   const pageNum = parseInt(page.getAttribute('data-page-index') || '0')
+  //   // console.log('Observing page:', page, 'Page number:', pageNum)
+  //   if (pages[pageNum]?.status === 'not-loaded') {
+  //     // console.log('Observing page:', page)
+  //     pageObserver?.observe(page)
+  //   }
+  // })
 
   // Observe all not-loaded images
-  carouselItems.value.forEach((image, index) => {
-    const imgIndex = image.getAttribute('data-img-index') || '0'
-    // console.log('Observing image:', image, 'Image index:', imgIndex)
-    if (!observedImages.has(image)) {
-      // console.log('Observing image:', image)
-      carouselItemObserver?.observe(image)
-    }
-  })
+  // carouselItems.value.forEach((image, index) => {
+  //   const imgIndex = image.getAttribute('data-img-index') || '0'
+  //   // console.log('Observing image:', image, 'Image index:', imgIndex)
+  //   if (!observedImages.has(image)) {
+  //     // console.log('Observing image:', image)
+  //     carouselItemObserver?.observe(image)
+  //   }
+  // })
 
 }
 
-const observedPages = new Set<Element>()
-const observedImages = new Set<Element>()
+// const observedPages = new Set<Element>()
+// const observedImages = new Set<Element>()
 
-const observeNewPages = (newPages: Element[]) => {
-  if (!pageObserver) return
-  console.log('Observing new pages:', newPages)
+// const updateObservedPages = (currentPages: Element[], oldPages: Element[]) => {
+//   if (!pageObserver) return
+//   console.log('Old pages:', oldPages)
+//   console.log('New pages:', currentPages)
   
-  newPages.forEach(page => {
-    const pageNum = parseInt(page.getAttribute('data-page-index') || '0')
-    if (pages[pageNum]?.status === 'not-loaded' && !observedPages.has(page)) {
-      // console.log('Observing new page:', pageNum)
-      pageObserver?.observe(page)
-      observedPages.add(page)
-      console.log('number of observed pages:', observedPages.size)
-    }
-  })
-}
+//   // Find and process only removed pages
+//   const removedPages = oldPages.filter(page => !currentPages.includes(page))
+//   console.log('Removed pages:', removedPages)
+//   removedPages.forEach(page => {
+//     if (observedPages.has(page)) {
+//       pageObserver?.unobserve(page)
+//       observedPages.delete(page)
+//     }
+//   })
 
-watch(notLoadedPages, (newPages) => {
-  observeNewPages(newPages)
-}, { deep: true })
+//   // Add new pages that need to be observed
+//   currentPages.forEach(page => {
+//     const pageNum = parseInt(page.getAttribute('data-page-index') || '0')
+//     if (pages[pageNum]?.status === 'not-loaded' && !observedPages.has(page)) {
+//       // console.log('Observing new page:', pageNum)
+//       pageObserver?.observe(page)
+//       observedPages.add(page)
+//       console.log('number of observed pages:', observedPages.size)
+//     }
+//   })
+// }
 
-const observeNewImages = (newImages: Element[]) => {
-  if (!carouselItemObserver) return
+// watch(notLoadedPages, (newPages, oldPages) => {
+//   updateObservedPages(newPages, oldPages)
+// }, { deep: true })
+
+// const observeNewImages = (newImages: Element[]) => {
+//   if (!carouselItemObserver) return
   
-  newImages.forEach(image => {
-    const imgIndex = image.getAttribute('data-img-index') || '0'
-    if (!observedImages.has(image)) {
-      // console.log('Observing new image:', imgIndex)
-      carouselItemObserver?.observe(image)
-      observedImages.add(image)
-    }
-  })
-}
-watch(carouselItems, (newImages) => {
-  observeNewImages(newImages)
-}, { deep: true })
+//   newImages.forEach(image => {
+//     const imgIndex = image.getAttribute('data-img-index') || '0'
+//     if (!observedImages.has(image)) {
+//       // console.log('Observing new image:', imgIndex)
+//       carouselItemObserver?.observe(image)
+//       observedImages.add(image)
+//     }
+//   })
+// }
+// watch(carouselItems, (newImages) => {
+//   observeNewImages(newImages)
+// }, { deep: true })
 
 onMounted(() => {
   numPages.value = Object.keys(pages).length
   console.log('Number of pages:', numPages.value)
   console.log('notLoadedPages:', notLoadedPages.value)
   setupObserver()
-  observeNewPages(notLoadedPages.value)
+  // updateObservedPages(notLoadedPages.value, [])
 })
 
 onUnmounted(() => {
