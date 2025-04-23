@@ -1,6 +1,14 @@
 # 🚀 Vue Infinity
 
-Vue Infinity is a lightweight library designed to efficiently render massive datasets by leveraging the fact that users only view a portion of the content at any given time. This enables you to build high-performance applications that scale to arbitrarily large data sets—without a hit to memory or speed.
+Vue Infinity is a lightweight library that allows you to use the fact that users only view a portion of the content at any given time. This enables you to build high-performance applications that scale to arbitrarily large data sets—without a hit to memory or speed.
+
+This is done on two levels, on the API level and at the UI level.
+
+API Level:
+```Fill this in```
+
+UI Level:
+```Fill this in```
 
 ## ✨Core Features
 
@@ -12,7 +20,7 @@ Vue Infinity is a lightweight library designed to efficiently render massive dat
 
 - Paginated data access
 - Configurable total items and items per page
-- Caching with automatic unloading of older pages
+- Caching with automatic unloading of older pages based on least-recently-used basis
 - Item access by index
 - Supports cancellation of in-flight network requests using AbortController
 
