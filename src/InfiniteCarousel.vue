@@ -11,7 +11,7 @@
       '--container-width': props.width
     }"
   >
-    <div class="carousel" ref="carousel">
+    <div class="carousel" ref="carousel" :style="{ gap: props.gap }">
       <template v-for="(page, index) in pages" :key="`page-status-${index}`">
         <template v-if="page.status === 'resolved' || page.status === 'pending'">
           <div
@@ -57,8 +57,10 @@ const props = withDefaults(
     numColsToShow?: number
     numRowsToShow?: number
     itemsPerPage?: number
+    gap?: string
   }>(),
   {
+    gap: '1rem',
     numColsToShow: 1,
     numRowsToShow: 1,
     itemsPerPage: 20,
@@ -88,19 +90,19 @@ const getPageItems = (index: number) => {
   return pages[index].items
 }
 
+const gapInPixels = ref(0) // 1rem in pixels
+
 const itemWidth = computed(() => {
   const gap = 0 // 1rem in pixels
-  return (container_size.value.width - (props.numColsToShow - 1) * gap) / props.numColsToShow
+  return (container_size.value.width - (props.numColsToShow - 1) * gapInPixels.value) / props.numColsToShow
 })
 
 const itemHeight = computed(() => {
-  const gap = 0 // 1rem in pixels
-  return Math.floor((container_size.value.height - (props.numRowsToShow - 1) * gap) / props.numRowsToShow)
+  return Math.floor((container_size.value.height - (props.numRowsToShow - 1) * gapInPixels.value) / props.numRowsToShow)
 })
 
 const notLoadedWidth = computed(() => {
-  const gap = 0 // 1rem in pixels
-  return itemWidth.value * props.itemsPerPage + (props.itemsPerPage - 1) * gap
+  return itemWidth.value * props.itemsPerPage + (props.itemsPerPage - 1) * gapInPixels.value
 })
 
 const numPages = ref(0)
@@ -109,6 +111,9 @@ const onResizeObserver = (entries: any) => {
   const [entry] = entries
   const { width, height } = entry.contentRect
   container_size.value = { width, height }
+  if (carousel.value) {
+    gapInPixels.value = parseFloat(getComputedStyle(carousel.value).gap) // 1rem in pixels
+  }
 }
 
 
@@ -153,82 +158,14 @@ const setupObserver = () => {
     filter: el => carouselItems.value.includes(el),
     rootMargin: "200%" //`${container_size.value.width * 3}px`,
   }) 
-
-
-  // Observe all not-loaded pages
-  // notLoadedPages.value.forEach((page, index) => {
-  //   const pageNum = parseInt(page.getAttribute('data-page-index') || '0')
-  //   // console.log('Observing page:', page, 'Page number:', pageNum)
-  //   if (pages[pageNum]?.status === 'not-loaded') {
-  //     // console.log('Observing page:', page)
-  //     pageObserver?.observe(page)
-  //   }
-  // })
-
-  // Observe all not-loaded images
-  // carouselItems.value.forEach((image, index) => {
-  //   const imgIndex = image.getAttribute('data-img-index') || '0'
-  //   // console.log('Observing image:', image, 'Image index:', imgIndex)
-  //   if (!observedImages.has(image)) {
-  //     // console.log('Observing image:', image)
-  //     carouselItemObserver?.observe(image)
-  //   }
-  // })
-
 }
-
-// const observedPages = new Set<Element>()
-// const observedImages = new Set<Element>()
-
-// const updateObservedPages = (currentPages: Element[], oldPages: Element[]) => {
-//   if (!pageObserver) return
-//   console.log('Old pages:', oldPages)
-//   console.log('New pages:', currentPages)
-  
-//   // Find and process only removed pages
-//   const removedPages = oldPages.filter(page => !currentPages.includes(page))
-//   console.log('Removed pages:', removedPages)
-//   removedPages.forEach(page => {
-//     if (observedPages.has(page)) {
-//       pageObserver?.unobserve(page)
-//       observedPages.delete(page)
-//     }
-//   })
-
-//   // Add new pages that need to be observed
-//   currentPages.forEach(page => {
-//     const pageNum = parseInt(page.getAttribute('data-page-index') || '0')
-//     if (pages[pageNum]?.status === 'not-loaded' && !observedPages.has(page)) {
-//       // console.log('Observing new page:', pageNum)
-//       pageObserver?.observe(page)
-//       observedPages.add(page)
-//       console.log('number of observed pages:', observedPages.size)
-//     }
-//   })
-// }
-
-// watch(notLoadedPages, (newPages, oldPages) => {
-//   updateObservedPages(newPages, oldPages)
-// }, { deep: true })
-
-// const observeNewImages = (newImages: Element[]) => {
-//   if (!carouselItemObserver) return
-  
-//   newImages.forEach(image => {
-//     const imgIndex = image.getAttribute('data-img-index') || '0'
-//     if (!observedImages.has(image)) {
-//       // console.log('Observing new image:', imgIndex)
-//       carouselItemObserver?.observe(image)
-//       observedImages.add(image)
-//     }
-//   })
-// }
-// watch(carouselItems, (newImages) => {
-//   observeNewImages(newImages)
-// }, { deep: true })
 
 onMounted(() => {
   numPages.value = Object.keys(pages).length
+  if (carousel.value) {
+    console.log('Carousel element:', carousel.value)
+    gapInPixels.value = parseFloat(getComputedStyle(carousel.value).gap) // 1rem in pixels
+  }
   // console.log('Number of pages:', numPages.value)
   // console.log('notLoadedPages:', notLoadedPages.value)
   setupObserver()

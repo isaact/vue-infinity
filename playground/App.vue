@@ -25,6 +25,10 @@
         Width:
         <input type="text" v-model="carouselWidth" />
       </label>
+      <label>
+        Gap:
+        <input type="text" v-model="gapValue" />
+      </label>
     </div>
 
     <InfiniteCarousel
@@ -34,6 +38,7 @@
       :width="carouselWidth"
       :numColsToShow="numColsToShow"
       :numRowsToShow="numRowsToShow"
+      :gap="gapValue"
     >
       <template #item="{ item, index }">
         <img :src="item.url" :alt="item.title || `Image ${index}`" class="carousel-img"/>
@@ -55,6 +60,7 @@ const numRowsToShow = ref(1)
 const numColsToShow = ref(1.1)
 const carouselHeight = ref('33vh')
 const carouselWidth = ref('100%')
+const gapValue = ref('10px')
 const numItems = ref(300)
 const itemsPerPage = ref(20) // Still needed for the infinite list
 const scrollToIndex = ref(0)
