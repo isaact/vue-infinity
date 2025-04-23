@@ -4,7 +4,7 @@ Vue Infinity is a lightweight library designed to efficiently render massive dat
 
 ## ✨Core Features
 
-### 🚀 InfiniteList
+### 🌀 InfiniteList
 
 `InfiniteList` provides reactive, paginated access to large datasets with full type support. It is ideal for applications that need to manage vast amounts of data without loading everything into memory.
 
