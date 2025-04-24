@@ -11,7 +11,7 @@
       '--container-width': props.width
     }"
   >
-    <div class="carousel" ref="carousel" :style="{ gap: props.gap }">
+    <div class="carousel" ref="carousel" :style="{ gap: props.gap }" :class="{ vertical: props.verticalScroll }">
       <template v-for="(page, index) in pages" :key="`page-status-${index}`">
         <template v-if="page.status === 'resolved' || page.status === 'pending'">
           <div
@@ -58,13 +58,15 @@ const props = withDefaults(
     numRowsToShow?: number
     itemsPerPage?: number
     gap?: string
+    verticalScroll?: boolean
   }>(),
   {
     gap: '1rem',
     numColsToShow: 1,
     numRowsToShow: 1,
     itemsPerPage: 20,
-    maxPagesToCache: 5
+    maxPagesToCache: 5,
+    verticalScroll: false
   }
 )
 
@@ -94,7 +96,7 @@ const gapInPixels = ref(0) // 1rem in pixels
 
 const itemWidth = computed(() => {
   const gap = 0 // 1rem in pixels
-  return (container_size.value.width - (props.numColsToShow - 1) * gapInPixels.value) / props.numColsToShow
+  return Math.floor((container_size.value.width - (props.numColsToShow - 1) * gapInPixels.value) / props.numColsToShow)
 })
 
 const itemHeight = computed(() => {
@@ -232,6 +234,13 @@ defineExpose({
   flex-direction: column;
   flex-wrap: wrap;
 }
+.carousel.vertical {
+  flex-direction: row;
+  overflow-y: scroll;
+  overflow-x: hidden;
+  scroll-snap-type: y mandatory;
+}
+
 
 .carousel-item {
   position: relative;
@@ -240,6 +249,9 @@ defineExpose({
   scroll-snap-align: start;
 }
 
+.carousel.vertical .carousel-item{
+  flex-shrink: 0;
+}
 .carousel-item.currentSlide {
   transform: scale(1.03);
 }
