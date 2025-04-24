@@ -5,10 +5,12 @@ Vue Infinity is a lightweight library that allows you to use the fact that users
 This is done on two levels, on the API level and at the UI level.
 
 API Level:
-```Fill this in```
+- Fetch only the data you need
+- Pages are automatically evicted from cache based on last-recently-used basis
 
 UI Level:
-```Fill this in```
+- Render only content that is visible to the user
+- This is a big advantage for image/video rich content which can take up a lot of memory
 
 ## ✨Core Features
 
