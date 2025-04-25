@@ -61,9 +61,9 @@ import { fetchMockImages } from './mockApi'
 import type { GalleryItem } from './mockApi'
 
 
-const numRowsToShow = ref(1)
-const numColsToShow = ref(1.1)
-const carouselHeight = ref('33vh')
+const numRowsToShow = ref(3)
+const numColsToShow = ref(3)
+const carouselHeight = ref('45vh')
 const carouselWidth = ref('100%')
 const gapValue = ref('10px')
 const numItems = ref(300)

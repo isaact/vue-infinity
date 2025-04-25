@@ -2,16 +2,23 @@
   <div
     class="infinite-carousel"
     ref="container"
-    v-resize-observer="onResizeObserver"
     :style="{
       '--item-width': `${itemWidth}px`,
       '--item-height': `${itemHeight}px`,
-      '--not-loaded-width': `${notLoadedWidth}px`,
+      '--num-cols-to-show': props.numColsToShow,
+      '--num-rows-to-show': props.numRowsToShow,
+      '--gap-in-px': `${gapInPixels}px`,
+      '--not-loaded-col-span': notLoadedColSpan,
+      '--not-loaded-row-span': notLoadedRowSpan,
       '--container-height': props.height,
       '--container-width': props.width
     }"
   >
-    <div class="carousel" ref="carousel" :style="{ gap: props.gap }" :class="{ vertical: props.verticalScroll }">
+    <div class="carousel"
+          ref="carousel" 
+          :style="{ gap: props.gap }" 
+          :class="{ vertical: props.verticalScroll }"
+          v-resize-observer="onResizeObserver">
       <template v-for="(page, index) in pages" :key="`page-status-${index}`">
         <template v-if="page.status === 'resolved' || page.status === 'pending'">
           <div
@@ -94,30 +101,61 @@ const getPageItems = (index: number) => {
 
 const gapInPixels = ref(0) // 1rem in pixels
 
+const totalGapHeight = computed(() => {
+  if(!props.verticalScroll) {
+    return (props.numRowsToShow - 1) * gapInPixels.value
+  }
+  return props.numRowsToShow * gapInPixels.value
+})
+const totalGapWidth = computed(() => {
+  if(!props.verticalScroll) {
+    return props.numColsToShow * gapInPixels.value
+  }
+  return (props.numColsToShow - 1) * gapInPixels.value
+})
+
 const itemWidth = computed(() => {
-  const gap = 0 // 1rem in pixels
-  return Math.floor((container_size.value.width - (props.numColsToShow - 1) * gapInPixels.value) / props.numColsToShow)
+  return (container_size.value.width - totalGapWidth.value) / props.numColsToShow
 })
 
 const itemHeight = computed(() => {
-  return Math.floor((container_size.value.height - (props.numRowsToShow - 1) * gapInPixels.value) / props.numRowsToShow)
+  return (container_size.value.height - totalGapHeight.value) / props.numRowsToShow
 })
 
-const notLoadedWidth = computed(() => {
-  return itemWidth.value * props.itemsPerPage + (props.itemsPerPage - 1) * gapInPixels.value
+const notLoadedColSpan = computed(() => {
+  // return props.numColsToShow * itemWidth.value + (props.numColsToShow - 1) * gapInPixels.value
+  if (!props.verticalScroll) {
+    return Math.floor(props.itemsPerPage / props.numColsToShow)
+  }
+  return Math.floor(props.numColsToShow)
+})
+
+const notLoadedRowSpan = computed(() => {
+  if (!props.verticalScroll) {
+    return Math.floor(props.numRowsToShow)
+  }
+  return Math.floor(props.itemsPerPage / props.numRowsToShow)
 })
 
 const numPages = ref(0)
 
 const onResizeObserver = (entries: any) => {
-  const [entry] = entries
-  const { width, height } = entry.contentRect
-  container_size.value = { width, height }
+  // const [entry] = entries
+  // const { width, height } = entry.contentRect
+  // container_size.value = { width, height }
+  // if (carousel.value) {
+  //   gapInPixels.value = parseFloat(getComputedStyle(carousel.value).gap) // 1rem in pixels
+  // }
+  updateDimensions()
+}
+
+const updateDimensions = () => {
   if (carousel.value) {
+    const { width, height } = carousel.value.getBoundingClientRect()
+    container_size.value = { width, height }
     gapInPixels.value = parseFloat(getComputedStyle(carousel.value).gap) // 1rem in pixels
   }
 }
-
 
 const setupObserver = () => {
   if (!carousel.value) return
@@ -174,6 +212,20 @@ onMounted(() => {
   // updateObservedPages(notLoadedPages.value, [])
 })
 
+watch(
+  [() => props.numColsToShow, () => props.numRowsToShow, () => props.gap, () => props.verticalScroll],
+  () => {
+    if (carousel.value) {
+      // gapInPixels.value = parseFloat(getComputedStyle(carousel.value).gap)
+      // // Force recalculate container dimensions
+      // // const { width, height } = carousel.value.getBoundingClientRect()
+      // // container_size.value = { width, height }
+      updateDimensions()
+    }
+  },
+  { immediate: true }
+)
+
 onUnmounted(() => {
   pageObserver?.disconnect()
   carouselItemObserver?.disconnect()
@@ -225,40 +277,46 @@ defineExpose({
 }
 
 .carousel {
-  display: flex;
-  overflow-x: scroll;
+  display: grid;
+  grid-template-rows: repeat(var(--num-rows-to-show), calc(100% / var(--num-rows-to-show)));
+  grid-auto-flow: column;
+  grid-auto-columns: calc(
+    (var(--container-width) - (var(--gap-in-px) * (var(--num-cols-to-show) - 1))) / var(--num-cols-to-show)
+  );
+  gap: var(--gap-in-px);
+  overflow-x: auto;
   overflow-y: hidden;
   scroll-snap-type: x mandatory;
   height: var(--container-height);
   width: var(--container-width);
-  flex-direction: column;
-  flex-wrap: wrap;
 }
+
+.carousel-item {
+  scroll-snap-align: start;
+
+  /* Make sure it fills the available grid cell */
+  width: 100%;
+  height: 100%;
+}
+
 .carousel.vertical {
-  flex-direction: row;
+  grid-template-columns: repeat(var(--num-cols-to-show), calc(100% / var(--num-cols-to-show)));
+  grid-auto-flow: row;
+  grid-auto-rows: calc(
+    (var(--container-height) - (var(--gap-in-px) * (var(--num-rows-to-show) - 1))) / var(--num-rows-to-show)
+  );
   overflow-y: scroll;
   overflow-x: hidden;
   scroll-snap-type: y mandatory;
 }
 
-
-.carousel-item {
-  position: relative;
-  width: var(--item-width);
-  height: var(--item-height);
-  scroll-snap-align: start;
-}
-
-.carousel.vertical .carousel-item{
-  flex-shrink: 0;
-}
 .carousel-item.currentSlide {
   transform: scale(1.03);
 }
 
 .carousel-item.not-loaded {
-  width: var(--not-loaded-width);
-  height: var(--container-height);
+  grid-row: span var(--not-loaded-row-span);
+  grid-column: span var(--not-loaded-col-span);
 }
 
 .carousel-item img {
