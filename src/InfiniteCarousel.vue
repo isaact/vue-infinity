@@ -50,7 +50,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch, useTemplateRef } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch, useTemplateRef, nextTick } from 'vue'
 import { useTemplateRefsList } from '@vueuse/core'
 import { vResizeObserver } from '@vueuse/components'
 import { InfiniteList } from './useInfiniteList'
@@ -146,7 +146,9 @@ const onResizeObserver = (entries: any) => {
   // if (carousel.value) {
   //   gapInPixels.value = parseFloat(getComputedStyle(carousel.value).gap) // 1rem in pixels
   // }
-  updateDimensions()
+  nextTick(() => {
+    updateDimensions()
+  })
 }
 
 const updateDimensions = () => {
@@ -154,6 +156,8 @@ const updateDimensions = () => {
     const { width, height } = carousel.value.getBoundingClientRect()
     container_size.value = { width, height }
     gapInPixels.value = parseFloat(getComputedStyle(carousel.value).gap) // 1rem in pixels
+    // console.log('Updated dimensions:', container_size.value)
+    // console.log('Updated gap in pixels:', gapInPixels.value, carousel.value, 'gap:', getComputedStyle(carousel.value).gap)
   }
 }
 
@@ -216,11 +220,14 @@ watch(
   [() => props.numColsToShow, () => props.numRowsToShow, () => props.gap, () => props.verticalScroll],
   () => {
     if (carousel.value) {
+      // console.log('Updating carousel dimensions')
       // gapInPixels.value = parseFloat(getComputedStyle(carousel.value).gap)
       // // Force recalculate container dimensions
       // // const { width, height } = carousel.value.getBoundingClientRect()
       // // container_size.value = { width, height }
-      updateDimensions()
+      nextTick(() => {
+        updateDimensions()
+      })
     }
   },
   { immediate: true }
@@ -300,7 +307,7 @@ defineExpose({
 }
 
 .carousel.vertical {
-  grid-template-columns: repeat(var(--num-cols-to-show), calc(100% / var(--num-cols-to-show)));
+  grid-template-columns: repeat(var(--num-cols-to-show), 1fr);
   grid-auto-flow: row;
   grid-auto-rows: calc(
     (var(--container-height) - (var(--gap-in-px) * (var(--num-rows-to-show) - 1))) / var(--num-rows-to-show)
