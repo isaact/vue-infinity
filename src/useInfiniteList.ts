@@ -55,6 +55,7 @@ export function useInfiniteList<T>(options: InfiniteListOptions<T>): InfiniteLis
     if (page.status === 'pending') {
       if (abortEarlierFetch) {
         page.abortController?.abort()
+        page.abortController = undefined
         page.abortController = new AbortController()
       } else {
         return page
@@ -116,6 +117,7 @@ export function useInfiniteList<T>(options: InfiniteListOptions<T>): InfiniteLis
     const wasResolved = page.status === 'resolved'
     if (page.status === 'pending') {
       page.abortController?.abort()
+      page.abortController = undefined
     } else if (wasResolved && options.onPageUnloaded) {
       options.onPageUnloaded(pageNum)
     }
