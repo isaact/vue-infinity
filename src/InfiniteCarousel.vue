@@ -285,11 +285,9 @@ defineExpose({
 
 .carousel {
   display: grid;
-  grid-template-rows: repeat(var(--num-rows-to-show), calc(100% / var(--num-rows-to-show)));
+  grid-template-rows: repeat(var(--num-rows-to-show), var(--item-height));
   grid-auto-flow: column;
-  grid-auto-columns: calc(
-    (var(--container-width) - (var(--gap-in-px) * (var(--num-cols-to-show) - 1))) / var(--num-cols-to-show)
-  );
+  grid-auto-columns: var(--item-width);
   gap: var(--gap-in-px);
   overflow-x: auto;
   overflow-y: hidden;
@@ -302,8 +300,8 @@ defineExpose({
   scroll-snap-align: start;
 
   /* Make sure it fills the available grid cell */
-  width: 100%;
-  height: 100%;
+  /* width: 100%;
+  height: 100%; */
 }
 
 .carousel.vertical {
