@@ -19,8 +19,13 @@
           :style="{ gap: props.gap }" 
           :class="{ vertical: props.verticalScroll }"
           v-resize-observer="onResizeObserver">
-      <template v-for="(page, index) in pages" :key="`page-status-${index}`">
-        <template v-if="page.status === 'resolved' || page.status === 'pending'">
+      <!-- <template v-if="tryPreviousPage">
+        <div class="carousel-item not-loaded" :ref="notLoadedPages.set" :data-page-index="nextPageToTry">
+          <div class="loading-overlay">Page not loaded</div>
+        </div>
+      </template> -->
+      <template v-for="index in pagesToTry" :key="`page-status-${index}`">
+        <template v-if="pages[index] && (pages[index].status === 'resolved' || pages[index].status === 'pending')">
           <div
             v-for="(item, itemIndex) in getPageItems(index)"
             :key="`${index}-${itemIndex}`"
@@ -29,18 +34,22 @@
             :ref="carouselItems.set"
             class="carousel-item"
           >
-            <slot name="item" v-if="visibleImages.has(`${index}-${itemIndex}`) && page.status === 'resolved'" :item="item" :index="`${index}-${itemIndex}`" />
+            <slot name="item" v-if="visibleImages.has(`${index}-${itemIndex}`) && pages[index].status === 'resolved'" :item="item" :index="`${index}-${itemIndex}`" />
             <slot name="loading" v-else :index="`${index}-${itemIndex}`">
               <div class="loading-overlay">Loading...</div>
             </slot>
           </div>
         </template>
-
-        <template v-else>
-          <div class="carousel-item not-loaded" :ref="notLoadedPages.set" :data-page-index="index">
+        <template v-if="!pages[index] || pages[index].status === 'not-loaded'">
+          <div class="carousel-item not-loaded" :ref="notLoadedPages.set" :data-page-index="index" :key="`${index}-0`">
             <div class="loading-overlay">Page not loaded</div>
           </div>
         </template>
+      </template>
+      <template v-if="tryNextPage">
+        <div class="carousel-item not-loaded" :ref="notLoadedPages.set" :data-page-index="nextPageToTry" :key="`${nextPageToTry}-0`">
+          <div class="loading-overlay">Page not loaded</div>
+        </div>
       </template>
     </div>
 
@@ -59,6 +68,7 @@ import { useAutoObserver, type AutoObserver } from './useAutoObserver'
 const props = withDefaults(
   defineProps<{
     infiniteList: InfiniteList<any>
+    startIndex?: number
     height: string
     width: string
     numColsToShow?: number
@@ -69,6 +79,7 @@ const props = withDefaults(
   }>(),
   {
     gap: '1rem',
+    startIndex: 0,
     numColsToShow: 1,
     numRowsToShow: 1,
     itemsPerPage: 20,
@@ -90,7 +101,54 @@ const carouselItems = useTemplateRefsList()
 let pageObserver: AutoObserver | null = null
 let carouselItemObserver: AutoObserver | null = null
 
-const { pages, getItem, fetchPage } = props.infiniteList
+const { pages, getItem, fetchPage: realfetchPage } = props.infiniteList
+const nextPageToTry = ref(0)
+const previousPageToTry = ref(0)
+const tryNextPage = ref(true)
+const tryPreviousPage = ref(false)
+
+const pagesToTry = computed(() => {
+  const pages = []
+  for (let i = previousPageToTry.value; i <= nextPageToTry.value; i++) {
+    pages.push(i)
+  }
+  return pages
+})
+
+// Fetch the page, if it is not undefined and the pageNumber is > than nextPageToTry to set nextPageToTry to that page + 1. If the page is <= previousPageToTry, set previousPageToTry to that page - 1 unless it is 0
+const fetchPage = async (pageNumber: number) => {
+  if (pages[pageNumber] && pages[pageNumber].status === 'pending') {
+    return
+  }
+  loading.value = true
+  error.value = false
+  try {
+    realfetchPage(pageNumber).then(() => {
+      if (pages[pageNumber]?.status === 'resolved') {
+        if (pageNumber >= nextPageToTry.value) {
+          // console.log('NextPage resolved:', pageNumber)
+          nextPageToTry.value = pageNumber + 1
+          // console.log('NextPageToTry:', nextPageToTry.value)
+        }
+        if (previousPageToTry.value > 0 && pageNumber <= previousPageToTry.value) {
+          // console.log('Page resolved:', pageNumber)
+          previousPageToTry.value = pageNumber - 1
+        }
+      } else {
+        // If the page is not resolved and the page number is === to nextPageToTry, set tryNextPage to false. Or if the page number is === to previousPageToTry, set tryPreviousPage to false
+        if (pageNumber === nextPageToTry.value) {
+          tryNextPage.value = false
+        } else if (pageNumber === previousPageToTry.value) {
+          tryPreviousPage.value = false
+        }
+      }
+    })
+  } catch (err) {
+    error.value = true
+  } finally {
+    loading.value = false
+  }
+}
 
 const getPageItems = (index: number) => {
   if (pages[index].status === 'pending') {
@@ -166,16 +224,11 @@ const setupObserver = () => {
   // console.log('Setting up observer for container:', carousel.value)
   pageObserver =  useAutoObserver(carousel, (entries) => {
     entries.forEach(entry => {
-      // console.log('Page is in view:', entry)
       if (entry.isIntersecting) {
-        // console.log('Page is in view:', entry)
-        // console.log('Intersection ratio:', entry.intersectionRatio)
         const pageIndex = entry.target.getAttribute('data-page-index')
-        if (pageIndex && pages[+pageIndex].status === 'not-loaded') {
-          // observedPages.delete(entry.target)
-          // pageObserver?.unobserve(entry.target)
+        // console.log('Page is in view:', pageIndex)
+        if (pageIndex) {
           fetchPage(+pageIndex)
-          // console.log('Unobserved page:', pageIndex)
         }
       }
     })
@@ -213,6 +266,9 @@ onMounted(() => {
   // console.log('Number of pages:', numPages.value)
   // console.log('notLoadedPages:', notLoadedPages.value)
   setupObserver()
+  nextTick(() => {
+    scrollToItem(0)
+  })
   // updateObservedPages(notLoadedPages.value, [])
 })
 
@@ -245,7 +301,7 @@ const scrollToItem = async (itemIndex: number) => {
   const itemInPage = itemIndex % props.itemsPerPage
   
   // First ensure the page is loaded
-  if (pages[pageIndex]?.status !== 'resolved') {
+  if (!pages[pageIndex] || pages[pageIndex]?.status !== 'resolved') {
     await fetchPage(pageIndex)
   }
 

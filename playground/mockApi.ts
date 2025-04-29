@@ -26,6 +26,10 @@ export async function fetchMockImages(
 
       const startIndex = page * itemsPerPage
       const endIndex = Math.min(startIndex + itemsPerPage, totalImages)
+      if (startIndex >= totalImages) {
+        resolve([])
+        return
+      }
       
       const items: GalleryItem[] = []
       for (let i = startIndex; i < endIndex; i++) {

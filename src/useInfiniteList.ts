@@ -2,7 +2,7 @@ import { reactive } from 'vue'
 
 export interface InfiniteList<T> {
   pages: Record<number, InfiniteListPage<T>>
-  notLoadedPages: Set<number>
+  // notLoadedPages: Set<number>
   getItem: (index: number) => Promise<T | undefined>
   fetchPage: (pageNum: number, abortEarlierFetch?: boolean) => Promise<InfiniteListPage<T> | undefined>
   clearPage: (pageNum: number) => void
@@ -11,7 +11,7 @@ export interface InfiniteList<T> {
 
 export interface InfiniteListOptions<T> {
   fetchItems: (page: number, signal: AbortSignal) => Promise<T[]>
-  totalItems: number
+  // totalItems: number
   itemsPerPage: number
   maxPagesToCache: number
   onPageUnloaded?: (pageNum: number) => void
@@ -25,27 +25,30 @@ export interface InfiniteListPage<T> {
 }
 
 export function useInfiniteList<T>(options: InfiniteListOptions<T>): InfiniteList<T> {
-  const { fetchItems, totalItems, itemsPerPage, maxPagesToCache } = options
+  const { fetchItems, itemsPerPage, maxPagesToCache } = options
 
   const pages = reactive<Record<number, InfiniteListPage<T>>>({})
-  const notLoadedPages = reactive<Set<number>>(new Set())
+  // const notLoadedPages = reactive<Set<number>>(new Set())
   const usageOrder: number[] = []
 
-  const totalPages = Math.ceil(totalItems / itemsPerPage)
+  // const totalPages = Math.ceil(totalItems / itemsPerPage)
 
   // 👇 Initialize all pages with 'not-loaded'
-  for (let i = 0; i < totalPages; i++) {
-    pages[i] = reactive({
-      pageNum: i,
-      items: [],
-      status: 'not-loaded'
-    })
-    notLoadedPages.add(i)
-  }
+  // for (let i = 0; i < totalPages; i++) {
+  //   pages[i] = reactive({
+  //     pageNum: i,
+  //     items: [],
+  //     status: 'not-loaded'
+  //   })
+  //   // notLoadedPages.add(i)
+  // }
 
   async function fetchAndCachePage(pageNum: number, abortEarlierFetch = false): Promise<InfiniteListPage<T> | undefined> {
-    const page = pages[pageNum]
-    // console.log(`Fetching page ${pageNum}...`, page)
+    const page = pages[pageNum] || (pages[pageNum] = reactive({
+      pageNum,
+      items: [],
+      status: 'not-loaded'
+    }))
 
     if (page.status === 'resolved') {
       markPageUsed(pageNum)
@@ -66,10 +69,14 @@ export function useInfiniteList<T>(options: InfiniteListOptions<T>): InfiniteLis
     page.abortController = new AbortController()
     // console.log(`Fetching page ${pageNum}...`)
 
-    notLoadedPages.delete(pageNum)
+    // notLoadedPages.delete(pageNum)
 
     try {
       const items = await fetchItems(pageNum, page.abortController.signal)
+      if(items.length === 0) {
+        page.status = 'error'
+        return page
+      }
       page.items = items
       page.status = 'resolved'
       markPageUsed(pageNum)
@@ -86,7 +93,7 @@ export function useInfiniteList<T>(options: InfiniteListOptions<T>): InfiniteLis
   }
 
   async function getItem(index: number): Promise<T | undefined> {
-    if (index < 0 || index >= totalItems) return undefined
+    if (index < 0) return undefined
 
     const pageNum = Math.floor(index / itemsPerPage)
     const indexInPage = index % itemsPerPage
@@ -123,19 +130,23 @@ export function useInfiniteList<T>(options: InfiniteListOptions<T>): InfiniteLis
     }
     page.items.splice(0)
     page.status = 'not-loaded'
-    notLoadedPages.add(pageNum)
+    // notLoadedPages.add(pageNum)
   }
 
   function clearPages() {
-    for (let i = 0; i < totalPages; i++) {
-      clearPage(i)
+    // for (let i = 0; i < totalPages; i++) {
+    //   clearPage(i)
+    // }
+    // usageOrder.length = 0
+    //Loop through all the pages and clear them
+    for (const pageNum in pages) {
+      clearPage(Number(pageNum))
     }
-    usageOrder.length = 0
   }
 
   return {
     pages,
-    notLoadedPages,
+    // notLoadedPages,
     getItem,
     fetchPage: fetchAndCachePage,
     clearPage,

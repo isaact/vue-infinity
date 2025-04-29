@@ -94,7 +94,6 @@ const fetchItems = async (page: number, signal: AbortSignal) => {
 }
 const infiniteList = useInfiniteList<GalleryItem>({
   fetchItems,
-  totalItems: numItems.value,
   itemsPerPage: itemsPerPage.value,
   maxPagesToCache: maxPagesToCache.value
 })
