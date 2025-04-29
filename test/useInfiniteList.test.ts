@@ -9,26 +9,13 @@ describe('useInfiniteList', () => {
     mockFetchItems.mockReset()
   })
 
-  it('should initialize with all pages in not-loaded state', () => {
-    const { pages, notLoadedPages } = useInfiniteList({
-      fetchItems: mockFetchItems,
-      totalItems: mockTotalItems,
-      itemsPerPage: 10,
-      maxPagesToCache: 3
-    })
-
-    expect(Object.keys(pages).length).toBe(10) // 100 items / 10 per page
-    expect(pages[0].status).toBe('not-loaded')
-    expect(notLoadedPages.has(0)).toBe(true)
-  })
 
   it('should fetch and cache a page', async () => {
     const testItems = Array(10).fill(0).map((_, i) => ({ id: i }))
     mockFetchItems.mockResolvedValue(testItems)
 
-    const { fetchPage, pages, notLoadedPages } = useInfiniteList({
+    const { fetchPage, pages } = useInfiniteList({
       fetchItems: mockFetchItems,
-      totalItems: mockTotalItems,
       itemsPerPage: 10,
       maxPagesToCache: 3
     })
@@ -37,7 +24,6 @@ describe('useInfiniteList', () => {
     expect(page).toBeDefined()
     expect(page?.items).toEqual(testItems)
     expect(pages[1].status).toBe('resolved')
-    expect(notLoadedPages.has(1)).toBe(false)
     expect(mockFetchItems).toHaveBeenCalledWith(1, expect.any(AbortSignal))
   })
 
@@ -55,7 +41,6 @@ describe('useInfiniteList', () => {
 
     const { fetchPage } = useInfiniteList({
       fetchItems: mockFetchItems,
-      totalItems: mockTotalItems,
       itemsPerPage: 10,
       maxPagesToCache: 3
     })
@@ -75,9 +60,8 @@ describe('useInfiniteList', () => {
     const testItems = Array(10).fill(0).map((_, i) => ({ id: i }))
     mockFetchItems.mockResolvedValue(testItems)
 
-    const { fetchPage, pages, notLoadedPages } = useInfiniteList({
+    const { fetchPage, pages } = useInfiniteList({
       fetchItems: mockFetchItems,
-      totalItems: mockTotalItems,
       itemsPerPage: 10,
       maxPagesToCache: 2
     })
@@ -87,7 +71,6 @@ describe('useInfiniteList', () => {
     await fetchPage(3) // Should evict page 1
 
     expect(pages[1].status).toBe('not-loaded') // Page 1 should be reset
-    expect(notLoadedPages.has(1)).toBe(true)
     expect(pages[2].status).toBe('resolved')
     expect(pages[3].status).toBe('resolved')
   })
@@ -98,7 +81,6 @@ describe('useInfiniteList', () => {
 
     const { getItem } = useInfiniteList({
       fetchItems: mockFetchItems,
-      totalItems: mockTotalItems,
       itemsPerPage: 10,
       maxPagesToCache: 3
     })
@@ -111,26 +93,22 @@ describe('useInfiniteList', () => {
     const testItems = Array(10).fill(0).map((_, i) => ({ id: i }))
     mockFetchItems.mockResolvedValue(testItems)
 
-    const { fetchPage, pages, notLoadedPages, clearPages } = useInfiniteList({
+    const { fetchPage, pages, clearPages } = useInfiniteList({
       fetchItems: mockFetchItems,
-      totalItems: mockTotalItems,
       itemsPerPage: 10,
       maxPagesToCache: 3
     })
 
     await fetchPage(1)
     expect(pages[1].status).toBe('resolved')
-    expect(notLoadedPages.has(1)).toBe(false)
     
     clearPages()
     expect(pages[1].status).toBe('not-loaded')
-    expect(notLoadedPages.has(1)).toBe(true)
   })
 
   it('should return undefined for out of bounds index', async () => {
     const { getItem } = useInfiniteList({
       fetchItems: mockFetchItems,
-      totalItems: mockTotalItems,
       itemsPerPage: 10,
       maxPagesToCache: 3
     })

@@ -46,11 +46,11 @@
           </div>
         </template>
       </template>
-      <template v-if="tryNextPage">
+      <!-- <template v-if="tryNextPage">
         <div class="carousel-item not-loaded" :ref="notLoadedPages.set" :data-page-index="nextPageToTry" :key="`${nextPageToTry}-0`">
           <div class="loading-overlay">Page not loaded</div>
         </div>
-      </template>
+      </template> -->
     </div>
 
     <div v-if="loading" class="loading-indicator">Loading more images...</div>
@@ -68,7 +68,6 @@ import { useAutoObserver, type AutoObserver } from './useAutoObserver'
 const props = withDefaults(
   defineProps<{
     infiniteList: InfiniteList<any>
-    startIndex?: number
     height: string
     width: string
     numColsToShow?: number
@@ -79,7 +78,6 @@ const props = withDefaults(
   }>(),
   {
     gap: '1rem',
-    startIndex: 0,
     numColsToShow: 1,
     numRowsToShow: 1,
     itemsPerPage: 20,
@@ -135,7 +133,7 @@ const fetchPage = async (pageNumber: number) => {
           previousPageToTry.value = pageNumber - 1
         }
       } else {
-        // If the page is not resolved and the page number is === to nextPageToTry, set tryNextPage to false. Or if the page number is === to previousPageToTry, set tryPreviousPage to false
+        // If the page is not resolved and the page number is === nextPageToTry, set tryNextPage to false. Or if the page number is === to previousPageToTry, set tryPreviousPage to false
         if (pageNumber === nextPageToTry.value) {
           tryNextPage.value = false
         } else if (pageNumber === previousPageToTry.value) {
@@ -157,7 +155,7 @@ const getPageItems = (index: number) => {
   return pages[index].items
 }
 
-const gapInPixels = ref(0) // 1rem in pixels
+const gapInPixels = ref(0)
 
 const totalGapHeight = computed(() => {
   if(!props.verticalScroll) {
@@ -181,7 +179,6 @@ const itemHeight = computed(() => {
 })
 
 const notLoadedColSpan = computed(() => {
-  // return props.numColsToShow * itemWidth.value + (props.numColsToShow - 1) * gapInPixels.value
   if (!props.verticalScroll) {
     return Math.floor(props.itemsPerPage / props.numColsToShow)
   }
@@ -198,12 +195,6 @@ const notLoadedRowSpan = computed(() => {
 const numPages = ref(0)
 
 const onResizeObserver = (entries: any) => {
-  // const [entry] = entries
-  // const { width, height } = entry.contentRect
-  // container_size.value = { width, height }
-  // if (carousel.value) {
-  //   gapInPixels.value = parseFloat(getComputedStyle(carousel.value).gap) // 1rem in pixels
-  // }
   nextTick(() => {
     updateDimensions()
   })
@@ -213,7 +204,7 @@ const updateDimensions = () => {
   if (carousel.value) {
     const { width, height } = carousel.value.getBoundingClientRect()
     container_size.value = { width, height }
-    gapInPixels.value = parseFloat(getComputedStyle(carousel.value).gap) // 1rem in pixels
+    gapInPixels.value = parseFloat(getComputedStyle(carousel.value).gap)
     // console.log('Updated dimensions:', container_size.value)
     // console.log('Updated gap in pixels:', gapInPixels.value, carousel.value, 'gap:', getComputedStyle(carousel.value).gap)
   }
@@ -253,7 +244,7 @@ const setupObserver = () => {
   }, {
     root: carousel.value,
     filter: el => carouselItems.value.includes(el),
-    rootMargin: "200%" //`${container_size.value.width * 3}px`,
+    rootMargin: "200%"
   }) 
 }
 
@@ -263,24 +254,16 @@ onMounted(() => {
     console.log('Carousel element:', carousel.value)
     gapInPixels.value = parseFloat(getComputedStyle(carousel.value).gap) // 1rem in pixels
   }
-  // console.log('Number of pages:', numPages.value)
-  // console.log('notLoadedPages:', notLoadedPages.value)
   setupObserver()
   nextTick(() => {
     scrollToItem(0)
   })
-  // updateObservedPages(notLoadedPages.value, [])
 })
 
 watch(
   [() => props.numColsToShow, () => props.numRowsToShow, () => props.gap, () => props.verticalScroll],
   () => {
     if (carousel.value) {
-      // console.log('Updating carousel dimensions')
-      // gapInPixels.value = parseFloat(getComputedStyle(carousel.value).gap)
-      // // Force recalculate container dimensions
-      // // const { width, height } = carousel.value.getBoundingClientRect()
-      // // container_size.value = { width, height }
       nextTick(() => {
         updateDimensions()
       })
