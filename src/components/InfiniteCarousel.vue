@@ -62,8 +62,8 @@
 import { ref, computed, onMounted, onUnmounted, watch, useTemplateRef, nextTick } from 'vue'
 import { useTemplateRefsList } from '@vueuse/core'
 import { vResizeObserver } from '@vueuse/components'
-import { InfiniteList } from './useInfiniteList'
-import { useAutoObserver, type AutoObserver } from './useAutoObserver'
+import { InfiniteList } from '../composables/useInfiniteList'
+import { useAutoObserver, type AutoObserver } from '../composables/useAutoObserver'
 
 const props = withDefaults(
   defineProps<{

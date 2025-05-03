@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { useInfiniteList } from '../src/useInfiniteList'
+import { useInfiniteList } from '../src/composables/useInfiniteList'
 
 describe('useInfiniteList', () => {
   const mockFetchItems = vi.fn()

@@ -1,11 +1,24 @@
 {
   "name": "vue-infinity",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "dist/vue-infinity.cjs",
+  "module": "dist/vue-infinity.esm.js",
+  "type": "module",
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/vue-infinity.es.js",
+      "require": "./dist/vue-infinity.umd.js"
+    }
+  },
+  "types": "dist/types/index.d.ts",
   "scripts": {
     "dev": "vitest --ui",
     "test": "vitest run",
-    "build": "tsup",
+    "build": "vite build",
     "playground": "cd playground && vite dev"
   },
   "keywords": [],
@@ -13,8 +26,7 @@
   "license": "MIT",
   "description": "A collection of composables and components for Vue 3 to improve app performance and memory usage.",
   "dependencies": {
-    "@vueuse/components": "^13.1.0",
-    "vue": "^3.5.13"
+    "@vueuse/components": "^13.1.0"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",
@@ -23,7 +35,9 @@
     "happy-dom": "^17.4.4",
     "tsup": "^8.4.0",
     "typescript": "^5.8.3",
-    "vite": "^6.2.5",
-    "vitest": "^3.1.1"
+    "vite": "^6.3.4",
+    "vite-plugin-dts": "^4.5.3",
+    "vitest": "^3.1.1",
+    "vue": "^3.5.13"
   }
 }
