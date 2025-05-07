@@ -15,10 +15,12 @@
     }"
   >
     <div class="carousel"
+          v-if="isClient"
           ref="carousel" 
           :style="{ gap: props.gap }" 
           :class="{ vertical: props.verticalScroll }"
-          v-resize-observer="onResizeObserver">
+          v-resize-observer="onResizeObserver"
+          >
       <!-- <template v-if="tryPreviousPage">
         <div class="carousel-item not-loaded" :ref="notLoadedPages.set" :data-page-index="nextPageToTry">
           <div class="loading-overlay">Page not loaded</div>
@@ -51,10 +53,11 @@
           <div class="loading-overlay">Page not loaded</div>
         </div>
       </template> -->
+      <div v-if="loading" class="loading-indicator">Loading more images...</div>
+      <div v-if="error" class="error-message">Error loading images</div>
     </div>
 
-    <div v-if="loading" class="loading-indicator">Loading more images...</div>
-    <div v-if="error" class="error-message">Error loading images</div>
+    
   </div>
 </template>
 
@@ -86,6 +89,7 @@ const props = withDefaults(
   }
 )
 
+const isClient = typeof window !== 'undefined'
 const carousel = useTemplateRef('carousel')
 const container_size = ref({ width: 0, height: 0 })
 const loading = ref(false)
@@ -248,17 +252,19 @@ const setupObserver = () => {
   }) 
 }
 
-onMounted(() => {
-  numPages.value = Object.keys(pages).length
-  if (carousel.value) {
-    console.log('Carousel element:', carousel.value)
-    gapInPixels.value = parseFloat(getComputedStyle(carousel.value).gap) // 1rem in pixels
-  }
-  setupObserver()
-  nextTick(() => {
-    scrollToItem(0)
+if (isClient){
+  onMounted(() => {
+    numPages.value = Object.keys(pages).length
+    if (carousel.value) {
+      // console.log('Carousel element:', carousel.value)
+      gapInPixels.value = parseFloat(getComputedStyle(carousel.value).gap)
+    }
+    setupObserver()
+    nextTick(() => {
+      scrollToItem(0)
+    })
   })
-})
+}
 
 watch(
   [() => props.numColsToShow, () => props.numRowsToShow, () => props.gap, () => props.verticalScroll],

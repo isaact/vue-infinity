@@ -1,9 +1,10 @@
 {
   "name": "vue-infinity",
   "version": "1.0.0",
-  "main": "dist/vue-infinity.cjs",
-  "module": "dist/vue-infinity.esm.js",
+  "main": "dist/vue-infinity.umd.js",
+  "module": "dist/vue-infinity.es.js",
   "type": "module",
+  "style": "dist/vue-infinity.css",
   "files": [
     "dist"
   ],
@@ -12,9 +13,10 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/vue-infinity.es.js",
       "require": "./dist/vue-infinity.umd.js"
-    }
+    },
+    "./style.css": "./dist/vue-infinity.css"
   },
-  "types": "dist/types/index.d.ts",
+  "types": "dist/index.d.ts",
   "scripts": {
     "dev": "vitest --ui",
     "test": "vitest run",

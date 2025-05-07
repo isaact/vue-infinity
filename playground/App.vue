@@ -54,7 +54,6 @@
 
 <script setup lang="ts">
 import { computed, watch, ref } from 'vue'
-import type { InfiniteList } from '../src/composables/useInfiniteList'
 import { useInfiniteList } from '../src/composables/useInfiniteList'
 import InfiniteCarousel from '../src/components/InfiniteCarousel.vue'
 import { fetchMockImages } from './mockApi'
