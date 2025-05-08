@@ -13,50 +13,27 @@
       '--container-height': props.height,
       '--container-width': props.width
     }"
+    v-resize-observer="updateDimensions"
   >
     <div class="carousel"
-          ref="carousel" 
-          :style="{ gap: props.gap }" 
-          :class="{ vertical: props.verticalScroll }"
-          >
-            <div
-              v-for="item in pageItems" :key="`page-${item.page}`" :id="`${item.page}-${item.index}`"
-              class="carousel-item"
-              :class="{ 'not-loaded': item.status === 'not-loaded', 'loaded': item.status === 'resolved' }"
-              :style="{ gridRow: `span ${item.rowSpan}`, gridColumn: `span ${item.colSpan}` }"
-              :data-page-index="item.page">
-              <div>
-                <slot name="item" v-if="visibleImages.has(`${item.page}-${item.index}`) && item.status === 'resolved'" :item="item" :index="`${item.page}-${item.index}`" >
-                  Item {{ item.index }}
-                </slot>
-                <slot name="loading" v-else :index="`${item.page}-${item.index}`">
-                  <div class="loading-overlay">Loading...</div>
-                </slot>
-              </div>
-            </div>
-      <!-- <div v-for="index in pagesToTry" :key="`page-status-${index}`">
-          <div
-            v-if="pages[index] && (pages[index].status === 'resolved' || pages[index].status === 'pending')"
-            v-for="(item, itemIndex) in getPageItems(index)"
-            :key="`${index}-${itemIndex}`"
-            :id="`${index}-${itemIndex}`"
-            :data-img-index="`${index}-${itemIndex}`"
-            :data-page-index="index"
-            class="carousel-item loaded"
-          >
-            <div>
-            <slot name="item" v-if="visibleImages.has(`${index}-${itemIndex}`) && pages[index].status === 'resolved'" :item="item" :index="`${index}-${itemIndex}`" />
-            <slot name="loading" v-else :index="`${index}-${itemIndex}`">
-              <div class="loading-overlay">Loading...</div>
-            </slot>
-          </div>
-          </div>
-          <div v-if="!pages[index] || pages[index].status === 'not-loaded'" class="carousel-item not-loaded" :data-page-index="index" :key="`${index}-0`">
-            <div class="loading-overlay">Page not loaded</div>
-          </div>
-      </div> -->
-      <!-- <div v-if="loading" class="loading-indicator">Loading more images...</div>
-      <div v-if="error" class="error-message">Error loading images</div> -->
+        ref="carousel" 
+        :style="{ gap: props.gap }" 
+        :class="{ vertical: props.verticalScroll }">
+      <div
+        v-for="item in pageItems" :key="`item-${item.page}-${item.index}`" :id="`${item.page}-${item.index}`"
+        class="carousel-item"
+        :class="{ 'not-loaded': item.status === 'not-loaded', 'loaded': item.status === 'resolved' }"
+        :style="{ gridRow: `span ${item.rowSpan}`, gridColumn: `span ${item.colSpan}` }"
+        :data-page-index="item.page">
+        <div>
+          <slot name="item" v-if="visibleImages.has(`${item.page}-${item.index}`) && item.status === 'resolved'" :item="item" :index="`${item.page}-${item.index}`" >
+            Item {{ item.index }}
+          </slot>
+          <slot name="loading" v-else :index="`${item.page}-${item.index}`">
+            <div class="loading-overlay">Loading...</div>
+          </slot>
+        </div>
+      </div>
     </div>
 
     
@@ -102,8 +79,11 @@ let pageObserver: AutoObserver | null = null
 let carouselItemObserver: AutoObserver | null = null
 
 const { pages, getItem, fetchPage: realfetchPage } = props.infiniteList
-const nextPageToTry = ref(0)
-const previousPageToTry = ref(0)
+const serverLoadedPages = ref(null)
+// Initialize based on server-prefetched state if available
+const initialNextPage = (pages[0] && pages[0].status === 'resolved') ? 1 : 0;
+const nextPageToTry = ref(initialNextPage);
+const previousPageToTry = ref(0);
 const tryNextPage = ref(true)
 const tryPreviousPage = ref(false)
 
@@ -125,6 +105,7 @@ const pageItems = computed(() => {
         item.page = i
         item.rowSpan = 1
         item.colSpan = 1
+        item.status = 'resolved'
         items.push(item)
       }
     }else if (pages[i] && pages[i].status === 'pending') {
@@ -284,23 +265,7 @@ const setupObserver = () => {
   }) 
 }
 
-
-onMounted(() => {
-  numPages.value = Object.keys(pages).length
-  if (carousel.value) {
-    // console.log('Carousel element:', carousel.value)
-    gapInPixels.value = parseFloat(getComputedStyle(carousel.value).gap)
-  }
-  if (isClient){
-    nextTick(() => {
-      setupObserver()
-      scrollToItem(0)
-    })
-  }
-})
-
-// On server, prefetch the first page
-onServerPrefetch(async () => {
+const initFirstPage = async () => {
   await fetchPage(0)
   numPages.value = Object.keys(pages).length
   // Seed visibleImages for SSR
@@ -308,8 +273,25 @@ onServerPrefetch(async () => {
   for (let i = 0; i < numVisible; i++) {
     visibleImages.value.add(`0-${i}`);
   }
-  console.log('Server prefetch done:', pageItems.value)
+}
+
+onMounted(async () => {
+  await initFirstPage()
+  if (carousel.value) {
+    // console.log('Carousel element:', carousel.value)
+    gapInPixels.value = parseFloat(getComputedStyle(carousel.value).gap)
+  }
+  nextTick(() => {
+    setupObserver()
+    scrollToItem(0)
+  })
 })
+
+// On server, prefetch the first page
+onServerPrefetch(async () => {
+  await initFirstPage()
+})
+
 
 // watch(
 //   [() => props.numColsToShow, () => props.numRowsToShow, () => props.gap, () => props.verticalScroll],

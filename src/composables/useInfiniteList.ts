@@ -7,6 +7,7 @@ export interface InfiniteList<T> {
   fetchPage: (pageNum: number, abortEarlierFetch?: boolean) => Promise<InfiniteListPage<T> | undefined>
   clearPage: (pageNum: number) => void
   clearPages: () => void
+  updatePages: (preloadedPages: Record<number, InfiniteListPage<T>>) => void
 }
 
 export interface InfiniteListOptions<T> {
@@ -15,6 +16,7 @@ export interface InfiniteListOptions<T> {
   itemsPerPage: number
   maxPagesToCache: number
   onPageUnloaded?: (pageNum: number) => void
+  preloadedPages?: Record<number, InfiniteListPage<T>>
 }
 
 export interface InfiniteListPage<T> {
@@ -27,9 +29,18 @@ export interface InfiniteListPage<T> {
 export function useInfiniteList<T>(options: InfiniteListOptions<T>): InfiniteList<T> {
   const { fetchItems, itemsPerPage, maxPagesToCache } = options
 
-  const pages = reactive<Record<number, InfiniteListPage<T>>>({})
+  const pages = reactive<Record<number, InfiniteListPage<T>>>(options.preloadedPages || {})
   // const notLoadedPages = reactive<Set<number>>(new Set())
   const usageOrder: number[] = []
+
+  // If preloaded pages are provided, mark them as resolved and add to usageOrder
+  if (options.preloadedPages) {
+    for (const pageNumStr in options.preloadedPages) {
+      const pageNum = Number(pageNumStr)
+      pages[pageNum].status = 'resolved'
+      usageOrder.push(pageNum)
+    }
+  }
 
   // const totalPages = Math.ceil(totalItems / itemsPerPage)
 
@@ -146,12 +157,34 @@ export function useInfiniteList<T>(options: InfiniteListOptions<T>): InfiniteLis
     }
   }
 
+  function updatePages(preloadedPages: Record<number, InfiniteListPage<T>>) {
+    for (const pageNumStr in preloadedPages) {
+      const pageNum = Number(pageNumStr)
+      const preloadedPage = preloadedPages[pageNum]
+      if (preloadedPage) {
+        if (!pages[pageNum]) {
+          pages[pageNum] = reactive({
+            pageNum: preloadedPage.pageNum,
+            items: [], // Initialize with empty array
+            status: 'not-loaded' // Initial status
+          })
+        }
+        // Update properties individually to maintain reactivity and type
+        pages[pageNum].items = preloadedPage.items
+        pages[pageNum].status = 'resolved'
+        pages[pageNum].abortController = preloadedPage.abortController
+        markPageUsed(pageNum) // Add to usage order
+      }
+    }
+  }
+
   return {
     pages,
     // notLoadedPages,
     getItem,
     fetchPage: fetchAndCachePage,
     clearPage,
-    clearPages
+    clearPages,
+    updatePages
   }
 }
