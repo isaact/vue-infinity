@@ -19,9 +19,24 @@
           :style="{ gap: props.gap }" 
           :class="{ vertical: props.verticalScroll }"
           >
-      <template v-for="index in pagesToTry" :key="`page-status-${index}`">
-        <template v-if="pages[index] && (pages[index].status === 'resolved' || pages[index].status === 'pending')">
+            <div
+              v-for="item in pageItems" :key="`page-${item.page}`" :id="`${item.page}-${item.index}`"
+              class="carousel-item"
+              :class="{ 'not-loaded': item.status === 'not-loaded', 'loaded': item.status === 'resolved' }"
+              :style="{ gridRow: `span ${item.rowSpan}`, gridColumn: `span ${item.colSpan}` }"
+              :data-page-index="item.page">
+              <div>
+                <slot name="item" v-if="visibleImages.has(`${item.page}-${item.index}`) && item.status === 'resolved'" :item="item" :index="`${item.page}-${item.index}`" >
+                  Item {{ item.index }}
+                </slot>
+                <slot name="loading" v-else :index="`${item.page}-${item.index}`">
+                  <div class="loading-overlay">Loading...</div>
+                </slot>
+              </div>
+            </div>
+      <!-- <div v-for="index in pagesToTry" :key="`page-status-${index}`">
           <div
+            v-if="pages[index] && (pages[index].status === 'resolved' || pages[index].status === 'pending')"
             v-for="(item, itemIndex) in getPageItems(index)"
             :key="`${index}-${itemIndex}`"
             :id="`${index}-${itemIndex}`"
@@ -29,20 +44,19 @@
             :data-page-index="index"
             class="carousel-item loaded"
           >
+            <div>
             <slot name="item" v-if="visibleImages.has(`${index}-${itemIndex}`) && pages[index].status === 'resolved'" :item="item" :index="`${index}-${itemIndex}`" />
             <slot name="loading" v-else :index="`${index}-${itemIndex}`">
               <div class="loading-overlay">Loading...</div>
             </slot>
           </div>
-        </template>
-        <template v-if="!pages[index] || pages[index].status === 'not-loaded'">
-          <div class="carousel-item not-loaded" :data-page-index="index" :key="`${index}-0`">
+          </div>
+          <div v-if="!pages[index] || pages[index].status === 'not-loaded'" class="carousel-item not-loaded" :data-page-index="index" :key="`${index}-0`">
             <div class="loading-overlay">Page not loaded</div>
           </div>
-        </template>
-      </template>
-      <div v-if="loading" class="loading-indicator">Loading more images...</div>
-      <div v-if="error" class="error-message">Error loading images</div>
+      </div> -->
+      <!-- <div v-if="loading" class="loading-indicator">Loading more images...</div>
+      <div v-if="error" class="error-message">Error loading images</div> -->
     </div>
 
     
@@ -99,6 +113,30 @@ const pagesToTry = computed(() => {
     pages.push(i)
   }
   return pages
+})
+
+const pageItems = computed(() => {
+  const items = []
+  for (let i = previousPageToTry.value; i <= nextPageToTry.value; i++) {
+    if (pages[i] && pages[i].status === 'resolved') {
+      // items.push(...pages[i].items)
+      for (let [itemIndex, item] of pages[i].items.entries()) {
+        item.index = i * props.itemsPerPage + itemIndex
+        item.page = i
+        item.rowSpan = 1
+        item.colSpan = 1
+        items.push(item)
+      }
+    }else if (pages[i] && pages[i].status === 'pending') {
+      // items.push(...Array(props.itemsPerPage).fill({rowSpan: 1, colSpan: 1, index:}))
+      for (let itemIndex = 0; itemIndex < props.itemsPerPage; itemIndex++) {
+        items.push({status: 'pending', rowSpan: 1, colSpan: 1, index: i * props.itemsPerPage + itemIndex})
+      }
+    } else {
+      items.push({status: 'not-loaded', rowSpan: notLoadedRowSpan, colSpan: notLoadedColSpan, })
+    }
+  }
+  return items
 })
 
 // Fetch the page, if it is not undefined and the pageNumber is > than nextPageToTry to set nextPageToTry to that page + 1. If the page is <= previousPageToTry, set previousPageToTry to that page - 1 unless it is 0
@@ -270,7 +308,7 @@ onServerPrefetch(async () => {
   for (let i = 0; i < numVisible; i++) {
     visibleImages.value.add(`0-${i}`);
   }
-  console.log('Server prefetch done:', pages[0].status, pagesToTry.value)
+  console.log('Server prefetch done:', pageItems.value)
 })
 
 // watch(
