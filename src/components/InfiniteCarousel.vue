@@ -41,10 +41,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch, useTemplateRef, nextTick, onServerPrefetch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch, useTemplateRef, nextTick, onServerPrefetch, onBeforeMount, useSSRContext } from 'vue'
 // import { useTemplateRefsList } from '@vueuse/core'
 import { vResizeObserver } from '@vueuse/components'
-import { InfiniteList } from '../composables/useInfiniteList'
+import { InfiniteList, type InfiniteListPage } from '../composables/useInfiniteList'
 import { useAutoObserver, type AutoObserver } from '../composables/useAutoObserver'
 
 const props = withDefaults(
@@ -79,8 +79,6 @@ let pageObserver: AutoObserver | null = null
 let carouselItemObserver: AutoObserver | null = null
 
 const { pages, getItem, fetchPage: realfetchPage } = props.infiniteList
-const serverLoadedPages = ref(null)
-// Initialize based on server-prefetched state if available
 const initialNextPage = (pages[0] && pages[0].status === 'resolved') ? 1 : 0;
 const nextPageToTry = ref(initialNextPage);
 const previousPageToTry = ref(0);
@@ -111,10 +109,10 @@ const pageItems = computed(() => {
     }else if (pages[i] && pages[i].status === 'pending') {
       // items.push(...Array(props.itemsPerPage).fill({rowSpan: 1, colSpan: 1, index:}))
       for (let itemIndex = 0; itemIndex < props.itemsPerPage; itemIndex++) {
-        items.push({status: 'pending', rowSpan: 1, colSpan: 1, index: i * props.itemsPerPage + itemIndex})
+        items.push({status: 'pending', rowSpan: 1, colSpan: 1, index: i * props.itemsPerPage + itemIndex, page: i})
       }
     } else {
-      items.push({status: 'not-loaded', rowSpan: notLoadedRowSpan, colSpan: notLoadedColSpan, })
+      items.push({status: 'not-loaded', rowSpan: notLoadedRowSpan, colSpan: notLoadedColSpan, page: i})
     }
   }
   return items
@@ -266,7 +264,10 @@ const setupObserver = () => {
 }
 
 const initFirstPage = async () => {
-  await fetchPage(0)
+  if (!pages[0] || (pages[0].status !== 'resolved' && pages[0].status !== 'pending')) {
+    console.log('Fetching first page')
+    await fetchPage(0)
+  }
   numPages.value = Object.keys(pages).length
   // Seed visibleImages for SSR
   const numVisible = props.numColsToShow * props.numRowsToShow;
@@ -288,22 +289,23 @@ onMounted(async () => {
 })
 
 // On server, prefetch the first page
-onServerPrefetch(async () => {
-  await initFirstPage()
-})
+// onServerPrefetch(async () => {
+//   await initFirstPage()
+//   // serverLoadedPages.value = pages
+// })
 
 
-// watch(
-//   [() => props.numColsToShow, () => props.numRowsToShow, () => props.gap, () => props.verticalScroll],
-//   () => {
-//     if (carousel.value) {
-//       nextTick(() => {
-//         updateDimensions()
-//       })
-//     }
-//   },
-//   { immediate: true }
-// )
+watch(
+  [() => props.numColsToShow, () => props.numRowsToShow, () => props.gap, () => props.verticalScroll],
+  () => {
+    if (carousel.value) {
+      nextTick(() => {
+        updateDimensions()
+      })
+    }
+  },
+  { immediate: true }
+)
 
 onUnmounted(() => {
   pageObserver?.disconnect()

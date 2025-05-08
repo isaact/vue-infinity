@@ -81,7 +81,7 @@ export function useAutoObserver(
     }
   }, { immediate: true })
 
-  onBeforeUnmount(cleanup)
+  // onBeforeUnmount(cleanup)
 
   return {
     observedElements,

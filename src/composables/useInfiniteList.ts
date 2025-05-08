@@ -158,6 +158,7 @@ export function useInfiniteList<T>(options: InfiniteListOptions<T>): InfiniteLis
   }
 
   function updatePages(preloadedPages: Record<number, InfiniteListPage<T>>) {
+    console.log('Updating pages with preloaded data:', preloadedPages)
     for (const pageNumStr in preloadedPages) {
       const pageNum = Number(pageNumStr)
       const preloadedPage = preloadedPages[pageNum]
