@@ -78,13 +78,13 @@ export function useInfiniteList<T>(options: InfiniteListOptions<T>): InfiniteLis
 
     page.status = 'pending'
     page.abortController = new AbortController()
-    console.log(`Fetching page ${pageNum}...`)
+    // console.log(`Fetching page ${pageNum}...`)
 
     // notLoadedPages.delete(pageNum)
 
     try {
       const items = await fetchItems(pageNum, page.abortController.signal)
-      console.log(`Fetched page ${pageNum}:`, items.length)
+      // console.log(`Fetched page ${pageNum}:`, items.length)
       if(items.length === 0) {
         page.status = 'error'
         return page

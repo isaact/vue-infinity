@@ -10,6 +10,8 @@
       '--gap-in-px': `${gapInPixels}px`,
       '--not-loaded-col-span': notLoadedColSpan,
       '--not-loaded-row-span': notLoadedRowSpan,
+      '--not-loaded-width': `${notLoadedWidth}px`,
+      '--not-loaded-height': `${notLoadedHeight}px`,
       '--container-height': props.height,
       '--container-width': props.width
     }"
@@ -20,19 +22,17 @@
         :style="{ gap: props.gap }" 
         :class="{ vertical: props.verticalScroll }">
       <div
-        v-for="item in pageItems" :key="`item-${item.page}-${item.index}`" :id="`${item.page}-${item.index}`"
+        v-for="item in pageItems" :key="`item-${item.id}`" :id="`${item.id}`"
         class="carousel-item"
         :class="{ 'not-loaded': item.status === 'not-loaded', 'loaded': item.status === 'resolved' }"
-        :style="{ gridRow: `span ${item.rowSpan}`, gridColumn: `span ${item.colSpan}` }"
-        :data-page-index="item.page">
-        <div>
-          <slot name="item" v-if="visibleImages.has(`${item.page}-${item.index}`) && item.status === 'resolved'" :item="item" :index="`${item.page}-${item.index}`" >
-            Item {{ item.index }}
-          </slot>
-          <slot name="loading" v-else :index="`${item.page}-${item.index}`">
-            <div class="loading-overlay">Loading...</div>
-          </slot>
-        </div>
+        :data-page-index="item.page"
+        :data-img-index="item.status === 'resolved' ? item.id : ''">
+        <slot name="item" v-if="visibleImages.has(`${item.id}`) && item.status === 'resolved'" :item="item" :index="item.index" :page="item.page">
+          Item {{ item.index }}
+        </slot>
+        <slot name="loading" v-else :index="`${item.index}`" :page="item.page">
+          <div class="loading-overlay">Loading...</div>
+        </slot>
       </div>
     </div>
 
@@ -52,9 +52,9 @@ const props = withDefaults(
     infiniteList: InfiniteList<any>
     height: string
     width: string
+    itemsPerPage: number
     numColsToShow?: number
     numRowsToShow?: number
-    itemsPerPage?: number
     gap?: string
     verticalScroll?: boolean
   }>(),
@@ -62,14 +62,13 @@ const props = withDefaults(
     gap: '1rem',
     numColsToShow: 1,
     numRowsToShow: 1,
-    itemsPerPage: 20,
     maxPagesToCache: 5,
     verticalScroll: false
   }
 )
 
 const isClient = typeof window !== 'undefined'
-const carousel = useTemplateRef('carousel')
+const carouselContainer = useTemplateRef('carousel')
 const container_size = ref({ width: 0, height: 0 })
 const loading = ref(false)
 const error = ref(false)
@@ -79,7 +78,7 @@ let pageObserver: AutoObserver | null = null
 let carouselItemObserver: AutoObserver | null = null
 
 const { pages, getItem, fetchPage: realfetchPage } = props.infiniteList
-const initialNextPage = (pages[0] && pages[0].status === 'resolved') ? 1 : 0;
+const initialNextPage = (pages[0] && (pages[0].status === 'resolved' || pages[0].status === 'pending')) ? 1 : 0;
 const nextPageToTry = ref(initialNextPage);
 const previousPageToTry = ref(0);
 const tryNextPage = ref(true)
@@ -95,12 +94,17 @@ const pagesToTry = computed(() => {
 
 const pageItems = computed(() => {
   const items = []
-  for (let i = previousPageToTry.value; i <= nextPageToTry.value; i++) {
+  for (let i = 0; i <= nextPageToTry.value; i++) {
+    // console.log('Page items:', i, nextPageToTry.value, previousPageToTry.value)
     if (pages[i] && pages[i].status === 'resolved') {
       // items.push(...pages[i].items)
+      
       for (let [itemIndex, item] of pages[i].items.entries()) {
+        const itemId = `${i}-${itemIndex}`
+        const pageIndex = (itemIndex === 0 || itemIndex === props.itemsPerPage - 1) ? i : ''
         item.index = i * props.itemsPerPage + itemIndex
-        item.page = i
+        item.id = itemId
+        item.page = pageIndex
         item.rowSpan = 1
         item.colSpan = 1
         item.status = 'resolved'
@@ -109,10 +113,12 @@ const pageItems = computed(() => {
     }else if (pages[i] && pages[i].status === 'pending') {
       // items.push(...Array(props.itemsPerPage).fill({rowSpan: 1, colSpan: 1, index:}))
       for (let itemIndex = 0; itemIndex < props.itemsPerPage; itemIndex++) {
-        items.push({status: 'pending', rowSpan: 1, colSpan: 1, index: i * props.itemsPerPage + itemIndex, page: i})
+        const itemId = `${i}-${itemIndex}`
+        items.push({status: 'pending', rowSpan: 1, colSpan: 1, index: i * props.itemsPerPage + itemIndex, page: i, id: itemId})
       }
-    } else {
-      items.push({status: 'not-loaded', rowSpan: notLoadedRowSpan, colSpan: notLoadedColSpan, page: i})
+    } else if(!pages[i] || pages[i].status === 'not-loaded') {
+      const itemId = `${i}-0`
+      items.push({status: 'not-loaded', rowSpan: notLoadedRowSpan, colSpan: notLoadedColSpan, page: i, id: itemId})
     }
   }
   return items
@@ -120,15 +126,15 @@ const pageItems = computed(() => {
 
 // Fetch the page, if it is not undefined and the pageNumber is > than nextPageToTry to set nextPageToTry to that page + 1. If the page is <= previousPageToTry, set previousPageToTry to that page - 1 unless it is 0
 const fetchPage = async (pageNumber: number) => {
-  console.log('Fetching page1:', pageNumber)
+  // console.log('Fetching page1:', pageNumber)
   if (pages[pageNumber] && pages[pageNumber].status === 'pending') {
-    console.log('Page is already loading:', pageNumber)
+    // console.log('Page is already loading:', pageNumber)
     return
   }
   loading.value = true
   error.value = false
   try {
-    console.log('Fetching page2:', pageNumber)
+    // console.log('Fetching page2:', pageNumber)
     await realfetchPage(pageNumber).then(() => {
       if (pages[pageNumber]?.status === 'resolved') {
         if (pageNumber >= nextPageToTry.value) {
@@ -157,12 +163,12 @@ const fetchPage = async (pageNumber: number) => {
   }
 }
 
-const getPageItems = (index: number) => {
-  if (pages[index].status === 'pending') {
-    return Array(props.itemsPerPage).fill(null)
-  }
-  return pages[index].items
-}
+// const getPageItems = (index: number) => {
+//   if (pages[index].status === 'pending') {
+//     return Array(props.itemsPerPage).fill(null)
+//   }
+//   return pages[index].items
+// }
 
 const gapInPixels = ref(0)
 
@@ -201,6 +207,14 @@ const notLoadedRowSpan = computed(() => {
   return Math.floor(props.itemsPerPage / props.numRowsToShow)
 })
 
+const notLoadedWidth = computed(() => {
+  return itemWidth.value * notLoadedColSpan.value
+})
+
+const notLoadedHeight = computed(() => {
+  return itemHeight.value * notLoadedRowSpan.value
+})
+
 const numPages = ref(0)
 
 // const onResizeObserver = (entries: any) => {
@@ -210,19 +224,19 @@ const numPages = ref(0)
 // }
 
 const updateDimensions = () => {
-  if (carousel.value) {
-    const { width, height } = carousel.value.getBoundingClientRect()
+  if (carouselContainer.value) {
+    const { width, height } = carouselContainer.value.getBoundingClientRect()
     container_size.value = { width, height }
-    gapInPixels.value = parseFloat(getComputedStyle(carousel.value).gap)
+    gapInPixels.value = parseFloat(getComputedStyle(carouselContainer.value).gap)
     // console.log('Updated dimensions:', container_size.value)
     // console.log('Updated gap in pixels:', gapInPixels.value, carousel.value, 'gap:', getComputedStyle(carousel.value).gap)
   }
 }
 
 const setupObserver = () => {
-  if (!carousel.value) return
+  if (!carouselContainer.value) return
   // console.log('Setting up observer for container:', carousel.value)
-  pageObserver =  useAutoObserver(carousel, (entries) => {
+  pageObserver =  useAutoObserver(carouselContainer, (entries) => {
     entries.forEach(entry => {
       if (entry.isIntersecting) {
         const pageIndex = entry.target.getAttribute('data-page-index')
@@ -238,11 +252,11 @@ const setupObserver = () => {
       return el.classList.contains('carousel-item') && el.classList.contains('not-loaded')
     },
     // filter: el => notLoadedPages.value.includes(el),
-    root: carousel.value,
+    root: carouselContainer.value,
     rootMargin: '300%'
   })
 
-  carouselItemObserver = useAutoObserver(carousel, (entries) => {
+  carouselItemObserver = useAutoObserver(carouselContainer, (entries) => {
     entries.forEach(entry => {
       if (entry.isIntersecting) {
         // console.log('Image is in view:', entry)
@@ -255,7 +269,7 @@ const setupObserver = () => {
       }
     })
   }, {
-    root: carousel.value,
+    root: carouselContainer.value,
     filter: el => {
       return el.classList.contains('carousel-item') && el.classList.contains('loaded')
     },
@@ -265,22 +279,23 @@ const setupObserver = () => {
 
 const initFirstPage = async () => {
   if (!pages[0] || (pages[0].status !== 'resolved' && pages[0].status !== 'pending')) {
-    console.log('Fetching first page')
+    // console.log('Fetching first page')
     await fetchPage(0)
   }
   numPages.value = Object.keys(pages).length
   // Seed visibleImages for SSR
-  const numVisible = props.numColsToShow * props.numRowsToShow;
+  const numVisible = props.numColsToShow * props.numRowsToShow * 2;
   for (let i = 0; i < numVisible; i++) {
-    visibleImages.value.add(`0-${i}`);
+    const item = pageItems.value[i]
+    visibleImages.value.add(item.id);
   }
 }
 
 onMounted(async () => {
   await initFirstPage()
-  if (carousel.value) {
+  if (carouselContainer.value) {
     // console.log('Carousel element:', carousel.value)
-    gapInPixels.value = parseFloat(getComputedStyle(carousel.value).gap)
+    gapInPixels.value = parseFloat(getComputedStyle(carouselContainer.value).gap)
   }
   nextTick(() => {
     setupObserver()
@@ -298,7 +313,7 @@ onMounted(async () => {
 watch(
   [() => props.numColsToShow, () => props.numRowsToShow, () => props.gap, () => props.verticalScroll],
   () => {
-    if (carousel.value) {
+    if (carouselContainer.value) {
       nextTick(() => {
         updateDimensions()
       })
@@ -313,7 +328,7 @@ onUnmounted(() => {
 })
 
 const scrollToItem = async (itemIndex: number) => {
-  if (!carousel.value) return
+  if (!carouselContainer.value) return
   
   const pageIndex = Math.floor(itemIndex / props.itemsPerPage)
   const itemInPage = itemIndex % props.itemsPerPage
@@ -351,7 +366,7 @@ defineExpose({
 })
 </script>
 
-<style>
+<style scoped>
 .infinite-carousel {
   overflow: hidden;
 }
@@ -369,14 +384,6 @@ defineExpose({
   width: var(--container-width);
 }
 
-.carousel-item {
-  scroll-snap-align: start;
-
-  /* Make sure it fills the available grid cell */
-  /* width: 100%;
-  height: 100%; */
-}
-
 .carousel.vertical {
   grid-template-columns: repeat(var(--num-cols-to-show), 1fr);
   grid-auto-flow: row;
@@ -388,20 +395,28 @@ defineExpose({
   scroll-snap-type: y mandatory;
 }
 
-.carousel-item.currentSlide {
-  transform: scale(1.03);
+.carousel-item {
+  scroll-snap-align: start;
+  width: var(--item-width);
+  height: var(--item-height);
 }
+
+/* .carousel-item.currentSlide {
+  transform: scale(1.03);
+} */
 
 .carousel-item.not-loaded {
   grid-row: span var(--not-loaded-row-span);
   grid-column: span var(--not-loaded-col-span);
+  width: var(--not-loaded-width);
+  height: var(--not-loaded-height);
 }
 
-.carousel-item img {
+/* .carousel-item img {
   width: var(--item-width);
   height: var(--container-height);
   object-fit: cover;
-}
+} */
 
 .loading-overlay {
   display: flex;

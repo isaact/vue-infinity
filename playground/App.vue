@@ -43,6 +43,7 @@
       :numColsToShow="numColsToShow"
       :numRowsToShow="numRowsToShow"
       :gap="gapValue"
+      :items-per-page="itemsPerPage"
       :verticalScroll="verticalScroll"
     >
       <template #item="{ item, index }">
