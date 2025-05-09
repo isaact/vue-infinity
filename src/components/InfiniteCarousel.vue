@@ -96,7 +96,7 @@ const pageItems = computed(() => {
   const items = []
   for (let i = 0; i <= nextPageToTry.value; i++) {
     // console.log('Page items:', i, nextPageToTry.value, previousPageToTry.value)
-    if (pages[i] && pages[i].status === 'resolved') {
+    if (pages[i]?.status === 'resolved') {
       // items.push(...pages[i].items)
       
       for (let [itemIndex, item] of pages[i].items.entries()) {
@@ -110,7 +110,7 @@ const pageItems = computed(() => {
         item.status = 'resolved'
         items.push(item)
       }
-    }else if (pages[i] && pages[i].status === 'pending') {
+    }else if (pages[i]?.status === 'pending') {
       // items.push(...Array(props.itemsPerPage).fill({rowSpan: 1, colSpan: 1, index:}))
       for (let itemIndex = 0; itemIndex < props.itemsPerPage; itemIndex++) {
         const itemId = `${i}-${itemIndex}`
