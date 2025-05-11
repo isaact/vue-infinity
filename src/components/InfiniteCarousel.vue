@@ -101,10 +101,9 @@ const pageItems = computed(() => {
       
       for (let [itemIndex, item] of pages[i].items.entries()) {
         const itemId = `${i}-${itemIndex}`
-        const pageIndex = (itemIndex === 0 || itemIndex === props.itemsPerPage - 1) ? i : ''
         item.index = i * props.itemsPerPage + itemIndex
         item.id = itemId
-        item.page = pageIndex
+        item.page = itemIndex === 0 ? i : ''
         item.rowSpan = 1
         item.colSpan = 1
         item.status = 'resolved'
@@ -114,7 +113,8 @@ const pageItems = computed(() => {
       // items.push(...Array(props.itemsPerPage).fill({rowSpan: 1, colSpan: 1, index:}))
       for (let itemIndex = 0; itemIndex < props.itemsPerPage; itemIndex++) {
         const itemId = `${i}-${itemIndex}`
-        items.push({status: 'pending', rowSpan: 1, colSpan: 1, index: i * props.itemsPerPage + itemIndex, page: i, id: itemId})
+        const pageIdx = itemIndex === 0 ? i : ''
+        items.push({status: 'pending', rowSpan: 1, colSpan: 1, index: i * props.itemsPerPage + itemIndex, page: pageIdx, id: itemId})
       }
     } else if(!pages[i] || pages[i].status === 'not-loaded') {
       const itemId = `${i}-0`
@@ -424,7 +424,7 @@ defineExpose({
   justify-content: center;
   background-color: rgba(0, 0, 0, 0.1);
   width: var(--item-width);
-  height: var(--container-height);
+  height: var(--item-height);
 }
 
 .carousel-item.not-loaded .loading-overlay {
