@@ -83,6 +83,8 @@ const nextPageToTry = ref(initialNextPage);
 const previousPageToTry = ref(0);
 const tryNextPage = ref(true)
 const tryPreviousPage = ref(false)
+const gapInPixels = ref(0)
+
 
 const pagesToTry = computed(() => {
   const pages = []
@@ -129,54 +131,6 @@ const pageItems = computed(() => {
   }
   return items
 })
-
-// Fetch the page, if it is not undefined and the pageNumber is > than nextPageToTry to set nextPageToTry to that page + 1. If the page is <= previousPageToTry, set previousPageToTry to that page - 1 unless it is 0
-const fetchPage = async (pageNumber: number) => {
-  // console.log('Fetching page1:', pageNumber)
-  if (pages[pageNumber] && pages[pageNumber].status === 'pending') {
-    // console.log('Page is already loading:', pageNumber)
-    return
-  }
-  loading.value = true
-  error.value = false
-  try {
-    // console.log('Fetching page2:', pageNumber)
-    await realfetchPage(pageNumber).then(() => {
-      if (pages[pageNumber]?.status === 'resolved') {
-        if (pageNumber >= nextPageToTry.value) {
-          // console.log('NextPage resolved:', pageNumber)
-          nextPageToTry.value = pageNumber + 1
-          // console.log('NextPageToTry:', nextPageToTry.value)
-        }
-        if (previousPageToTry.value > 0 && pageNumber <= previousPageToTry.value) {
-          // console.log('Page resolved:', pageNumber)
-          previousPageToTry.value = pageNumber - 1
-        }
-      } else {
-        // If the page is not resolved and the page number is === nextPageToTry, set tryNextPage to false. Or if the page number is === to previousPageToTry, set tryPreviousPage to false
-        if (pageNumber === nextPageToTry.value) {
-          tryNextPage.value = false
-        } else if (pageNumber === previousPageToTry.value) {
-          tryPreviousPage.value = false
-        }
-      }
-    })
-  } catch (err) {
-    console.error('Error fetching page:', err)
-    error.value = true
-  } finally {
-    loading.value = false
-  }
-}
-
-// const getPageItems = (index: number) => {
-//   if (pages[index].status === 'pending') {
-//     return Array(props.itemsPerPage).fill(null)
-//   }
-//   return pages[index].items
-// }
-
-const gapInPixels = ref(0)
 
 const totalGapHeight = computed(() => {
   if(!props.verticalScroll) {
@@ -225,13 +179,44 @@ const notLoadedHeight = computed(() => {
   return itemHeight.value * notLoadedRowSpan.value
 })
 
-const numPages = ref(0)
-
-// const onResizeObserver = (entries: any) => {
-//   nextTick(() => {
-//     updateDimensions()
-//   })
-// }
+// Fetch the page, if it is not undefined and the pageNumber is > than nextPageToTry to set nextPageToTry to that page + 1. If the page is <= previousPageToTry, set previousPageToTry to that page - 1 unless it is 0
+const fetchPage = async (pageNumber: number) => {
+  // console.log('Fetching page1:', pageNumber)
+  if (pages[pageNumber] && pages[pageNumber].status === 'pending') {
+    // console.log('Page is already loading:', pageNumber)
+    return
+  }
+  loading.value = true
+  error.value = false
+  try {
+    // console.log('Fetching page2:', pageNumber)
+    await realfetchPage(pageNumber).then(() => {
+      if (pages[pageNumber]?.status === 'resolved') {
+        if (pageNumber >= nextPageToTry.value) {
+          // console.log('NextPage resolved:', pageNumber)
+          nextPageToTry.value = pageNumber + 1
+          // console.log('NextPageToTry:', nextPageToTry.value)
+        }
+        if (previousPageToTry.value > 0 && pageNumber <= previousPageToTry.value) {
+          // console.log('Page resolved:', pageNumber)
+          previousPageToTry.value = pageNumber - 1
+        }
+      } else {
+        // If the page is not resolved and the page number is === nextPageToTry, set tryNextPage to false. Or if the page number is === to previousPageToTry, set tryPreviousPage to false
+        if (pageNumber === nextPageToTry.value) {
+          tryNextPage.value = false
+        } else if (pageNumber === previousPageToTry.value) {
+          tryPreviousPage.value = false
+        }
+      }
+    })
+  } catch (err) {
+    console.error('Error fetching page:', err)
+    error.value = true
+  } finally {
+    loading.value = false
+  }
+}
 
 const updateDimensions = () => {
   if (carouselContainer.value) {
@@ -292,13 +277,46 @@ const initFirstPage = async () => {
     // console.log('Fetching first page')
     await fetchPage(0)
   }
-  numPages.value = Object.keys(pages).length
   // Seed visibleImages for SSR
   const numVisible = props.numColsToShow * props.numRowsToShow * 2;
   for (let i = 0; i < numVisible; i++) {
     const item = pageItems.value[i]
     visibleImages.value.add(item.id);
   }
+}
+
+const scrollToItem = async (itemIndex: number) => {
+  if (!carouselContainer.value) return
+  
+  const pageIndex = Math.floor(itemIndex / props.itemsPerPage)
+  const itemInPage = itemIndex % props.itemsPerPage
+  
+  // First ensure the page is loaded
+  if (!pages[pageIndex] || pages[pageIndex]?.status !== 'resolved') {
+    await fetchPage(pageIndex)
+  }
+
+  // Wait for the item to be rendered
+  const checkItem = () => {
+    return new Promise<void>((resolve) => {
+      const itemId = `${pageIndex}-${itemInPage}`;
+      const itemElement = document.getElementById(itemId);
+      
+      if (itemElement) {
+        itemElement.scrollIntoView({
+          behavior: 'smooth',
+          block: 'nearest',
+          inline: 'start'
+        })
+        resolve()
+      } else {
+        // If not found yet, wait and check again
+        setTimeout(() => checkItem().then(resolve), 150)
+      }
+    })
+  }
+
+  await checkItem()
 }
 
 onMounted(async () => {
@@ -336,40 +354,6 @@ onUnmounted(() => {
   pageObserver?.disconnect()
   carouselItemObserver?.disconnect()
 })
-
-const scrollToItem = async (itemIndex: number) => {
-  if (!carouselContainer.value) return
-  
-  const pageIndex = Math.floor(itemIndex / props.itemsPerPage)
-  const itemInPage = itemIndex % props.itemsPerPage
-  
-  // First ensure the page is loaded
-  if (!pages[pageIndex] || pages[pageIndex]?.status !== 'resolved') {
-    await fetchPage(pageIndex)
-  }
-
-  // Wait for the item to be rendered
-  const checkItem = () => {
-    return new Promise<void>((resolve) => {
-      const itemId = `${pageIndex}-${itemInPage}`;
-      const itemElement = document.getElementById(itemId);
-      
-      if (itemElement) {
-        itemElement.scrollIntoView({
-          behavior: 'smooth',
-          block: 'nearest',
-          inline: 'start'
-        })
-        resolve()
-      } else {
-        // If not found yet, wait and check again
-        setTimeout(() => checkItem().then(resolve), 50)
-      }
-    })
-  }
-
-  await checkItem()
-}
 
 defineExpose({
   scrollToItem
