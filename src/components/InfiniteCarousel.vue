@@ -24,7 +24,7 @@
       <div
         v-for="item in pageItems" :key="`item-${item.id}`" :id="`${item.id}`"
         class="carousel-item"
-        :class="{ 'not-loaded': item.status === 'not-loaded', 'loaded': item.status === 'resolved' }"
+        :class="{ 'not-loaded': item.status === 'not-loaded', 'not-loaded-item': item.status === 'not-loaded-item', 'loaded': item.status === 'resolved' }"
         :data-page-index="item.page"
         :data-img-index="item.status === 'resolved' ? item.id : ''">
         <slot name="item" v-if="visibleImages.has(`${item.id}`) && item.status === 'resolved'" :item="item" :index="item.index" :page="item.page">
@@ -119,6 +119,12 @@ const pageItems = computed(() => {
     } else if(!pages[i] || pages[i].status === 'not-loaded') {
       const itemId = `${i}-0`
       items.push({status: 'not-loaded', rowSpan: notLoadedRowSpan, colSpan: notLoadedColSpan, page: i, id: itemId})
+      const staringIndex = props.itemsPerPage - notLoadedRemainingItems.value
+      for (let itemIndex = staringIndex; itemIndex < props.itemsPerPage; itemIndex++) {
+        const itemId = `${i}-${itemIndex}`
+        items.push({status: 'not-loaded-item', rowSpan: 1, colSpan: 1, index: i * props.itemsPerPage + itemIndex, page: '', id: itemId})
+      }
+      // items.push({status: 'not-loaded', rowSpan: notLoadedRowSpan, colSpan: notLoadedColSpan, page: i})
     }
   }
   return items
@@ -205,6 +211,10 @@ const notLoadedRowSpan = computed(() => {
     return Math.floor(props.numRowsToShow)
   }
   return Math.floor(props.itemsPerPage / props.numRowsToShow)
+})
+
+const notLoadedRemainingItems = computed(() => {
+  return props.itemsPerPage - (notLoadedColSpan.value * notLoadedRowSpan.value)
 })
 
 const notLoadedWidth = computed(() => {
@@ -395,7 +405,7 @@ defineExpose({
   scroll-snap-type: y mandatory;
 }
 
-.carousel-item {
+.carousel-item, .carousel-item.not-loaded-item {
   scroll-snap-align: start;
   width: var(--item-width);
   height: var(--item-height);
