@@ -287,6 +287,10 @@ const initFirstPage = async () => {
 
 const scrollToItem = async (itemIndex: number) => {
   if (!carouselContainer.value) return
+
+  // Disconnect observers before scrolling
+  pageObserver?.disconnect();
+  carouselItemObserver?.disconnect();
   
   const pageIndex = Math.floor(itemIndex / props.itemsPerPage)
   const itemInPage = itemIndex % props.itemsPerPage
@@ -317,6 +321,9 @@ const scrollToItem = async (itemIndex: number) => {
   }
 
   await checkItem()
+
+  // Reconnect observers after scrolling
+  setupObserver();
 }
 
 onMounted(async () => {
