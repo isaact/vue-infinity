@@ -25,7 +25,7 @@
   },
   "keywords": [],
   "author": "",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "description": "A collection of composables and components for Vue 3 to improve app performance and memory usage.",
   "dependencies": {
     "@vueuse/components": "^13.1.0"
