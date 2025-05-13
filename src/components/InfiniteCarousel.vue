@@ -30,7 +30,7 @@
         <slot name="item" v-if="visibleImages.has(`${item.id}`) && item.status === 'resolved'" :item="item" :index="item.index" :page="item.page">
           Item {{ item.index }}
         </slot>
-        <slot name="loading" v-else :index="`${item.index}`" :page="item.page">
+        <slot name="loading" v-else-if="item.status === 'resolved' || item.status === 'pending'" :index="`${item.index}`" :page="item.page">
           <div class="loading-overlay">Loading...</div>
         </slot>
       </div>
@@ -120,9 +120,9 @@ const pageItems = computed(() => {
       }
     } else if(!pages[i] || pages[i].status === 'not-loaded') {
       const itemId = `${i}-0`
-      items.push({status: 'not-loaded', rowSpan: notLoadedRowSpan, colSpan: notLoadedColSpan, page: i, id: itemId})
+      items.push({status: 'not-loaded', rowSpan: 1, colSpan: 1, page: i, id: itemId})
       const staringIndex = props.itemsPerPage - notLoadedRemainingItems.value
-      for (let itemIndex = staringIndex; itemIndex < props.itemsPerPage; itemIndex++) {
+      for (let itemIndex = 1; itemIndex < props.itemsPerPage; itemIndex++) {
         const itemId = `${i}-${itemIndex}`
         items.push({status: 'not-loaded-item', rowSpan: 1, colSpan: 1, index: i * props.itemsPerPage + itemIndex, page: '', id: itemId})
       }
@@ -154,6 +154,7 @@ const itemHeight = computed(() => {
 })
 
 const notLoadedColSpan = computed(() => {
+  return 1
   if (!props.verticalScroll) {
     return Math.floor(props.itemsPerPage / props.numColsToShow)
   }
@@ -161,6 +162,7 @@ const notLoadedColSpan = computed(() => {
 })
 
 const notLoadedRowSpan = computed(() => {
+  return 1
   if (!props.verticalScroll) {
     return Math.floor(props.numRowsToShow)
   }
@@ -168,15 +170,15 @@ const notLoadedRowSpan = computed(() => {
 })
 
 const notLoadedRemainingItems = computed(() => {
-  return props.itemsPerPage - (notLoadedColSpan.value * notLoadedRowSpan.value)
+  return props.itemsPerPage - 1 //(notLoadedColSpan.value * notLoadedRowSpan.value)
 })
 
 const notLoadedWidth = computed(() => {
-  return itemWidth.value * notLoadedColSpan.value
+  return itemWidth.value// * (props.itemsPerPage / props.numColsToShow)
 })
 
 const notLoadedHeight = computed(() => {
-  return itemHeight.value * notLoadedRowSpan.value
+  return itemHeight.value// * notLoadedRowSpan.value
 })
 
 // Fetch the page, if it is not undefined and the pageNumber is > than nextPageToTry to set nextPageToTry to that page + 1. If the page is <= previousPageToTry, set previousPageToTry to that page - 1 unless it is 0
