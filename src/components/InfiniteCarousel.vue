@@ -351,8 +351,12 @@ watch(
   [() => props.numColsToShow, () => props.numRowsToShow, () => props.gap, () => props.verticalScroll],
   () => {
     if (carouselContainer.value) {
+      // Disconnect observers before scrolling
+      pageObserver?.disconnect();
+      carouselItemObserver?.disconnect();
       nextTick(() => {
         updateDimensions()
+        setupObserver()
       })
     }
   },
