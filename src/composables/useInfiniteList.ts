@@ -2,7 +2,7 @@ import { reactive } from 'vue'
 
 export interface InfiniteList<T> {
   pages: Record<number, InfiniteListPage<T>>
-  // notLoadedPages: Set<number>
+  itemsPerPage: number
   getItem: (index: number) => Promise<T | undefined>
   fetchPage: (pageNum: number, abortEarlierFetch?: boolean) => Promise<InfiniteListPage<T> | undefined>
   clearPage: (pageNum: number) => void
@@ -12,7 +12,6 @@ export interface InfiniteList<T> {
 
 export interface InfiniteListOptions<T> {
   fetchItems: (page: number, signal: AbortSignal) => Promise<T[]>
-  // totalItems: number
   itemsPerPage: number
   maxPagesToCache: number
   onPageUnloaded?: (pageNum: number) => void
@@ -41,18 +40,6 @@ export function useInfiniteList<T>(options: InfiniteListOptions<T>): InfiniteLis
       usageOrder.push(pageNum)
     }
   }
-
-  // const totalPages = Math.ceil(totalItems / itemsPerPage)
-
-  // 👇 Initialize all pages with 'not-loaded'
-  // for (let i = 0; i < totalPages; i++) {
-  //   pages[i] = reactive({
-  //     pageNum: i,
-  //     items: [],
-  //     status: 'not-loaded'
-  //   })
-  //   // notLoadedPages.add(i)
-  // }
 
   async function fetchAndCachePage(pageNum: number, abortEarlierFetch = false): Promise<InfiniteListPage<T> | undefined> {
     const page = pages[pageNum] || (pages[pageNum] = reactive({
@@ -181,7 +168,7 @@ export function useInfiniteList<T>(options: InfiniteListOptions<T>): InfiniteLis
 
   return {
     pages,
-    // notLoadedPages,
+    itemsPerPage,
     getItem,
     fetchPage: fetchAndCachePage,
     clearPage,

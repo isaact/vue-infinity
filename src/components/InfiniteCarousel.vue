@@ -52,7 +52,6 @@ const props = withDefaults(
     infiniteList: InfiniteList<any>
     height: string
     width: string
-    itemsPerPage: number
     numColsToShow?: number
     numRowsToShow?: number
     gap?: string
@@ -70,6 +69,7 @@ const props = withDefaults(
 const isClient = typeof window !== 'undefined'
 const carouselContainer = useTemplateRef('carousel')
 const container_size = ref({ width: 0, height: 0 })
+const itemsPerPage = props.infiniteList.itemsPerPage
 const loading = ref(false)
 const error = ref(false)
 const visibleImages = ref(new Set<string>())
@@ -103,7 +103,7 @@ const pageItems = computed(() => {
       
       for (let [itemIndex, item] of pages[i].items.entries()) {
         const itemId = `${i}-${itemIndex}`
-        item.index = i * props.itemsPerPage + itemIndex
+        item.index = i * itemsPerPage + itemIndex
         item.id = itemId
         item.page = itemIndex === 0 ? i : ''
         item.rowSpan = 1
@@ -112,19 +112,19 @@ const pageItems = computed(() => {
         items.push(item)
       }
     }else if (pages[i]?.status === 'pending') {
-      // items.push(...Array(props.itemsPerPage).fill({rowSpan: 1, colSpan: 1, index:}))
-      for (let itemIndex = 0; itemIndex < props.itemsPerPage; itemIndex++) {
+      // items.push(...Array(itemsPerPage).fill({rowSpan: 1, colSpan: 1, index:}))
+      for (let itemIndex = 0; itemIndex < itemsPerPage; itemIndex++) {
         const itemId = `${i}-${itemIndex}`
         const pageIdx = itemIndex === 0 ? i : ''
-        items.push({status: 'pending', rowSpan: 1, colSpan: 1, index: i * props.itemsPerPage + itemIndex, page: pageIdx, id: itemId})
+        items.push({status: 'pending', rowSpan: 1, colSpan: 1, index: i * itemsPerPage + itemIndex, page: pageIdx, id: itemId})
       }
     } else if(!pages[i] || pages[i].status === 'not-loaded') {
       const itemId = `${i}-0`
       items.push({status: 'not-loaded', rowSpan: 1, colSpan: 1, page: i, id: itemId})
-      const staringIndex = props.itemsPerPage - notLoadedRemainingItems.value
-      for (let itemIndex = 1; itemIndex < props.itemsPerPage; itemIndex++) {
+      const staringIndex = itemsPerPage - notLoadedRemainingItems.value
+      for (let itemIndex = 1; itemIndex < itemsPerPage; itemIndex++) {
         const itemId = `${i}-${itemIndex}`
-        items.push({status: 'not-loaded-item', rowSpan: 1, colSpan: 1, index: i * props.itemsPerPage + itemIndex, page: '', id: itemId})
+        items.push({status: 'not-loaded-item', rowSpan: 1, colSpan: 1, index: i * itemsPerPage + itemIndex, page: '', id: itemId})
       }
       // items.push({status: 'not-loaded', rowSpan: notLoadedRowSpan, colSpan: notLoadedColSpan, page: i})
     }
@@ -156,7 +156,7 @@ const itemHeight = computed(() => {
 const notLoadedColSpan = computed(() => {
   return 1
   if (!props.verticalScroll) {
-    return Math.floor(props.itemsPerPage / props.numColsToShow)
+    return Math.floor(itemsPerPage / props.numColsToShow)
   }
   return Math.floor(props.numColsToShow)
 })
@@ -166,15 +166,15 @@ const notLoadedRowSpan = computed(() => {
   if (!props.verticalScroll) {
     return Math.floor(props.numRowsToShow)
   }
-  return Math.floor(props.itemsPerPage / props.numRowsToShow)
+  return Math.floor(itemsPerPage / props.numRowsToShow)
 })
 
 const notLoadedRemainingItems = computed(() => {
-  return props.itemsPerPage - 1 //(notLoadedColSpan.value * notLoadedRowSpan.value)
+  return itemsPerPage - 1 //(notLoadedColSpan.value * notLoadedRowSpan.value)
 })
 
 const notLoadedWidth = computed(() => {
-  return itemWidth.value// * (props.itemsPerPage / props.numColsToShow)
+  return itemWidth.value// * (itemsPerPage / props.numColsToShow)
 })
 
 const notLoadedHeight = computed(() => {
@@ -294,13 +294,16 @@ const scrollToItem = async (itemIndex: number) => {
   pageObserver?.disconnect();
   carouselItemObserver?.disconnect();
   
-  const pageIndex = Math.floor(itemIndex / props.itemsPerPage)
-  const itemInPage = itemIndex % props.itemsPerPage
+  const pageIndex = Math.floor(itemIndex / itemsPerPage)
+  const itemInPage = itemIndex % itemsPerPage
   
   // First ensure the page is loaded
   if (!pages[pageIndex] || pages[pageIndex]?.status !== 'resolved') {
+    console.log('Fetching page to scroll to:', pageIndex)
     await fetchPage(pageIndex)
   }
+  // Reconnect observers after scrolling
+  setupObserver();
 
   // Wait for the item to be rendered
   const checkItem = () => {
@@ -323,9 +326,6 @@ const scrollToItem = async (itemIndex: number) => {
   }
 
   await checkItem()
-
-  // Reconnect observers after scrolling
-  setupObserver();
 }
 
 onMounted(async () => {
