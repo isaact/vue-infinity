@@ -23,6 +23,7 @@ export interface InfiniteListPage<T> {
   items: T[]
   status: 'not-loaded' | 'pending' | 'resolved' | 'error'
   abortController?: AbortController
+  lastUsed?: number // Add timestamp for LRU
 }
 
 export function useInfiniteList<T>(options: InfiniteListOptions<T>): InfiniteList<T> {
@@ -30,18 +31,18 @@ export function useInfiniteList<T>(options: InfiniteListOptions<T>): InfiniteLis
 
   const pages = reactive<Record<number, InfiniteListPage<T>>>(options.preloadedPages || {})
   // const notLoadedPages = reactive<Set<number>>(new Set())
-  const usageOrder: number[] = []
+  // const usageOrder: number[] = [] // No longer needed for timestamp LRU
 
-  // If preloaded pages are provided, mark them as resolved and add to usageOrder
-  if (options.preloadedPages) {
-    for (const pageNumStr in options.preloadedPages) {
-      const pageNum = Number(pageNumStr)
-      pages[pageNum].status = 'resolved'
-      usageOrder.push(pageNum)
-    }
-  }
+ // If preloaded pages are provided, mark them as resolved and update timestamp
+ if (options.preloadedPages) {
+   for (const pageNumStr in options.preloadedPages) {
+     const pageNum = Number(pageNumStr)
+     pages[pageNum].status = 'resolved'
+     markPageUsed(pageNum) // Mark preloaded pages as used
+   }
+ }
 
-  async function fetchAndCachePage(pageNum: number, abortEarlierFetch = false): Promise<InfiniteListPage<T> | undefined> {
+ async function fetchAndCachePage(pageNum: number, abortEarlierFetch = false): Promise<InfiniteListPage<T> | undefined> {
     const page = pages[pageNum] || (pages[pageNum] = reactive({
       pageNum,
       items: [],
@@ -103,18 +104,24 @@ export function useInfiniteList<T>(options: InfiniteListOptions<T>): InfiniteLis
   }
 
   function markPageUsed(pageNum: number) {
-    const index = usageOrder.indexOf(pageNum)
-    if (index !== -1) usageOrder.splice(index, 1)
-    usageOrder.push(pageNum)
+    const page = pages[pageNum]
+    if (page) {
+      page.lastUsed = Date.now() // Update timestamp
+    }
     cleanupCache()
   }
 
   function cleanupCache() {
-    while (usageOrder.length > maxPagesToCache) {
-      const oldest = usageOrder.shift()
-      // console.log(`Clearing page ${oldest} from cache...`)
-      if (oldest !== undefined) {
-        clearPage(oldest)
+    const cachedPages = Object.values(pages).filter(page => page.status === 'resolved' && page.lastUsed !== undefined)
+    if (cachedPages.length > maxPagesToCache) {
+      // Sort by lastUsed timestamp ascending (oldest first)
+      cachedPages.sort((a, b) => (a.lastUsed || 0) - (b.lastUsed || 0))
+
+      const pagesToClearCount = cachedPages.length - maxPagesToCache
+      for (let i = 0; i < pagesToClearCount; i++) {
+        const oldestPage = cachedPages[i]
+        // console.log(`Clearing page ${oldestPage.pageNum} from cache (LRU)...`)
+        clearPage(oldestPage.pageNum)
       }
     }
   }
@@ -137,7 +144,7 @@ export function useInfiniteList<T>(options: InfiniteListOptions<T>): InfiniteLis
     // for (let i = 0; i < totalPages; i++) {
     //   clearPage(i)
     // }
-    // usageOrder.length = 0
+    // usageOrder.length = 0 // No longer needed
     //Loop through all the pages and clear them
     for (const pageNum in pages) {
       clearPage(Number(pageNum))

@@ -122,9 +122,16 @@ const pageItems = computed(() => {
       const itemId = `${i}-0`
       items.push({status: 'not-loaded', rowSpan: 1, colSpan: 1, page: i, id: itemId})
       const staringIndex = itemsPerPage - notLoadedRemainingItems.value
+      const lastItemIndex = itemsPerPage - 1
       for (let itemIndex = 1; itemIndex < itemsPerPage; itemIndex++) {
         const itemId = `${i}-${itemIndex}`
-        items.push({status: 'not-loaded-item', rowSpan: 1, colSpan: 1, index: i * itemsPerPage + itemIndex, page: '', id: itemId})
+        let itemStatus =  'not-loaded-item'
+        let pageIndex = undefined
+        if (itemIndex === lastItemIndex) {
+          itemStatus = 'not-loaded'
+          pageIndex = i
+        }
+        items.push({status: itemStatus, rowSpan: 1, colSpan: 1, index: i * itemsPerPage + itemIndex, page: pageIndex, id: itemId})
       }
       // items.push({status: 'not-loaded', rowSpan: notLoadedRowSpan, colSpan: notLoadedColSpan, page: i})
     }
