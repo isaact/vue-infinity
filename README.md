@@ -1,10 +1,8 @@
-# 🚀 Vue Infinity
-
+<img src="assets/logo.svg" alt="Vue Infinity Logo" style="width: 50%;">
+# Vue Infinity
 Vue Infinity is a lightweight library that allows you to use the fact that users only view a portion of the content at any given time. This enables you to build high-performance applications that scale to arbitrarily large data sets—without a hit to memory or speed.
 
 This is done on two levels, on the API level and at the UI level.
-
-![Vue Infinity Logo](assets/logo.svg)
 
 API Level:
 - Fetch only the data you need
@@ -18,12 +16,11 @@ UI Level:
 
 ### 🌀 InfiniteList
 
-`InfiniteList` provides reactive, paginated access to large datasets with full type support. It is ideal for applications that need to manage vast amounts of data without loading everything into memory.
+`InfiniteList` provides reactive, paginated access to large datasets with full type support. It is ideal for applications that need to browse vast amounts of data without loading everything into memory.
 
 **Key Capabilities:**
 
 - Paginated data access
-- Configurable total items and items per page
 - Caching with automatic unloading of older pages based on least-recently-used basis
 - Item access by index
 - Supports cancellation of in-flight network requests using AbortController
@@ -44,14 +41,16 @@ const { pages, getItem, fetchPage } = useInfiniteList({
 
 ### 🪂 InfiniteCarousel
 
-`InfiniteCarousel` is a general-purpose virtual scroll component optimized for grid-like or carousel-based layouts. It renders only what’s visible and a small buffer, making it highly efficient for rendering large collections.
+`InfiniteCarousel` is a general-purpose virtual scroll component optimized for grid-like or carousel-based layouts. It renders only what’s visible and a small buffer, making it highly efficient for rendering large, media-rich collections.
 
 **Key Capabilities:**
 
-- Customizable number of rows and columns visible
+- Integrates directly with `InfiniteList` for managing the data access
+- Customizable number of rows and columns
+- Configurable as a horizontal or vertical scroller
 - Supports custom templates for each item
 - Supports custom loading templates
-- Integrates directly with `InfiniteList` for managing the data access
+- Allows scrolling to any item with css based scroll snapping
 
 **Example:**
 
