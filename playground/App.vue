@@ -1,6 +1,8 @@
 <template>
   <div class="playground">
-    <h1>InfiniteCarousel Playground</h1>
+    
+    <h1 style="text-align: center;"><img src="/logo.svg" alt="Vue Infinity Logo" class="logo" />Vue-Infinity</h1>
+    <h2 style="text-align: center;">InfiniteCarousel Playground</h2>
     
     <div class="controls">
       <button @click="resetGallery">Reset Gallery</button>
@@ -46,7 +48,7 @@
       :items-per-page="itemsPerPage"
       :verticalScroll="verticalScroll"
     >
-      <template #item="{ item, index }">
+      <template #item="{ item, index }: { item: GalleryItem, index: number }">
         <img :src="item.url" :alt="item.title || `Image ${index}`" class="carousel-img"/>
       </template>
     </InfiniteCarousel>
@@ -66,7 +68,7 @@ const numColsToShow = ref(3)
 const carouselHeight = ref('45vh')
 const carouselWidth = ref('100%')
 const gapValue = ref('10px')
-const numItems = ref(300)
+const numItems = ref(3000)
 const verticalScroll = ref(false)
 const itemsPerPage = ref(20) // Still needed for the infinite list
 const scrollToIndex = ref(0)
@@ -106,6 +108,13 @@ const resetGallery = () => {
 
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+
+.logo {
+  display: block;
+  margin: 0 auto 2rem;
+  width: 125px; /* Adjust size as needed */
+  height: auto;
+}
 
 .playground {
   max-width: 1200px;

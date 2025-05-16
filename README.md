@@ -4,6 +4,8 @@ Vue Infinity is a lightweight library that allows you to use the fact that users
 
 This is done on two levels, on the API level and at the UI level.
 
+![Vue Infinity Logo](assets/logo.svg)
+
 API Level:
 - Fetch only the data you need
 - Pages are automatically evicted from cache based on last-recently-used basis
