@@ -1,6 +1,6 @@
 <div align="center"><img src="assets/logo.svg" alt="Vue Infinity Logo" style="width: 30%;"></div>
 
-# Vue Infinity
+# Vue-Infinity
 Vue Infinity is a lightweight library that allows you to use the fact that users only view a portion of the content at any given time. This enables you to build high-performance applications that scale to arbitrarily large data sets—without a hit to memory or speed.
 
 This is done on two levels, on the API level and at the UI level.
