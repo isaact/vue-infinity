@@ -1,4 +1,4 @@
-<div align="center"><img src="assets/logo.svg" alt="Vue Infinity Logo" style="width: 30%;"></div>
+<div align="center"><img src="https://github.com/tewolde/vue-infinity/raw/main/assets/logo.svg" alt="Vue Infinity Logo" style="width: 50%;"></div>
 
 # Vue-Infinity
 Vue Infinity is a lightweight library that allows you to use the fact that users only view a portion of the content at any given time. This enables you to build high-performance applications that scale to arbitrarily large data sets—without a hit to memory or speed.
@@ -121,6 +121,9 @@ To install Vue Infinity, run the following command:
 npm install vue-infinity
 ```
 
+## 🚀 Demo
+
+Check out the live demo here: [https://tewolde.co/vueInfinity/](https://tewolde.co/vueInfinity/)
 ## ▶️ Run Playground App
 
 To run the playground application locally, use the following command:
