@@ -28,7 +28,7 @@ const { pages, getItem, fetchPage } = useInfiniteList({
 });
 ```
 
-### 🎠 InfiniteCarousel
+### 🪂 InfiniteCarousel
 
 A general-purpose virtual scroll component optimized for grid-like or carousel-based layouts.
 
@@ -68,7 +68,7 @@ const infiniteList = useInfiniteList({
 </script>
 ```
 
-### 👁️ AutoObserver
+### 🔎 AutoObserver
 
 Enhances the native `IntersectionObserver` by automatically handling new elements and cleaning up removed ones.
 
