@@ -27,6 +27,7 @@
   "author": "",
   "license": "Apache-2.0",
   "description": "A collection of composables and components for Vue 3 to improve app performance and memory usage.",
+  "homepage": "https://tewolde.co/vueInfinity/",
   "repository": {
     "type": "git",
     "url": "https://github.com/isaact/vue-infinity.git"
