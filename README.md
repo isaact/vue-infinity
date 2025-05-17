@@ -1,57 +1,42 @@
 <div align="center"><img width="300" src="https://tewolde.co/vi-logo.svg?width=200" alt="Vue Infinity Logo"></div>
-
 # Vue-Infinity
-Vue Infinity is a lightweight library that allows you to use the fact that users only view a portion of the content at any given time. This enables you to build high-performance applications that scale to arbitrarily large data sets—without a hit to memory or speed.
 
-This is done on two levels, on the API level and at the UI level.
+**Vue Infinity** is a modular toolkit designed to help developers build high-performance, memory-efficient, and media-rich applications with Vue. By leveraging smart data fetching and virtualized rendering, it ensures smooth user experiences even with large datasets.
 
-API Level:
-- Fetch only the data you need
-- Pages are automatically evicted from cache based on last-recently-used basis
+## 🚀 Key Features
 
-UI Level:
-- Render only content that is visible to the user
-- This is a big advantage for image/video rich content which can take up a lot of memory
+### 🔄 InfiniteList
 
-## ✨Core Features
-
-### 🌀 InfiniteList
-
-`InfiniteList` provides reactive, paginated access to large datasets with full type support. It is ideal for applications that need to browse vast amounts of data without loading everything into memory.
-
-**Key Capabilities:**
+Provides reactive, paginated access to large datasets with full type support.
 
 - Paginated data access
 - Caching with automatic unloading of older pages based on least-recently-used basis
 - Item access by index
-- Supports cancellation of in-flight network requests using AbortController
+- Supports cancellation of in-flight network requests using `AbortController`
 
 **Example:**
 
-```ts
+```javascript
 const { pages, getItem, fetchPage } = useInfiniteList({
   fetchItems: async (page, signal) => {
-    const response = await fetch(`/api/items?page=${page}`, { signal })
-    return response.json()
+    const response = await fetch(`/api/items?page=${page}`, { signal });
+    return response.json();
   },
-  totalItems: 1000,
   itemsPerPage: 50,
   maxPagesToCache: 5
-})
+});
 ```
 
-### 🪂 InfiniteCarousel
+### 🎠 InfiniteCarousel
 
-`InfiniteCarousel` is a general-purpose virtual scroll component optimized for grid-like or carousel-based layouts. It renders only what’s visible and a small buffer, making it highly efficient for rendering large, media-rich collections.
+A general-purpose virtual scroll component optimized for grid-like or carousel-based layouts.
 
-**Key Capabilities:**
-
-- Integrates directly with `InfiniteList` for managing the data access
+- Integrates directly with `InfiniteList` for managing data access
 - Customizable number of rows and columns
 - Configurable as a horizontal or vertical scroller
 - Supports custom templates for each item
 - Supports custom loading templates
-- Allows scrolling to any item with css based scroll snapping
+- Allows scrolling to any item with CSS-based scroll snapping
 
 **Example:**
 
@@ -71,22 +56,20 @@ const { pages, getItem, fetchPage } = useInfiniteList({
 </template>
 
 <script setup>
-import { useInfiniteList } from 'vue-infinity'
+import { useInfiniteList } from 'vue-infinity';
 
 const infiniteList = useInfiniteList({
   fetchItems: (page) => fetchPage(page),
   totalItems: 1000,
   itemsPerPage: 20,
   maxPagesToCache: 5
-})
+});
 </script>
 ```
 
-### 🔍 AutoObserver
+### 👁️ AutoObserver
 
-`AutoObserver` enhances the native `IntersectionObserver` by automatically handling new elements and cleaning up removed ones. This is especially useful for dynamic content or virtualized lists.
-
-**Key Capabilities:**
+Enhances the native `IntersectionObserver` by automatically handling new elements and cleaning up removed ones.
 
 - Automatically observes newly added elements
 - Stops observing removed elements
@@ -95,43 +78,42 @@ const infiniteList = useInfiniteList({
 
 **Example:**
 
-```ts
-const containerRef = ref<HTMLElement>()
+```javascript
+const containerRef = ref<HTMLElement>();
 
 const { disconnect } = useAutoObserver(
   containerRef,
   (entries) => {
     entries.forEach(entry => {
-      console.log('Element visibility changed:', entry.isIntersecting)
-    })
+      console.log('Element visibility changed:', entry.isIntersecting);
+    });
   },
   {
     rootMargin: '200px',
     threshold: 0.1,
     filter: el => el.classList.contains('observe-me')
   }
-)
+);
 ```
 
 ## 📦 Installation
-
-To install Vue Infinity, run the following command:
 
 ```bash
 npm install vue-infinity
 ```
 
-## 🚀 Demo
+## 🧪 Live Demo
 
-Check out the live demo here: [https://tewolde.co/vueInfinity/](https://tewolde.co/vueInfinity/)
-## ▶️ Run Playground App
+Explore the live demo here: [https://tewolde.co/vueInfinity/](https://tewolde.co/vueInfinity/)
 
-To run the playground application locally, use the following command:
+## 🧑‍💻 Run Playground App
+
+To run the playground application locally:
 
 ```bash
 npm run playground
 ```
 
-## 📝 License
+## 📄 License
 
 Apache 2.0 License - [https://opensource.org/licenses/Apache-2.0](https://opensource.org/licenses/Apache-2.0)
