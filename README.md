@@ -1,4 +1,5 @@
 <div align="center"><img width="300" src="https://tewolde.co/vi-logo.svg?width=200" alt="Vue Infinity Logo"></div>
+
 # Vue-Infinity
 
 **Vue Infinity** is a modular toolkit designed to help developers build high-performance, memory-efficient, and media-rich applications with Vue. By leveraging smart data fetching and virtualized rendering, it ensures smooth user experiences even with large datasets.
