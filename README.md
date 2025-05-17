@@ -134,4 +134,4 @@ npm run playground
 
 ## 📝 License
 
-MIT License - [https://opensource.org/licenses/MIT](https://opensource.org/licenses/MIT)
+Apache 2.0 License - [https://opensource.org/licenses/Apache-2.0](https://opensource.org/licenses/Apache-2.0)
