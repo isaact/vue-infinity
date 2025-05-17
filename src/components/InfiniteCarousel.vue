@@ -303,7 +303,7 @@ const scrollToItem = async (itemIndex: number) => {
   
   // First ensure the page is loaded
   if (!pages[pageIndex] || pages[pageIndex]?.status !== 'resolved') {
-    console.log('Fetching page to scroll to:', pageIndex)
+    // console.log('Fetching page to scroll to:', pageIndex)
     await fetchPage(pageIndex)
   }
   // Reconnect observers after scrolling
