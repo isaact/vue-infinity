@@ -340,7 +340,7 @@ onMounted(async () => {
   }
   nextTick(() => {
     setupObserver()
-    scrollToItem(0)
+    // scrollToItem(0)
   })
 })
 
