@@ -139,13 +139,13 @@ const totalGapHeight = computed(() => {
   // if(!props.verticalScroll) {
   //   return (props.numRowsToShow - 1) * gapInPixels.value
   // }
-  return props.numRowsToShow * gapInPixels.value
+  return (adjustedNumRowsToShow.value - 1) * gapInPixels.value
 })
 const totalGapWidth = computed(() => {
   // if(!props.verticalScroll) {
   //   return props.numColsToShow * gapInPixels.value
   // }
-  return (props.numColsToShow - 1) * gapInPixels.value
+  return (adjustedNumColsToShow.value - 1) * gapInPixels.value
 })
 
 const adjustedNumColsToShow = computed(() => {
