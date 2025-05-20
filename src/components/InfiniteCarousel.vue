@@ -5,8 +5,8 @@
     :style="{
       '--item-width': `${itemWidth}px`,
       '--item-height': `${itemHeight}px`,
-      '--num-cols-to-show': props.numColsToShow,
-      '--num-rows-to-show': props.numRowsToShow,
+      '--num-cols-to-show': adjustedNumColsToShow,
+      '--num-rows-to-show': adjustedNumRowsToShow,
       '--gap-in-px': `${gapInPixels}px`,
       '--not-loaded-col-span': notLoadedColSpan,
       '--not-loaded-row-span': notLoadedRowSpan,
@@ -136,24 +136,37 @@ const pageItems = computed(() => {
 })
 
 const totalGapHeight = computed(() => {
-  if(!props.verticalScroll) {
-    return (props.numRowsToShow - 1) * gapInPixels.value
-  }
+  // if(!props.verticalScroll) {
+  //   return (props.numRowsToShow - 1) * gapInPixels.value
+  // }
   return props.numRowsToShow * gapInPixels.value
 })
 const totalGapWidth = computed(() => {
-  if(!props.verticalScroll) {
-    return props.numColsToShow * gapInPixels.value
-  }
+  // if(!props.verticalScroll) {
+  //   return props.numColsToShow * gapInPixels.value
+  // }
   return (props.numColsToShow - 1) * gapInPixels.value
 })
 
+const adjustedNumColsToShow = computed(() => {
+  if (props.verticalScroll) {
+    return Math.ceil(props.numColsToShow)
+  }
+  return props.numColsToShow
+})
+const adjustedNumRowsToShow = computed(() => {
+  if (props.verticalScroll) {
+    return props.numRowsToShow
+  }
+  return Math.ceil(props.numRowsToShow)
+})
+
 const itemWidth = computed(() => {
-  return (container_size.value.width - totalGapWidth.value) / props.numColsToShow
+  return (container_size.value.width - totalGapWidth.value) / adjustedNumColsToShow.value
 })
 
 const itemHeight = computed(() => {
-  return (container_size.value.height - totalGapHeight.value) / props.numRowsToShow
+  return (container_size.value.height - totalGapHeight.value) / adjustedNumRowsToShow.value
 })
 
 const notLoadedColSpan = computed(() => {
@@ -340,16 +353,8 @@ onMounted(async () => {
   }
   nextTick(() => {
     setupObserver()
-    // scrollToItem(0)
   })
 })
-
-// On server, prefetch the first page
-// onServerPrefetch(async () => {
-//   await initFirstPage()
-//   // serverLoadedPages.value = pages
-// })
-
 
 watch(
   [() => props.numColsToShow, () => props.numRowsToShow, () => props.gap, () => props.verticalScroll],
@@ -385,24 +390,22 @@ defineExpose({
 .carousel {
   display: grid;
   grid-template-rows: repeat(var(--num-rows-to-show), var(--item-height));
+  grid-template-columns: repeat(var(--num-cols-to-show), var(--item-width));
   grid-auto-flow: column;
   grid-auto-columns: var(--item-width);
   gap: var(--gap-in-px);
-  overflow-x: auto;
-  overflow-y: hidden;
+  overflow-x: scroll;
+  overflow-y: scroll;
   scroll-snap-type: x mandatory;
   height: var(--container-height);
   width: var(--container-width);
 }
 
 .carousel.vertical {
-  grid-template-columns: repeat(var(--num-cols-to-show), 1fr);
   grid-auto-flow: row;
-  grid-auto-rows: calc(
+  /* grid-auto-rows: calc(
     (var(--container-height) - (var(--gap-in-px) * (var(--num-rows-to-show) - 1))) / var(--num-rows-to-show)
-  );
-  overflow-y: scroll;
-  overflow-x: hidden;
+  ); */
   scroll-snap-type: y mandatory;
 }
 
