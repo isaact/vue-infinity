@@ -11,13 +11,13 @@
         <input type="number" v-model.number="scrollToIndex" :min="0" :max="numItems - 1" />
         <button @click="scrollToItem">Go</button>
       </label>
-      <label>
-        Slides to show per row:
-        <input type="number" v-model.number="numColsToShow" :min="1" :max="maxSlides" step="0.1" />
+      <label class="slider-label">
+        Slides to show per row: <span>{{ numColsToShow.toFixed(1) }}</span>
+        <input type="range" v-model.number="numColsToShow" :min="1" :max="3" step="0.1" />
       </label>
-      <label>
-        Number of rows:
-        <input type="number" v-model.number="numRowsToShow" :min="1" :max="maxSlides" step="1" />
+      <label class="slider-label">
+        Number of rows: <span>{{ numRowsToShow.toFixed(1) }}</span>
+        <input type="range" v-model.number="numRowsToShow" :min="1" :max="3" step="0.1" />
       </label>
       <label>
         Height:
@@ -147,6 +147,16 @@ h1 {
   align-items: center;
   gap: 8px;
   color: #e0e0e0;
+}
+
+.controls .slider-label {
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.controls .slider-label span {
+  margin-left: auto; /* Push the value to the right */
+  font-weight: bold;
 }
 
 .controls input[type="number"],
