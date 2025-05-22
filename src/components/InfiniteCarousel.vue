@@ -42,7 +42,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch, useTemplateRef, nextTick, onServerPrefetch, onBeforeMount, useSSRContext } from 'vue'
-// import { useTemplateRefsList } from '@vueuse/core'
+import { useThrottleFn } from '@vueuse/core'
 import { vResizeObserver } from '@vueuse/components'
 import { InfiniteList, type InfiniteListPage } from '../composables/useInfiniteList'
 import { useAutoObserver, type AutoObserver } from '../composables/useAutoObserver'
@@ -66,7 +66,6 @@ const props = withDefaults(
   }
 )
 
-const isClient = typeof window !== 'undefined'
 const carouselContainer = useTemplateRef('carousel')
 const container_size = ref({ width: 0, height: 0 })
 const itemsPerPage = props.infiniteList.itemsPerPage
@@ -253,11 +252,13 @@ const setupObserver = () => {
   pageObserver =  useAutoObserver(carouselContainer, (entries) => {
     entries.forEach(entry => {
       if (entry.isIntersecting) {
-        const pageIndex = entry.target.getAttribute('data-page-index')
-        // console.log('Page is in view:', pageIndex)
-        if (pageIndex) {
-          fetchPage(+pageIndex)
-        }
+        useThrottleFn(() => {
+          // console.log('Page is in view:', entry)
+          const pageIndex = entry.target.getAttribute('data-page-index')
+          if (pageIndex) {
+            fetchPage(+pageIndex)
+          }
+        }, 100)()
       }
     })
   }, {
