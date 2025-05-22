@@ -128,7 +128,7 @@ const pageItems = computed(() => {
           items.push({status: itemStatus, rowSpan: 1, colSpan: 1, index: i * itemsPerPage + itemIndex, page: pageIndex, id: itemId})
         }
       }
-      items.push({status: 'not-loaded', rowSpan: notLoadedRowSpan, colSpan: notLoadedColSpan, page: i})
+      items.push({status: 'not-loaded', rowSpan: notLoadedRowSpan, colSpan: notLoadedColSpan, page: i, id: itemId})
     }
   }
   return items
