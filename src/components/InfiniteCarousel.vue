@@ -258,7 +258,7 @@ const setupObserver = () => {
           if (pageIndex) {
             fetchPage(+pageIndex)
           }
-        }, 100)()
+        }, 50)()
       }
     })
   }, {
@@ -359,15 +359,27 @@ onMounted(async () => {
 
 watch(
   [() => props.numColsToShow, () => props.numRowsToShow, () => props.gap, () => props.verticalScroll],
-  () => {
+  (newValues, oldValues) => {
     if (carouselContainer.value) {
-      // Disconnect observers before scrolling
-      pageObserver?.disconnect();
-      carouselItemObserver?.disconnect();
-      nextTick(() => {
-        updateDimensions()
-        setupObserver()
-      })
+      const verticalScrollChanged = newValues[3] !== oldValues[3];
+      if (verticalScrollChanged) {
+        // Reset pages when verticalScroll changes
+        props.infiniteList.clearPages();
+        nextPageToTry.value = 0;
+        previousPageToTry.value = 0;
+        tryNextPage.value = true;
+        tryPreviousPage.value = false;
+        initFirstPage(); // Re-initialize the first page
+      } else {
+        // Update the gap in pixels}
+        // Disconnect observers before scrolling
+        pageObserver?.disconnect();
+        carouselItemObserver?.disconnect();
+        nextTick(() => {
+          updateDimensions();
+          setupObserver();
+        });
+      }
     }
   },
   { immediate: true }
@@ -394,6 +406,7 @@ defineExpose({
   grid-template-columns: repeat(var(--num-cols-to-show), var(--item-width));
   grid-auto-flow: column;
   grid-auto-columns: var(--item-width);
+  grid-auto-rows: var(--item-height);
   gap: var(--gap-in-px);
   overflow-x: scroll;
   overflow-y: scroll;
