@@ -258,7 +258,7 @@ const setupObserver = () => {
           if (pageIndex) {
             fetchPage(+pageIndex)
           }
-        }, 50)()
+        }, 100)()
       }
     })
   }, {
@@ -278,9 +278,11 @@ const setupObserver = () => {
         const imgIndex = entry.target.getAttribute('data-img-index') || ''
         visibleImages.value.add(imgIndex)
       } else {
-        // console.log('Image is not in view:', entry)
-        const imgIndex = entry.target.getAttribute('data-img-index') || ''
-        visibleImages.value.delete(imgIndex)
+        useThrottleFn(() => {
+          // console.log('Image is not in view:', entry)
+          const imgIndex = entry.target.getAttribute('data-img-index') || ''
+          visibleImages.value.delete(imgIndex)
+        }, 100)()
       }
     })
   }, {
