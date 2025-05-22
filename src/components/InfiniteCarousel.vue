@@ -183,10 +183,11 @@ const notLoadedRowSpan = computed(() => {
 })
 
 const notLoadedRemainingItems = computed(() => {
+  // console.log('Not loaded remaining items:', itemsPerPage, props.numColsToShow, props.numRowsToShow)
   if (!props.verticalScroll) {
-    return itemsPerPage % props.numColsToShow
+    return itemsPerPage % Math.floor(props.numColsToShow)
   }
-  return itemsPerPage % props.numRowsToShow
+  return itemsPerPage % Math.floor(props.numRowsToShow)
 })
 
 const notLoadedWidth = computed(() => {
