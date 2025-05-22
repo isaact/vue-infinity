@@ -361,27 +361,14 @@ onMounted(async () => {
 
 watch(
   [() => props.numColsToShow, () => props.numRowsToShow, () => props.gap, () => props.verticalScroll],
-  (newValues, oldValues) => {
+  () => {
     if (carouselContainer.value) {
-      const verticalScrollChanged = newValues[3] !== oldValues[3];
-      if (verticalScrollChanged) {
-        // Reset pages when verticalScroll changes
-        props.infiniteList.clearPages();
-        nextPageToTry.value = 0;
-        previousPageToTry.value = 0;
-        tryNextPage.value = true;
-        tryPreviousPage.value = false;
-        initFirstPage(); // Re-initialize the first page
-      } else {
-        // Update the gap in pixels}
-        // Disconnect observers before scrolling
-        pageObserver?.disconnect();
-        carouselItemObserver?.disconnect();
-        nextTick(() => {
-          updateDimensions();
-          setupObserver();
-        });
-      }
+      pageObserver?.disconnect();
+      carouselItemObserver?.disconnect();
+      nextTick(() => {
+        updateDimensions();
+        setupObserver();
+      });
     }
   },
   { immediate: true }
