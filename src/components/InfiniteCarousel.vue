@@ -30,7 +30,7 @@
         <slot name="item" v-if="visibleImages.has(`${item.id}`) && item.status === 'resolved'" :item="item" :index="item.index" :page="item.page">
           Item {{ item.index }}
         </slot>
-        <slot name="loading" v-else-if="item.status === 'resolved' || item.status === 'pending'" :index="`${item.index}`" :page="item.page">
+        <slot name="loading" v-else :index="`${item.index}`" :page="item.page">
           <div class="loading-overlay">Loading...</div>
         </slot>
       </div>
@@ -46,6 +46,16 @@ import { useThrottleFn } from '@vueuse/core'
 import { vResizeObserver } from '@vueuse/components'
 import { InfiniteList, type InfiniteListPage } from '../composables/useInfiniteList'
 import { useAutoObserver, type AutoObserver } from '../composables/useAutoObserver'
+
+interface ItemMetaData {
+  index: number
+  isPageMarker: boolean
+  page: number
+  rowSpan: number
+  colSpan: number
+  status: 'resolved' | 'pending' | 'not-loaded' | 'not-loaded-item'
+  id: string
+}
 
 const props = withDefaults(
   defineProps<{
@@ -84,15 +94,7 @@ const tryNextPage = ref(true)
 const tryPreviousPage = ref(false)
 const gapInPixels = ref(0)
 
-
-const pagesToTry = computed(() => {
-  const pages = []
-  for (let i = previousPageToTry.value; i <= nextPageToTry.value; i++) {
-    pages.push(i)
-  }
-  return pages
-})
-
+//Add return type
 const pageItems = computed(() => {
   const items = []
   for (let i = 0; i <= nextPageToTry.value; i++) {
@@ -102,20 +104,33 @@ const pageItems = computed(() => {
       
       for (let [itemIndex, item] of pages[i].items.entries()) {
         const itemId = `${i}-${itemIndex}`
-        item.index = i * itemsPerPage + itemIndex
-        item.id = itemId
-        item.page = itemIndex === 0 ? i : ''
-        item.rowSpan = 1
-        item.colSpan = 1
-        item.status = 'resolved'
-        items.push(item)
+        const itemInfo: ItemMetaData = {
+          index: i * itemsPerPage + itemIndex,
+          isPageMarker: itemIndex === 0,
+          page: i,
+          rowSpan: 1,
+          colSpan: 1,
+          status: 'resolved',
+          id: itemId
+        }
+        items.push([item, itemInfo])
       }
     }else if (pages[i]?.status === 'pending') {
       // items.push(...Array(itemsPerPage).fill({rowSpan: 1, colSpan: 1, index:}))
       for (let itemIndex = 0; itemIndex < itemsPerPage; itemIndex++) {
         const itemId = `${i}-${itemIndex}`
         const pageIdx = itemIndex === 0 ? i : ''
-        items.push({status: 'pending', rowSpan: 1, colSpan: 1, index: i * itemsPerPage + itemIndex, page: pageIdx, id: itemId})
+        const itemInfo: ItemMetaData = {
+          index: i * itemsPerPage + itemIndex,
+          isPageMarker: itemIndex === 0,
+          page: i,
+          rowSpan: 1,
+          colSpan: 1,
+          status: 'pending',
+          id: itemId
+        }
+        // items.push({status: 'pending', rowSpan: 1, colSpan: 1, index: i * itemsPerPage + itemIndex, page: pageIdx, id: itemId})
+        items.push([{}, itemInfo])
       }
     } else if(!pages[i] || pages[i].status === 'not-loaded') {
       const itemId = `${i}-0`
@@ -123,12 +138,30 @@ const pageItems = computed(() => {
         items.push({status: 'not-loaded-item', rowSpan: 1, colSpan: 1, page: i, id: itemId})
         for (let itemIndex = 1; itemIndex < notLoadedRemainingItems.value; itemIndex++) {
           const itemId = `${i}-${itemIndex}`
-          let itemStatus =  'not-loaded-item'
-          let pageIndex = undefined
-          items.push({status: itemStatus, rowSpan: 1, colSpan: 1, index: i * itemsPerPage + itemIndex, page: pageIndex, id: itemId})
+          const itemInfo: ItemMetaData = {
+            index: i * itemsPerPage + itemIndex,
+            isPageMarker: false,
+            page: i,
+            rowSpan: 1,
+            colSpan: 1,
+            status: 'not-loaded-item',
+            id: itemId
+          }
+          // items.push({status: itemStatus, rowSpan: 1, colSpan: 1, index: i * itemsPerPage + itemIndex, page: pageIndex, id: itemId})
+          items.push([{}, itemInfo])
         }
       }
-      items.push({status: 'not-loaded', rowSpan: notLoadedRowSpan, colSpan: notLoadedColSpan, page: i, id: itemId})
+      const itemInfo: ItemMetaData = {
+        index: i * itemsPerPage,
+        isPageMarker: true,
+        page: i,
+        rowSpan: notLoadedRowSpan.value,
+        colSpan: notLoadedColSpan.value,
+        status: 'not-loaded',
+        id: itemId
+      }
+      // items.push({status: 'not-loaded', rowSpan: notLoadedRowSpan, colSpan: notLoadedColSpan, page: i, id: itemId})
+      items.push([{}, itemInfo])
     }
   }
   return items
@@ -185,9 +218,9 @@ const notLoadedRowSpan = computed(() => {
 const notLoadedRemainingItems = computed(() => {
   // console.log('Not loaded remaining items:', itemsPerPage, props.numColsToShow, props.numRowsToShow)
   if (!props.verticalScroll) {
-    return itemsPerPage % Math.floor(props.numColsToShow)
+    return itemsPerPage % adjustedNumRowsToShow.value
   }
-  return itemsPerPage % Math.floor(props.numRowsToShow)
+  return itemsPerPage % adjustedNumColsToShow.value
 })
 
 const notLoadedWidth = computed(() => {
@@ -253,13 +286,26 @@ const setupObserver = () => {
   pageObserver =  useAutoObserver(carouselContainer, (entries) => {
     entries.forEach(entry => {
       if (entry.isIntersecting) {
-        useThrottleFn(() => {
+        // useThrottleFn(() => {
           // console.log('Page is in view:', entry)
           const pageIndex = entry.target.getAttribute('data-page-index')
           if (pageIndex) {
             fetchPage(+pageIndex)
           }
-        }, 100)()
+        // }, 30)()
+      }else {
+        //Abort the fetch if the page is not in view
+        // console.log('Page is not in view:', entry)
+        const pageIndex = entry.target.getAttribute('data-page-index')
+        if (pageIndex) {
+          // console.log('Aborting fetch for page:', pageIndex)
+          const page = pages[+pageIndex]
+          if (page && page.status === 'pending') {
+            // console.log('Aborting fetch for page:', pageIndex)
+            page.abortController?.abort()
+            page.status = 'not-loaded'
+          }
+        }
       }
     })
   }, {
@@ -301,10 +347,10 @@ const initFirstPage = async () => {
     await fetchPage(0)
   }
   // Seed visibleImages for SSR
-  const numVisible = props.numColsToShow * props.numRowsToShow * 2;
+  const numVisible = props.numColsToShow * props.numRowsToShow
   for (let i = 0; i < numVisible; i++) {
-    const item = pageItems.value[i]
-    visibleImages.value.add(item.id);
+    const [_, itemData] = pageItems.value[i]
+    visibleImages.value.add(itemData.id);
   }
 }
 

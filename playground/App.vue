@@ -70,7 +70,7 @@ const carouselWidth = ref('100%')
 const gapValue = ref('10px')
 const numItems = ref(3000)
 const verticalScroll = ref(false)
-const itemsPerPage = ref(20) // Still needed for the infinite list
+const itemsPerPage = ref(11) // Still needed for the infinite list
 const scrollToIndex = ref(0)
 const carouselRef = ref<InstanceType<typeof InfiniteCarousel>>()
 
