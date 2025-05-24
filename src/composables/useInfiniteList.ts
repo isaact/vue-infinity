@@ -8,6 +8,7 @@ export interface InfiniteList<T> {
   clearPage: (pageNum: number) => void
   clearPages: () => void
   updatePages: (preloadedPages: Record<number, InfiniteListPage<T>>) => void
+  updateMaxPagesToCache: (newMax: number) => void
 }
 
 export interface InfiniteListOptions<T> {
@@ -27,7 +28,8 @@ export interface InfiniteListPage<T> {
 }
 
 export function useInfiniteList<T>(options: InfiniteListOptions<T>): InfiniteList<T> {
-  const { fetchItems, itemsPerPage, maxPagesToCache } = options
+  const { fetchItems, itemsPerPage } = options
+  let { maxPagesToCache } = options // Make maxPagesToCache mutable
 
   const pages = reactive<Record<number, InfiniteListPage<T>>>(options.preloadedPages || {})
   // const notLoadedPages = reactive<Set<number>>(new Set())
@@ -173,6 +175,11 @@ export function useInfiniteList<T>(options: InfiniteListOptions<T>): InfiniteLis
     }
   }
 
+  function updateMaxPagesToCache(newMax: number) {
+    maxPagesToCache = newMax
+    cleanupCache() // Run cleanup immediately after updating the max
+  }
+
   return {
     pages,
     itemsPerPage,
@@ -180,6 +187,7 @@ export function useInfiniteList<T>(options: InfiniteListOptions<T>): InfiniteLis
     fetchPage: fetchAndCachePage,
     clearPage,
     clearPages,
-    updatePages
+    updatePages,
+    updateMaxPagesToCache // Return the new method
   }
 }

@@ -79,7 +79,7 @@ const scrollToItem = () => {
     carouselRef.value.scrollToItem(scrollToIndex.value)
   }
 }
-const maxPagesToCache = ref(5)//ref(Math.ceil(numRowsToShow.value * numColsToShow.value * 3 / itemsPerPage.value) + 2) // 3 pages of items to cache
+const maxPagesToCache = ref(11)//ref(Math.ceil(numRowsToShow.value * numColsToShow.value * 3 / itemsPerPage.value) + 2) // 3 pages of items to cache
 
 const maxSlides = computed(() => itemsPerPage.value * maxPagesToCache.value)
 

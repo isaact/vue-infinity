@@ -22,12 +22,11 @@
         :style="{ gap: props.gap }" 
         :class="{ vertical: props.verticalScroll }">
       <div
-        v-for="item in pageItems" :key="`item-${item.id}`" :id="`${item.id}`"
-        class="carousel-item"
-        :class="{ 'not-loaded': item.status === 'not-loaded', 'not-loaded-item': item.status === 'not-loaded-item', 'loaded': item.status === 'resolved' }"
+        v-for="(item in pageItems" :key="`item-${item.id}`" :id="item.id" class="carousel-item"
+        :class="item.status"
         :data-page-index="item.page"
-        :data-img-index="item.status === 'resolved' ? item.id : ''">
-        <slot name="item" v-if="visibleImages.has(`${item.id}`) && item.status === 'resolved'" :item="item" :index="item.index" :page="item.page">
+        :data-img-index="item.status === 'loaded' ? item.id : ''">
+        <slot name="item" v-if="visibleImages.has(`${item.id}`) && item.status === 'loaded'" :item="fetchItem(item)" :index="item.index" :page="item.page">
           Item {{ item.index }}
         </slot>
         <slot name="loading" v-else :index="`${item.index}`" :page="item.page">
@@ -49,11 +48,12 @@ import { useAutoObserver, type AutoObserver } from '../composables/useAutoObserv
 
 interface ItemMetaData {
   index: number
+  itemIndex?: number // Optional, used for resolved items to track their index in the page
   isPageMarker: boolean
   page: number
   rowSpan: number
   colSpan: number
-  status: 'resolved' | 'pending' | 'not-loaded' | 'not-loaded-item'
+  status: 'loaded' | 'pending' | 'not-loaded' | 'not-loaded-item'
   id: string
 }
 
@@ -95,8 +95,8 @@ const tryPreviousPage = ref(false)
 const gapInPixels = ref(0)
 
 //Add return type
-const pageItems = computed(() => {
-  const items = []
+const pageItems = computed((): Array<ItemMetaData> => {
+  const items: Array<ItemMetaData>= []
   for (let i = 0; i <= nextPageToTry.value; i++) {
     // console.log('Page items:', i, nextPageToTry.value, previousPageToTry.value)
     if (pages[i]?.status === 'resolved') {
@@ -106,14 +106,15 @@ const pageItems = computed(() => {
         const itemId = `${i}-${itemIndex}`
         const itemInfo: ItemMetaData = {
           index: i * itemsPerPage + itemIndex,
+          itemIndex, // Store the index of the item in the page
           isPageMarker: itemIndex === 0,
           page: i,
           rowSpan: 1,
           colSpan: 1,
-          status: 'resolved',
+          status: 'loaded',
           id: itemId
         }
-        items.push([item, itemInfo])
+        items.push(itemInfo)
       }
     }else if (pages[i]?.status === 'pending') {
       // items.push(...Array(itemsPerPage).fill({rowSpan: 1, colSpan: 1, index:}))
@@ -130,17 +131,17 @@ const pageItems = computed(() => {
           id: itemId
         }
         // items.push({status: 'pending', rowSpan: 1, colSpan: 1, index: i * itemsPerPage + itemIndex, page: pageIdx, id: itemId})
-        items.push([{}, itemInfo])
+        items.push(itemInfo)
       }
     } else if(!pages[i] || pages[i].status === 'not-loaded') {
       const itemId = `${i}-0`
       if(notLoadedRemainingItems.value > 0) {
-        items.push({status: 'not-loaded-item', rowSpan: 1, colSpan: 1, page: i, id: itemId})
+        // items.push({status: 'not-loaded-item', rowSpan: 1, colSpan: 1, page: i, id: itemId})
         for (let itemIndex = 1; itemIndex < notLoadedRemainingItems.value; itemIndex++) {
           const itemId = `${i}-${itemIndex}`
           const itemInfo: ItemMetaData = {
             index: i * itemsPerPage + itemIndex,
-            isPageMarker: false,
+            isPageMarker: itemIndex === 0,
             page: i,
             rowSpan: 1,
             colSpan: 1,
@@ -148,7 +149,7 @@ const pageItems = computed(() => {
             id: itemId
           }
           // items.push({status: itemStatus, rowSpan: 1, colSpan: 1, index: i * itemsPerPage + itemIndex, page: pageIndex, id: itemId})
-          items.push([{}, itemInfo])
+          items.push(itemInfo)
         }
       }
       const itemInfo: ItemMetaData = {
@@ -161,7 +162,7 @@ const pageItems = computed(() => {
         id: itemId
       }
       // items.push({status: 'not-loaded', rowSpan: notLoadedRowSpan, colSpan: notLoadedColSpan, page: i, id: itemId})
-      items.push([{}, itemInfo])
+      items.push(itemInfo)
     }
   }
   return items
@@ -349,9 +350,11 @@ const initFirstPage = async () => {
   // Seed visibleImages for SSR
   const numVisible = props.numColsToShow * props.numRowsToShow
   for (let i = 0; i < numVisible; i++) {
-    const [_, itemData] = pageItems.value[i]
+    const itemData = pageItems.value[i]
+    console.log('Seeding visible image:', itemData.id, itemData.status)
     visibleImages.value.add(itemData.id);
   }
+  console.log('Initial visible images:', visibleImages.value)
 }
 
 const scrollToItem = async (itemIndex: number) => {
@@ -393,6 +396,21 @@ const scrollToItem = async (itemIndex: number) => {
   }
 
   await checkItem()
+}
+const fetchItem = (itemInfo: ItemMetaData): any => {
+  console.log('Fetching item:', itemInfo.id, itemInfo.status, itemInfo.page, itemInfo.itemIndex)
+  if (itemInfo.status === 'loaded' && itemInfo.itemIndex !== undefined && pages[itemInfo.page]) {
+    console.log('Returning loaded item:', pages[itemInfo.page].items[itemInfo.itemIndex])
+    return pages[itemInfo.page].items[itemInfo.itemIndex]
+  } else if (itemInfo.status === 'pending') {
+    console.log('Item is pending, returning null:', itemInfo.id)
+    return null
+  } else if (itemInfo.status === 'not-loaded' || itemInfo.status === 'not-loaded-item') {
+    console.log('Item is not loaded, returning null:', itemInfo.id)
+    return null
+  }
+  console.warn('Unknown item status:', itemInfo.status, 'for item:', itemInfo.id)
+  return null
 }
 
 onMounted(async () => {
