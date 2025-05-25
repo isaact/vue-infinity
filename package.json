@@ -30,7 +30,7 @@
   "homepage": "https://tewolde.co/vueInfinity/",
   "repository": {
     "type": "git",
-    "url": "https://github.com/isaact/vue-infinity.git"
+    "url": "git+https://github.com/isaact/vue-infinity.git"
   },
   "dependencies": {
     "@vueuse/components": "^13.1.0"
