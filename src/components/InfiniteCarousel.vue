@@ -97,13 +97,16 @@ const gapInPixels = ref(0)
 //Add return type
 const pageItems = computed((): Array<ItemMetaData> => {
   const items: Array<ItemMetaData>= []
+  let itemPosition = 0
+  let itemsPerView = adjustedNumRowsToShow.value * adjustedNumColsToShow.value
   for (let i = 0; i <= nextPageToTry.value; i++) {
     // console.log('Page items:', i, nextPageToTry.value, previousPageToTry.value)
     if (pages[i]?.status === 'resolved') {
       // items.push(...pages[i].items)
-      
-      for (let [itemIndex, item] of pages[i].items.entries()) {
+      itemPosition += pages[i].items.length
+      for (let [itemIndex, _] of pages[i].items.entries()) {
         const itemId = `${i}-${itemIndex}`
+        itemPosition++
         const itemInfo: ItemMetaData = {
           index: i * itemsPerPage + itemIndex,
           itemIndex, // Store the index of the item in the page
@@ -118,6 +121,7 @@ const pageItems = computed((): Array<ItemMetaData> => {
       }
     }else if (pages[i]?.status === 'pending') {
       // items.push(...Array(itemsPerPage).fill({rowSpan: 1, colSpan: 1, index:}))
+      itemPosition += itemsPerPage
       for (let itemIndex = 0; itemIndex < itemsPerPage; itemIndex++) {
         const itemId = `${i}-${itemIndex}`
         const pageIdx = itemIndex === 0 ? i : ''
@@ -135,13 +139,14 @@ const pageItems = computed((): Array<ItemMetaData> => {
       }
     } else if(!pages[i] || pages[i].status === 'not-loaded') {
       const itemId = `${i}-0`
-      if(notLoadedRemainingItems.value > 0) {
+      const numItemsBefore = itemPosition  % itemsPerView
+      if(numItemsBefore > 0) {
         // items.push({status: 'not-loaded-item', rowSpan: 1, colSpan: 1, page: i, id: itemId})
-        for (let itemIndex = 0; itemIndex < notLoadedRemainingItems.value; itemIndex++) {
+        for (let itemIndex = 0; itemIndex < numItemsBefore; itemIndex++) {
           const itemId = `${i}-${itemIndex}`
           const itemInfo: ItemMetaData = {
             index: i * itemsPerPage + itemIndex,
-            isPageMarker: itemIndex === 0,
+            isPageMarker: false,
             page: i,
             rowSpan: 1,
             colSpan: 1,
@@ -154,7 +159,7 @@ const pageItems = computed((): Array<ItemMetaData> => {
       }
       const itemInfo: ItemMetaData = {
         index: i * itemsPerPage,
-        isPageMarker: notLoadedRemainingItems.value === 0,
+        isPageMarker: true,
         page: i,
         rowSpan: notLoadedRowSpan.value,
         colSpan: notLoadedColSpan.value,
@@ -163,6 +168,25 @@ const pageItems = computed((): Array<ItemMetaData> => {
       }
       // items.push({status: 'not-loaded', rowSpan: notLoadedRowSpan, colSpan: notLoadedColSpan, page: i, id: itemId})
       items.push(itemInfo)
+      const remaintingItems = notLoadedRemainingItems.value - numItemsBefore
+      if( remaintingItems > 0) {
+        // Add a not-loaded item for the remaining items
+        for (let itemIndex = 0; itemIndex < remaintingItems; itemIndex++) {
+          const itemId = `${i}-${itemIndex + numItemsBefore + itemsPerView}`
+          const itemInfo: ItemMetaData = {
+            index: i * itemsPerPage + itemIndex,
+            isPageMarker: false,
+            page: i,
+            rowSpan: 1,
+            colSpan: 1,
+            status: 'not-loaded-item',
+            id: itemId
+          }
+          // items.push({status: itemStatus, rowSpan: 1, colSpan: 1, index: i * itemsPerPage + itemIndex, page: pageIndex, id: itemId})
+          items.push(itemInfo)
+        }
+      }
+      itemPosition += itemsPerPage
     }
   }
   return items
