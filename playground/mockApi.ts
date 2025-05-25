@@ -45,7 +45,7 @@ export async function fetchMockImages(
 
     signal?.addEventListener('abort', () => {
       clearTimeout(timeout)
-      reject(new DOMException('Aborted2', 'AbortError'))
+      // reject(new DOMException('Aborted2', 'AbortError'))
     })
   })
 }

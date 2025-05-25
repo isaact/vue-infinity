@@ -63,14 +63,14 @@ import { fetchMockImages } from './mockApi'
 import type { GalleryItem } from './mockApi'
 
 
-const numRowsToShow = ref(3)
-const numColsToShow = ref(3)
+const numRowsToShow = ref(2)
+const numColsToShow = ref(2)
 const carouselHeight = ref('45vh')
 const carouselWidth = ref('100%')
 const gapValue = ref('10px')
 const numItems = ref(3000)
 const verticalScroll = ref(false)
-const itemsPerPage = ref(11) // Still needed for the infinite list
+const itemsPerPage = ref(7) // Still needed for the infinite list
 const scrollToIndex = ref(0)
 const carouselRef = ref<InstanceType<typeof InfiniteCarousel>>()
 
@@ -79,7 +79,7 @@ const scrollToItem = () => {
     carouselRef.value.scrollToItem(scrollToIndex.value)
   }
 }
-const maxPagesToCache = ref(11)//ref(Math.ceil(numRowsToShow.value * numColsToShow.value * 3 / itemsPerPage.value) + 2) // 3 pages of items to cache
+const maxPagesToCache = ref(3)//ref(Math.ceil(numRowsToShow.value * numColsToShow.value * 3 / itemsPerPage.value) + 2) // 3 pages of items to cache
 
 const maxSlides = computed(() => itemsPerPage.value * maxPagesToCache.value)
 

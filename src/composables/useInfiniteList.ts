@@ -8,6 +8,7 @@ export interface InfiniteList<T> {
   clearPage: (pageNum: number) => void
   clearPages: () => void
   updatePages: (preloadedPages: Record<number, InfiniteListPage<T>>) => void
+  maxPagesToCache: number // Make this mutable
   updateMaxPagesToCache: (newMax: number) => void
 }
 
@@ -116,6 +117,7 @@ export function useInfiniteList<T>(options: InfiniteListOptions<T>): InfiniteLis
   function cleanupCache() {
     const cachedPages = Object.values(pages).filter(page => page.status === 'resolved' && page.lastUsed !== undefined)
     if (cachedPages.length > maxPagesToCache) {
+      console.log(`Cleaning up cache: ${cachedPages.length} cached pages, max allowed is ${maxPagesToCache}`)
       // Sort by lastUsed timestamp ascending (oldest first)
       cachedPages.sort((a, b) => (a.lastUsed || 0) - (b.lastUsed || 0))
 
@@ -131,6 +133,7 @@ export function useInfiniteList<T>(options: InfiniteListOptions<T>): InfiniteLis
   function clearPage(pageNum: number) {
     const page = pages[pageNum]
     const wasResolved = page.status === 'resolved'
+    console.log(`Clearing page ${pageNum}...`)
     if (page.status === 'pending') {
       page.abortController?.abort()
       page.abortController = undefined
@@ -139,15 +142,9 @@ export function useInfiniteList<T>(options: InfiniteListOptions<T>): InfiniteLis
     }
     page.items.splice(0)
     page.status = 'not-loaded'
-    // notLoadedPages.add(pageNum)
   }
 
   function clearPages() {
-    // for (let i = 0; i < totalPages; i++) {
-    //   clearPage(i)
-    // }
-    // usageOrder.length = 0 // No longer needed
-    //Loop through all the pages and clear them
     for (const pageNum in pages) {
       clearPage(Number(pageNum))
     }
@@ -188,6 +185,7 @@ export function useInfiniteList<T>(options: InfiniteListOptions<T>): InfiniteLis
     clearPage,
     clearPages,
     updatePages,
+    maxPagesToCache, // Expose the mutable maxPagesToCache
     updateMaxPagesToCache // Return the new method
   }
 }

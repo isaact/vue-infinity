@@ -24,7 +24,7 @@
       <div
         v-for="(item in pageItems" :key="`item-${item.id}`" :id="item.id" class="carousel-item"
         :class="item.status"
-        :data-page-index="item.page"
+        :data-page-index="item.isPageMarker ? item.page : ''"
         :data-img-index="item.status === 'loaded' ? item.id : ''">
         <slot name="item" v-if="visibleImages.has(`${item.id}`) && item.status === 'loaded'" :item="fetchItem(item)" :index="item.index" :page="item.page">
           Item {{ item.index }}
@@ -86,7 +86,7 @@ const visibleImages = ref(new Set<string>())
 let pageObserver: AutoObserver | null = null
 let carouselItemObserver: AutoObserver | null = null
 
-const { pages, getItem, fetchPage: realfetchPage } = props.infiniteList
+const { pages, getItem, fetchPage: realfetchPage, updateMaxPagesToCache } = props.infiniteList
 const initialNextPage = (pages[0] && (pages[0].status === 'resolved' || pages[0].status === 'pending')) ? 1 : 0;
 const nextPageToTry = ref(initialNextPage);
 const previousPageToTry = ref(0);
@@ -137,7 +137,7 @@ const pageItems = computed((): Array<ItemMetaData> => {
       const itemId = `${i}-0`
       if(notLoadedRemainingItems.value > 0) {
         // items.push({status: 'not-loaded-item', rowSpan: 1, colSpan: 1, page: i, id: itemId})
-        for (let itemIndex = 1; itemIndex < notLoadedRemainingItems.value; itemIndex++) {
+        for (let itemIndex = 0; itemIndex < notLoadedRemainingItems.value; itemIndex++) {
           const itemId = `${i}-${itemIndex}`
           const itemInfo: ItemMetaData = {
             index: i * itemsPerPage + itemIndex,
@@ -154,7 +154,7 @@ const pageItems = computed((): Array<ItemMetaData> => {
       }
       const itemInfo: ItemMetaData = {
         index: i * itemsPerPage,
-        isPageMarker: true,
+        isPageMarker: notLoadedRemainingItems.value === 0,
         page: i,
         rowSpan: notLoadedRowSpan.value,
         colSpan: notLoadedColSpan.value,
@@ -303,8 +303,12 @@ const setupObserver = () => {
           const page = pages[+pageIndex]
           if (page && page.status === 'pending') {
             // console.log('Aborting fetch for page:', pageIndex)
-            page.abortController?.abort()
-            page.status = 'not-loaded'
+            // page.abortController?.abort()
+            // page.status = 'not-loaded'
+            nextTick(() => {
+              // console.log('Clearing page:', pageIndex)
+              props.infiniteList.clearPage(+pageIndex)
+            })
           }
         }
       }
@@ -312,6 +316,8 @@ const setupObserver = () => {
   }, {
     // Filter only elements with that have the class .carousel-item.not-loaded
     filter: el => {
+      // return true if the element has data-page-index attribute
+      return el.classList.contains('carousel-item') && el.hasAttribute('data-page-index')
       return el.classList.contains('carousel-item') && el.classList.contains('not-loaded')
     },
     // filter: el => notLoadedPages.value.includes(el),
@@ -351,10 +357,10 @@ const initFirstPage = async () => {
   const numVisible = props.numColsToShow * props.numRowsToShow
   for (let i = 0; i < numVisible; i++) {
     const itemData = pageItems.value[i]
-    console.log('Seeding visible image:', itemData.id, itemData.status)
+    // console.log('Seeding visible image:', itemData.id, itemData.status)
     visibleImages.value.add(itemData.id);
   }
-  console.log('Initial visible images:', visibleImages.value)
+  // console.log('Initial visible images:', visibleImages.value)
 }
 
 const scrollToItem = async (itemIndex: number) => {
@@ -398,25 +404,33 @@ const scrollToItem = async (itemIndex: number) => {
   await checkItem()
 }
 const fetchItem = (itemInfo: ItemMetaData): any => {
-  console.log('Fetching item:', itemInfo.id, itemInfo.status, itemInfo.page, itemInfo.itemIndex)
+  // console.log('Fetching item:', itemInfo.id, itemInfo.status, itemInfo.page, itemInfo.itemIndex)
   if (itemInfo.status === 'loaded' && itemInfo.itemIndex !== undefined && pages[itemInfo.page]) {
-    console.log('Returning loaded item:', pages[itemInfo.page].items[itemInfo.itemIndex])
+    // console.log('Returning loaded item:', pages[itemInfo.page].items[itemInfo.itemIndex])
     return pages[itemInfo.page].items[itemInfo.itemIndex]
   } else if (itemInfo.status === 'pending') {
-    console.log('Item is pending, returning null:', itemInfo.id)
+    // console.log('Item is pending, returning null:', itemInfo.id)
     return null
   } else if (itemInfo.status === 'not-loaded' || itemInfo.status === 'not-loaded-item') {
-    console.log('Item is not loaded, returning null:', itemInfo.id)
+    // console.log('Item is not loaded, returning null:', itemInfo.id)
     return null
   }
-  console.warn('Unknown item status:', itemInfo.status, 'for item:', itemInfo.id)
+  // console.warn('Unknown item status:', itemInfo.status, 'for item:', itemInfo.id)
   return null
+}
+const fixCacheSize = () => {
+  const newMaxPagesToCache = Math.ceil(props.numRowsToShow * props.numColsToShow * 3 * 3 / itemsPerPage)
+  if( props.infiniteList.maxPagesToCache >= newMaxPagesToCache) {
+    return
+  }
+  console.log('Updating max pages to cache:', newMaxPagesToCache);
+  updateMaxPagesToCache(newMaxPagesToCache);
 }
 
 onMounted(async () => {
+  fixCacheSize()
   await initFirstPage()
   if (carouselContainer.value) {
-    // console.log('Carousel element:', carousel.value)
     gapInPixels.value = parseFloat(getComputedStyle(carouselContainer.value).gap)
   }
   nextTick(() => {
@@ -431,8 +445,13 @@ watch(
       pageObserver?.disconnect();
       carouselItemObserver?.disconnect();
       nextTick(() => {
+        fixCacheSize();
         updateDimensions();
+        scrollToItem(0); // Scroll to the first item after updating dimensions
         setupObserver();
+        // Update maxPagesToCache based on visible items + buffer
+        
+        
       });
     }
   },
