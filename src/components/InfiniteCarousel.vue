@@ -318,7 +318,6 @@ const setupObserver = () => {
     filter: el => {
       // return true if the element has data-page-index attribute
       return el.classList.contains('carousel-item') && el.hasAttribute('data-page-index')
-      return el.classList.contains('carousel-item') && el.classList.contains('not-loaded')
     },
     // filter: el => notLoadedPages.value.includes(el),
     root: carouselContainer.value,
