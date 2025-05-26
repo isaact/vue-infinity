@@ -30,7 +30,7 @@
           Item {{ item.index }}
         </slot>
         <slot name="loading" v-else :index="`${item.index}`" :page="item.page">
-          <div class="loading-overlay">Loading...</div>
+          <div class="loading-overlay">Loading {{ item.index }}...</div>
         </slot>
       </div>
     </div>
@@ -88,7 +88,7 @@ let carouselItemObserver: AutoObserver | null = null
 
 const { pages, getItem, fetchPage: realfetchPage, updateMaxPagesToCache } = props.infiniteList
 const initialNextPage = (pages[0] && (pages[0].status === 'resolved' || pages[0].status === 'pending')) ? 1 : 0;
-const nextPageToTry = ref(initialNextPage);
+const nextPageToTry = ref(7);
 const previousPageToTry = ref(0);
 const tryNextPage = ref(true)
 const tryPreviousPage = ref(false)
@@ -98,12 +98,11 @@ const gapInPixels = ref(0)
 const pageItems = computed((): Array<ItemMetaData> => {
   const items: Array<ItemMetaData>= []
   let itemPosition = 0
-  let itemsPerView = adjustedNumRowsToShow.value * adjustedNumColsToShow.value
+  // let itemsPerView = adjustedNumRowsToShow.value * adjustedNumColsToShow.value
   for (let i = 0; i <= nextPageToTry.value; i++) {
     // console.log('Page items:', i, nextPageToTry.value, previousPageToTry.value)
     if (pages[i]?.status === 'resolved') {
       // items.push(...pages[i].items)
-      itemPosition += pages[i].items.length
       for (let [itemIndex, _] of pages[i].items.entries()) {
         const itemId = `${i}-${itemIndex}`
         itemPosition++
@@ -119,6 +118,7 @@ const pageItems = computed((): Array<ItemMetaData> => {
         }
         items.push(itemInfo)
       }
+      console.log('Added resolved page:', i, 'with items:', pages[i].items.length, 'total items:', itemPosition)
     }else if (pages[i]?.status === 'pending') {
       // items.push(...Array(itemsPerPage).fill({rowSpan: 1, colSpan: 1, index:}))
       itemPosition += itemsPerPage
@@ -139,7 +139,8 @@ const pageItems = computed((): Array<ItemMetaData> => {
       }
     } else if(!pages[i] || pages[i].status === 'not-loaded') {
       const itemId = `${i}-0`
-      const numItemsBefore = itemPosition  % itemsPerView
+      const numItemsBefore = props.verticalScroll ? adjustedNumColsToShow.value  - itemPosition % adjustedNumColsToShow.value : adjustedNumRowsToShow.value - itemPosition % adjustedNumRowsToShow.value
+      console.log('Not loaded page:', i, 'numItemsBefore:', numItemsBefore, 'itemPosition:', itemPosition, 'itemsPerPage:', itemsPerPage)
       if(numItemsBefore > 0) {
         // items.push({status: 'not-loaded-item', rowSpan: 1, colSpan: 1, page: i, id: itemId})
         for (let itemIndex = 0; itemIndex < numItemsBefore; itemIndex++) {
@@ -157,6 +158,9 @@ const pageItems = computed((): Array<ItemMetaData> => {
           items.push(itemInfo)
         }
       }
+      const colSpan = Math.floor((itemsPerPage - numItemsBefore) / adjustedNumColsToShow.value)
+      const rowSpan = Math.floor((itemsPerPage - numItemsBefore) / adjustedNumRowsToShow.value)
+      const remainingItems = itemsPerPage - numItemsBefore - colSpan * rowSpan
       const itemInfo: ItemMetaData = {
         index: i * itemsPerPage,
         isPageMarker: true,
@@ -168,11 +172,13 @@ const pageItems = computed((): Array<ItemMetaData> => {
       }
       // items.push({status: 'not-loaded', rowSpan: notLoadedRowSpan, colSpan: notLoadedColSpan, page: i, id: itemId})
       items.push(itemInfo)
-      const remaintingItems = notLoadedRemainingItems.value - numItemsBefore
-      if( remaintingItems > 0) {
+      // const remainingItems = notLoadedRemainingItems.value - numItemsBefore
+      
+      if( remainingItems > 0) {
+        const startIndex = itemsPerPage - remainingItems
         // Add a not-loaded item for the remaining items
-        for (let itemIndex = 0; itemIndex < remaintingItems; itemIndex++) {
-          const itemId = `${i}-${itemIndex + numItemsBefore + itemsPerView}`
+        for (let itemIndex = startIndex; itemIndex < itemsPerPage; itemIndex++) {
+          const itemId = `${i}-${itemIndex}`
           const itemInfo: ItemMetaData = {
             index: i * itemsPerPage + itemIndex,
             isPageMarker: false,
