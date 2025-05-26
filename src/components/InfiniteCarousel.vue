@@ -25,7 +25,14 @@
         v-for="(item in pageItems" :key="`item-${item.id}`" :id="item.id" class="carousel-item"
         :class="item.status"
         :data-page-index="item.isPageMarker ? item.page : ''"
-        :data-img-index="item.status === 'loaded' ? item.id : ''">
+        :data-img-index="item.status === 'loaded' ? item.id : ''"
+        :style="{
+          'grid-column': item.colSpan > 1 ? `span ${item.colSpan}` : undefined,
+          'grid-row': item.rowSpan > 1 ? `span ${item.rowSpan}` : undefined,
+          width: item.colSpan > 1 ? `${item.colSpan * itemWidth + (item.colSpan - 1) * gapInPixels}px` : undefined,
+          height: item.rowSpan > 1 ? `${item.rowSpan * itemHeight + (item.rowSpan - 1) * gapInPixels}px` : undefined,
+        }"
+      >
         <slot name="item" v-if="visibleImages.has(`${item.id}`) && item.status === 'loaded'" :item="fetchItem(item)" :index="item.index" :page="item.page">
           Item {{ item.index }}
         </slot>
@@ -45,6 +52,7 @@ import { useThrottleFn } from '@vueuse/core'
 import { vResizeObserver } from '@vueuse/components'
 import { InfiniteList, type InfiniteListPage } from '../composables/useInfiniteList'
 import { useAutoObserver, type AutoObserver } from '../composables/useAutoObserver'
+import { a } from 'vitest/dist/chunks/suite.d.FvehnV49'
 
 interface ItemMetaData {
   index: number
@@ -118,7 +126,7 @@ const pageItems = computed((): Array<ItemMetaData> => {
         }
         items.push(itemInfo)
       }
-      console.log('Added resolved page:', i, 'with items:', pages[i].items.length, 'total items:', itemPosition)
+      // console.log('Added resolved page:', i, 'with items:', pages[i].items.length, 'total items:', itemPosition)
     }else if (pages[i]?.status === 'pending') {
       // items.push(...Array(itemsPerPage).fill({rowSpan: 1, colSpan: 1, index:}))
       itemPosition += itemsPerPage
@@ -138,9 +146,8 @@ const pageItems = computed((): Array<ItemMetaData> => {
         items.push(itemInfo)
       }
     } else if(!pages[i] || pages[i].status === 'not-loaded') {
-      const itemId = `${i}-0`
       const numItemsBefore = props.verticalScroll ? adjustedNumColsToShow.value  - itemPosition % adjustedNumColsToShow.value : adjustedNumRowsToShow.value - itemPosition % adjustedNumRowsToShow.value
-      console.log('Not loaded page:', i, 'numItemsBefore:', numItemsBefore, 'itemPosition:', itemPosition, 'itemsPerPage:', itemsPerPage)
+      // console.log('Not loaded page:', i, 'numItemsBefore:', numItemsBefore, 'itemPosition:', itemPosition, 'itemsPerPage:', itemsPerPage)
       if(numItemsBefore > 0) {
         // items.push({status: 'not-loaded-item', rowSpan: 1, colSpan: 1, page: i, id: itemId})
         for (let itemIndex = 0; itemIndex < numItemsBefore; itemIndex++) {
@@ -158,15 +165,16 @@ const pageItems = computed((): Array<ItemMetaData> => {
           items.push(itemInfo)
         }
       }
-      const colSpan = Math.floor((itemsPerPage - numItemsBefore) / adjustedNumColsToShow.value)
-      const rowSpan = Math.floor((itemsPerPage - numItemsBefore) / adjustedNumRowsToShow.value)
+      const itemId = `${i}-${numItemsBefore}`
+      const colSpan = props.verticalScroll ? adjustedNumColsToShow.value : Math.floor((itemsPerPage - numItemsBefore) / adjustedNumColsToShow.value)
+      const rowSpan = props.verticalScroll ? Math.floor((itemsPerPage - numItemsBefore) / adjustedNumRowsToShow.value): adjustedNumRowsToShow.value
       const remainingItems = itemsPerPage - numItemsBefore - colSpan * rowSpan
       const itemInfo: ItemMetaData = {
-        index: i * itemsPerPage,
+        index: i * itemsPerPage + numItemsBefore,
         isPageMarker: true,
         page: i,
-        rowSpan: notLoadedRowSpan.value,
-        colSpan: notLoadedColSpan.value,
+        rowSpan: rowSpan,
+        colSpan: colSpan,
         status: 'not-loaded',
         id: itemId
       }
@@ -534,13 +542,13 @@ defineExpose({
 /* .carousel-item.currentSlide {
   transform: scale(1.03);
 } */
-
+/*
 .carousel-item.not-loaded {
   grid-row: span var(--not-loaded-row-span);
   grid-column: span var(--not-loaded-col-span);
   width: var(--not-loaded-width);
   height: var(--not-loaded-height);
-}
+}*/
 
 /* .carousel-item img {
   width: var(--item-width);

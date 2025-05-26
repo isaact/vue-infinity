@@ -117,7 +117,7 @@ export function useInfiniteList<T>(options: InfiniteListOptions<T>): InfiniteLis
   function cleanupCache() {
     const cachedPages = Object.values(pages).filter(page => page.status === 'resolved' && page.lastUsed !== undefined)
     if (cachedPages.length > maxPagesToCache) {
-      console.log(`Cleaning up cache: ${cachedPages.length} cached pages, max allowed is ${maxPagesToCache}`)
+      // console.log(`Cleaning up cache: ${cachedPages.length} cached pages, max allowed is ${maxPagesToCache}`)
       // Sort by lastUsed timestamp ascending (oldest first)
       cachedPages.sort((a, b) => (a.lastUsed || 0) - (b.lastUsed || 0))
 
@@ -133,7 +133,7 @@ export function useInfiniteList<T>(options: InfiniteListOptions<T>): InfiniteLis
   function clearPage(pageNum: number) {
     const page = pages[pageNum]
     const wasResolved = page.status === 'resolved'
-    console.log(`Clearing page ${pageNum}...`)
+    // console.log(`Clearing page ${pageNum}...`)
     if (page.status === 'pending') {
       page.abortController?.abort()
       page.abortController = undefined
@@ -151,7 +151,7 @@ export function useInfiniteList<T>(options: InfiniteListOptions<T>): InfiniteLis
   }
 
   function updatePages(preloadedPages: Record<number, InfiniteListPage<T>>) {
-    console.log('Updating pages with preloaded data:', preloadedPages)
+    // console.log('Updating pages with preloaded data:', preloadedPages)
     for (const pageNumStr in preloadedPages) {
       const pageNum = Number(pageNumStr)
       const preloadedPage = preloadedPages[pageNum]
