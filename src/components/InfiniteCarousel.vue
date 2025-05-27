@@ -108,7 +108,7 @@ const pageItems = computed((): Array<ItemMetaData> => {
   let itemPosition = 0
   // let itemsPerView = adjustedNumRowsToShow.value * adjustedNumColsToShow.value
   //Find the last page that has items
-  for (let i = 0; i <= nextPageToTry.value; i++) {
+  for (let i = 0; i < nextPageToTry.value; i++) {
     // console.log('Page items:', i, nextPageToTry.value, previousPageToTry.value)
     if (pages[i]?.status === 'resolved') {
       // items.push(...pages[i].items)
@@ -205,12 +205,12 @@ const pageItems = computed((): Array<ItemMetaData> => {
     }
   }
   items.push({
-    index: -1, // Marker for the end of the page
+    index: itemPosition, // Marker for the end of the page
     isPageMarker: true,
-    page: -1,
+    page: nextPageToTry.value,
     rowSpan: 1,
     colSpan: 1,
-    status: 'not-loaded',
+    status: 'not-loaded-item',
     id: 'page-end-marker'
   })
   return items
