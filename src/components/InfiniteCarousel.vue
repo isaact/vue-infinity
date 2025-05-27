@@ -27,10 +27,10 @@
         :data-page-index="item.isPageMarker ? item.page : ''"
         :data-img-index="item.status === 'loaded' ? item.id : ''"
         :style="{
-          'grid-column': item.colSpan > 1 ? `span ${item.colSpan}` : undefined,
-          'grid-row': item.rowSpan > 1 ? `span ${item.rowSpan}` : undefined,
-          width: item.colSpan > 1 ? `${item.colSpan * itemWidth + (item.colSpan - 1) * gapInPixels}px` : undefined,
-          height: item.rowSpan > 1 ? `${item.rowSpan * itemHeight + (item.rowSpan - 1) * gapInPixels}px` : undefined,
+        'grid-column': item.colSpan > 1 ? `span ${item.colSpan}` : undefined,
+        'grid-row': item.rowSpan > 1 ? `span ${item.rowSpan}` : undefined,
+        width: item.colSpan > 1 ? `${item.colSpan * itemWidth + (item.colSpan - 1) * gapInPixels}px` : undefined,
+        height: item.rowSpan > 1 ? `${item.rowSpan * itemHeight + (item.rowSpan - 1) * gapInPixels}px` : undefined,
         }"
       >
         <slot name="item" v-if="visibleImages.has(`${item.id}`) && item.status === 'loaded'" :item="fetchItem(item)" :index="item.index" :page="item.page">
@@ -47,8 +47,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch, useTemplateRef, nextTick, onServerPrefetch, onBeforeMount, useSSRContext } from 'vue'
-import { useThrottleFn } from '@vueuse/core'
+import { ref, computed, onMounted, onUnmounted, watch, useTemplateRef, nextTick } from 'vue'
+import { useThrottleFn, useDebounceFn } from '@vueuse/core'
 import { vResizeObserver } from '@vueuse/components'
 import { InfiniteList, type InfiniteListPage } from '../composables/useInfiniteList'
 import { useAutoObserver, type AutoObserver } from '../composables/useAutoObserver'
@@ -107,6 +107,7 @@ const pageItems = computed((): Array<ItemMetaData> => {
   const items: Array<ItemMetaData>= []
   let itemPosition = 0
   // let itemsPerView = adjustedNumRowsToShow.value * adjustedNumColsToShow.value
+  //Find the last page that has items
   for (let i = 0; i <= nextPageToTry.value; i++) {
     // console.log('Page items:', i, nextPageToTry.value, previousPageToTry.value)
     if (pages[i]?.status === 'resolved') {
@@ -203,6 +204,15 @@ const pageItems = computed((): Array<ItemMetaData> => {
       itemPosition += itemsPerPage
     }
   }
+  items.push({
+    index: -1, // Marker for the end of the page
+    isPageMarker: true,
+    page: -1,
+    rowSpan: 1,
+    colSpan: 1,
+    status: 'not-loaded',
+    id: 'page-end-marker'
+  })
   return items
 })
 
@@ -294,11 +304,11 @@ const fetchPage = async (pageNumber: number) => {
         }
       } else {
         // If the page is not resolved and the page number is === nextPageToTry, set tryNextPage to false. Or if the page number is === to previousPageToTry, set tryPreviousPage to false
-        if (pageNumber === nextPageToTry.value) {
-          tryNextPage.value = false
-        } else if (pageNumber === previousPageToTry.value) {
-          tryPreviousPage.value = false
-        }
+        // if (pageNumber === nextPageToTry.value) {
+        //   tryNextPage.value = false
+        // } else if (pageNumber === previousPageToTry.value) {
+        //   tryPreviousPage.value = false
+        // }
       }
     })
   } catch (err) {
@@ -322,32 +332,35 @@ const updateDimensions = () => {
 const setupObserver = () => {
   if (!carouselContainer.value) return
   // console.log('Setting up observer for container:', carousel.value)
+
+  const throttledFetchPage = useThrottleFn((pageIndex: number) => {
+    // console.log('Debounced fetch for page:', pageIndex)
+    fetchPage(pageIndex)
+  }, 100)
+  const throttledAbortPageLoad = useThrottleFn((pageIndex: number) => {
+    // console.log('Debounced abort for page:', pageIndex)
+    const page = pages[pageIndex]
+    if (page && page.status === 'pending') {
+      // console.log('Aborting fetch for page:', pageIndex)
+      page.abortController?.abort()
+      nextTick(() => {
+        // console.log('Clearing page:', pageIndex)
+        props.infiniteList.clearPage(pageIndex)
+      })
+    }
+  }, 100)
   pageObserver =  useAutoObserver(carouselContainer, (entries) => {
     entries.forEach(entry => {
       if (entry.isIntersecting) {
-        // useThrottleFn(() => {
-          // console.log('Page is in view:', entry)
-          const pageIndex = entry.target.getAttribute('data-page-index')
-          if (pageIndex) {
-            fetchPage(+pageIndex)
-          }
-        // }, 30)()
-      }else {
-        //Abort the fetch if the page is not in view
-        // console.log('Page is not in view:', entry)
+        // console.log('Page is in view:', entry)
         const pageIndex = entry.target.getAttribute('data-page-index')
         if (pageIndex) {
-          // console.log('Aborting fetch for page:', pageIndex)
-          const page = pages[+pageIndex]
-          if (page && page.status === 'pending') {
-            // console.log('Aborting fetch for page:', pageIndex)
-            // page.abortController?.abort()
-            // page.status = 'not-loaded'
-            nextTick(() => {
-              // console.log('Clearing page:', pageIndex)
-              props.infiniteList.clearPage(+pageIndex)
-            })
-          }
+          throttledFetchPage(+pageIndex)
+        }
+      }else {
+        const pageIndex = entry.target.getAttribute('data-page-index')
+        if (pageIndex) {
+          throttledAbortPageLoad(+pageIndex)
         }
       }
     })
@@ -362,18 +375,23 @@ const setupObserver = () => {
     rootMargin: '300%'
   })
 
+
+  const throttledRemoveVisibleImage = useThrottleFn((imgIndex: string) => {
+    // console.log('Removing visible image:', imgIndex)
+    visibleImages.value.delete(imgIndex)
+  }, 100)
   carouselItemObserver = useAutoObserver(carouselContainer, (entries) => {
     entries.forEach(entry => {
       if (entry.isIntersecting) {
         // console.log('Image is in view:', entry)
         const imgIndex = entry.target.getAttribute('data-img-index') || ''
         visibleImages.value.add(imgIndex)
+        // throttledAddVisibleImage(imgIndex)
       } else {
-        useThrottleFn(() => {
-          // console.log('Image is not in view:', entry)
-          const imgIndex = entry.target.getAttribute('data-img-index') || ''
-          visibleImages.value.delete(imgIndex)
-        }, 100)()
+        // console.log('Image is not in view:', entry)
+        const imgIndex = entry.target.getAttribute('data-img-index') || ''
+        // visibleImages.value.delete(imgIndex)
+        throttledRemoveVisibleImage(imgIndex)
       }
     })
   }, {
