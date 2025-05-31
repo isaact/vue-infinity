@@ -132,6 +132,7 @@ export function useInfiniteList<T>(options: InfiniteListOptions<T>): InfiniteLis
 
   function clearPage(pageNum: number) {
     const page = pages[pageNum]
+    if (!page) return
     const wasResolved = page.status === 'resolved'
     // console.log(`Clearing page ${pageNum}...`)
     if (page.status === 'pending') {

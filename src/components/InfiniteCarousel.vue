@@ -21,28 +21,42 @@
         ref="carousel" 
         :style="{ gap: props.gap }" 
         :class="{ vertical: props.verticalScroll }">
-      <div
-        v-for="(item in pageItems" :key="`item-${item.id}`" :id="item.id" class="carousel-item"
-        :class="item.status"
-        :data-page-index="item.isPageMarker ? item.page : ''"
-        :data-img-index="item.status === 'loaded' ? item.id : ''"
-        :style="{
-        'grid-column': item.colSpan > 1 ? `span ${item.colSpan}` : undefined,
-        'grid-row': item.rowSpan > 1 ? `span ${item.rowSpan}` : undefined,
-        width: item.colSpan > 1 ? `${item.colSpan * itemWidth + (item.colSpan - 1) * gapInPixels}px` : undefined,
-        height: item.rowSpan > 1 ? `${item.rowSpan * itemHeight + (item.rowSpan - 1) * gapInPixels}px` : undefined,
-        }"
-      >
-        <slot name="item" v-if="visibleImages.has(`${item.id}`) && item.status === 'loaded'" :item="fetchItem(item)" :index="item.index" :page="item.page">
-          Item {{ item.index }}
-        </slot>
-        <slot name="loading" v-else :index="`${item.index}`" :page="item.page">
-          <div class="loading-overlay">Loading {{ item.index }}...</div>
-        </slot>
-      </div>
+      <template v-for="i in nextPageToTry + 1" :key="i - 1">
+        <template v-if="pages[i - 1] && pages[i - 1].status === 'resolved'">
+          <div
+            v-for="(item, index) in pages[i - 1].items" :key="`${i - 1}-${index}`" class="carousel-item"
+            :class="pages[i - 1].status"
+            :data-page-index="i - 1"
+            :data-item-index="index"
+            :data-load-page="index === 0 ? i - 1 : ''"
+            :style="{
+            }"
+          >
+            <slot name="item" v-if="visibleImages.has(`${i - 1}-${index}`)" :item="item" :index="index" :page="i - 1">
+              <div>Page: {{ i - 1 }}, Item {{ index }}</div>
+            </slot>
+            <slot name="loading" v-else :index="`${item.index}`" :page="item.page">
+              <div class="loading-overlay">Loading Page: {{ i - 1 }}, Item {{ index }}...</div>
+            </slot>
+          </div>
+        </template>
+        <template v-else>
+          <div
+            v-for="index in props.infiniteList.itemsPerPage" :key="`${i - 1}-${index}`" class="carousel-item"
+            :class="pages[i - 1]?.status || 'not-loaded'"
+            :data-page-index="i - 1"
+            :data-item-index="index"
+            :data-load-page="index === 0 ? i - 1 : ''"
+            :style="{
+            }"
+          >
+            <slot name="loading" :index="index" :page="i - 1">
+              <div class="loading-overlay">Page: {{ i - 1 }}, Item {{ index }}...</div>
+            </slot>
+          </div>
+        </template>
+      </template>
     </div>
-
-    
   </div>
 </template>
 
@@ -52,18 +66,6 @@ import { useThrottleFn, useDebounceFn } from '@vueuse/core'
 import { vResizeObserver } from '@vueuse/components'
 import { InfiniteList, type InfiniteListPage } from '../composables/useInfiniteList'
 import { useAutoObserver, type AutoObserver } from '../composables/useAutoObserver'
-import { a } from 'vitest/dist/chunks/suite.d.FvehnV49'
-
-interface ItemMetaData {
-  index: number
-  itemIndex?: number // Optional, used for resolved items to track their index in the page
-  isPageMarker: boolean
-  page: number
-  rowSpan: number
-  colSpan: number
-  status: 'loaded' | 'pending' | 'not-loaded' | 'not-loaded-item'
-  id: string
-}
 
 const props = withDefaults(
   defineProps<{
@@ -90,142 +92,21 @@ const itemsPerPage = props.infiniteList.itemsPerPage
 const loading = ref(false)
 const error = ref(false)
 const visibleImages = ref(new Set<string>())
+const visiblePages = ref(new Set<number>())
 
 let pageObserver: AutoObserver | null = null
 let carouselItemObserver: AutoObserver | null = null
 
 const { pages, getItem, fetchPage: realfetchPage, updateMaxPagesToCache } = props.infiniteList
 const initialNextPage = (pages[0] && (pages[0].status === 'resolved' || pages[0].status === 'pending')) ? 1 : 0;
-const nextPageToTry = ref(7);
+const nextPageToTry = ref(initialNextPage);
 const previousPageToTry = ref(0);
-const tryNextPage = ref(true)
-const tryPreviousPage = ref(false)
 const gapInPixels = ref(0)
 
-//Add return type
-const pageItems = computed((): Array<ItemMetaData> => {
-  const items: Array<ItemMetaData>= []
-  let itemPosition = 0
-  // let itemsPerView = adjustedNumRowsToShow.value * adjustedNumColsToShow.value
-  //Find the last page that has items
-  for (let i = 0; i < nextPageToTry.value; i++) {
-    // console.log('Page items:', i, nextPageToTry.value, previousPageToTry.value)
-    if (pages[i]?.status === 'resolved') {
-      // items.push(...pages[i].items)
-      for (let [itemIndex, _] of pages[i].items.entries()) {
-        const itemId = `${i}-${itemIndex}`
-        itemPosition++
-        const itemInfo: ItemMetaData = {
-          index: i * itemsPerPage + itemIndex,
-          itemIndex, // Store the index of the item in the page
-          isPageMarker: itemIndex === 0,
-          page: i,
-          rowSpan: 1,
-          colSpan: 1,
-          status: 'loaded',
-          id: itemId
-        }
-        items.push(itemInfo)
-      }
-      // console.log('Added resolved page:', i, 'with items:', pages[i].items.length, 'total items:', itemPosition)
-    }else if (pages[i]?.status === 'pending') {
-      // items.push(...Array(itemsPerPage).fill({rowSpan: 1, colSpan: 1, index:}))
-      itemPosition += itemsPerPage
-      for (let itemIndex = 0; itemIndex < itemsPerPage; itemIndex++) {
-        const itemId = `${i}-${itemIndex}`
-        const pageIdx = itemIndex === 0 ? i : ''
-        const itemInfo: ItemMetaData = {
-          index: i * itemsPerPage + itemIndex,
-          isPageMarker: itemIndex === 0,
-          page: i,
-          rowSpan: 1,
-          colSpan: 1,
-          status: 'pending',
-          id: itemId
-        }
-        // items.push({status: 'pending', rowSpan: 1, colSpan: 1, index: i * itemsPerPage + itemIndex, page: pageIdx, id: itemId})
-        items.push(itemInfo)
-      }
-    } else if(!pages[i] || pages[i].status === 'not-loaded') {
-      const numItemsBefore = props.verticalScroll ? adjustedNumColsToShow.value  - itemPosition % adjustedNumColsToShow.value : adjustedNumRowsToShow.value - itemPosition % adjustedNumRowsToShow.value
-      // console.log('Not loaded page:', i, 'numItemsBefore:', numItemsBefore, 'itemPosition:', itemPosition, 'itemsPerPage:', itemsPerPage)
-      if(numItemsBefore > 0) {
-        // items.push({status: 'not-loaded-item', rowSpan: 1, colSpan: 1, page: i, id: itemId})
-        for (let itemIndex = 0; itemIndex < numItemsBefore; itemIndex++) {
-          const itemId = `${i}-${itemIndex}`
-          const itemInfo: ItemMetaData = {
-            index: i * itemsPerPage + itemIndex,
-            isPageMarker: false,
-            page: i,
-            rowSpan: 1,
-            colSpan: 1,
-            status: 'not-loaded-item',
-            id: itemId
-          }
-          // items.push({status: itemStatus, rowSpan: 1, colSpan: 1, index: i * itemsPerPage + itemIndex, page: pageIndex, id: itemId})
-          items.push(itemInfo)
-        }
-      }
-      const itemId = `${i}-${numItemsBefore}`
-      const colSpan = props.verticalScroll ? adjustedNumColsToShow.value : Math.floor((itemsPerPage - numItemsBefore) / adjustedNumColsToShow.value)
-      const rowSpan = props.verticalScroll ? Math.floor((itemsPerPage - numItemsBefore) / adjustedNumRowsToShow.value): adjustedNumRowsToShow.value
-      const remainingItems = itemsPerPage - numItemsBefore - colSpan * rowSpan
-      const itemInfo: ItemMetaData = {
-        index: i * itemsPerPage + numItemsBefore,
-        isPageMarker: true,
-        page: i,
-        rowSpan: rowSpan,
-        colSpan: colSpan,
-        status: 'not-loaded',
-        id: itemId
-      }
-      // items.push({status: 'not-loaded', rowSpan: notLoadedRowSpan, colSpan: notLoadedColSpan, page: i, id: itemId})
-      items.push(itemInfo)
-      // const remainingItems = notLoadedRemainingItems.value - numItemsBefore
-      
-      if( remainingItems > 0) {
-        const startIndex = itemsPerPage - remainingItems
-        // Add a not-loaded item for the remaining items
-        for (let itemIndex = startIndex; itemIndex < itemsPerPage; itemIndex++) {
-          const itemId = `${i}-${itemIndex}`
-          const itemInfo: ItemMetaData = {
-            index: i * itemsPerPage + itemIndex,
-            isPageMarker: false,
-            page: i,
-            rowSpan: 1,
-            colSpan: 1,
-            status: 'not-loaded-item',
-            id: itemId
-          }
-          // items.push({status: itemStatus, rowSpan: 1, colSpan: 1, index: i * itemsPerPage + itemIndex, page: pageIndex, id: itemId})
-          items.push(itemInfo)
-        }
-      }
-      itemPosition += itemsPerPage
-    }
-  }
-  items.push({
-    index: itemPosition, // Marker for the end of the page
-    isPageMarker: true,
-    page: nextPageToTry.value,
-    rowSpan: 1,
-    colSpan: 1,
-    status: 'not-loaded-item',
-    id: 'page-end-marker'
-  })
-  return items
-})
-
 const totalGapHeight = computed(() => {
-  // if(!props.verticalScroll) {
-  //   return (props.numRowsToShow - 1) * gapInPixels.value
-  // }
   return (adjustedNumRowsToShow.value - 1) * gapInPixels.value
 })
 const totalGapWidth = computed(() => {
-  // if(!props.verticalScroll) {
-  //   return props.numColsToShow * gapInPixels.value
-  // }
   return (adjustedNumColsToShow.value - 1) * gapInPixels.value
 })
 
@@ -282,15 +163,15 @@ const notLoadedHeight = computed(() => {
 
 // Fetch the page, if it is not undefined and the pageNumber is > than nextPageToTry to set nextPageToTry to that page + 1. If the page is <= previousPageToTry, set previousPageToTry to that page - 1 unless it is 0
 const fetchPage = async (pageNumber: number) => {
-  // console.log('Fetching page1:', pageNumber)
-  if (pages[pageNumber] && pages[pageNumber].status === 'pending') {
+  // console.log('Fetching page:', pageNumber)
+  if (pages[pageNumber] && pages[pageNumber].status === 'pending' || pages[pageNumber]?.status === 'resolved') {
     // console.log('Page is already loading:', pageNumber)
     return
   }
   loading.value = true
   error.value = false
   try {
-    // console.log('Fetching page2:', pageNumber)
+    // console.log('Fetching page:', pageNumber)
     await realfetchPage(pageNumber).then(() => {
       if (pages[pageNumber]?.status === 'resolved') {
         if (pageNumber >= nextPageToTry.value) {
@@ -333,21 +214,9 @@ const setupObserver = () => {
   if (!carouselContainer.value) return
   // console.log('Setting up observer for container:', carousel.value)
 
-  const throttledFetchPage = useThrottleFn((pageIndex: number) => {
+  const throttledFetchPage = useDebounceFn((pageIndex: number) => {
     // console.log('Debounced fetch for page:', pageIndex)
     fetchPage(pageIndex)
-  }, 100)
-  const throttledAbortPageLoad = useThrottleFn((pageIndex: number) => {
-    // console.log('Debounced abort for page:', pageIndex)
-    const page = pages[pageIndex]
-    if (page && page.status === 'pending') {
-      // console.log('Aborting fetch for page:', pageIndex)
-      page.abortController?.abort()
-      nextTick(() => {
-        // console.log('Clearing page:', pageIndex)
-        props.infiniteList.clearPage(pageIndex)
-      })
-    }
   }, 100)
   pageObserver =  useAutoObserver(carouselContainer, (entries) => {
     entries.forEach(entry => {
@@ -355,12 +224,21 @@ const setupObserver = () => {
         // console.log('Page is in view:', entry)
         const pageIndex = entry.target.getAttribute('data-page-index')
         if (pageIndex) {
-          throttledFetchPage(+pageIndex)
+          // console.log('Page in view:', pageIndex, 'Status:', pages[+pageIndex]?.status)
+          fetchPage(+pageIndex)
         }
       }else {
-        const pageIndex = entry.target.getAttribute('data-page-index')
+        const pageIndex = entry.target.getAttribute('data-')
         if (pageIndex) {
-          throttledAbortPageLoad(+pageIndex)
+          const page = pages[+pageIndex]
+          if (page && page.status === 'pending') {
+            console.log('Aborting fetch for page:', pageIndex)
+            page.abortController?.abort()
+            // nextTick(() => {
+              console.log('Clearing page:', pageIndex)
+              props.infiniteList.clearPage(+pageIndex)
+            // })
+          }
         }
       }
     })
@@ -368,50 +246,52 @@ const setupObserver = () => {
     // Filter only elements with that have the class .carousel-item.not-loaded
     filter: el => {
       // return true if the element has data-page-index attribute
-      return el.classList.contains('carousel-item') && el.hasAttribute('data-page-index')
+      return el.classList.contains('carousel-item') && el.classList.contains('not-loaded') && el.hasAttribute('data-load-page')
     },
     // filter: el => notLoadedPages.value.includes(el),
     root: carouselContainer.value,
     rootMargin: '300%'
   })
-
-
-  const throttledRemoveVisibleImage = useThrottleFn((imgIndex: string) => {
-    // console.log('Removing visible image:', imgIndex)
-    visibleImages.value.delete(imgIndex)
-  }, 100)
   carouselItemObserver = useAutoObserver(carouselContainer, (entries) => {
     entries.forEach(entry => {
       if (entry.isIntersecting) {
         // console.log('Image is in view:', entry)
-        const imgIndex = entry.target.getAttribute('data-img-index') || ''
-        visibleImages.value.add(imgIndex)
+        // const imgIndex = entry.target.getAttribute('data-img-index') || ''
+        // visibleImages.value.add(imgIndex)
         // throttledAddVisibleImage(imgIndex)
+        const itemIndex = entry.target.getAttribute('data-item-index') || ''
+        const pageIndex = entry.target.getAttribute('data-page-index') || ''
+        if (itemIndex && pageIndex && pages[+pageIndex] && pages[+pageIndex].items) {
+          const itemData = pages[+pageIndex].items[+itemIndex]
+          if (itemData) {
+             visibleImages.value.add(`${pageIndex}-${itemIndex}`)
+          }
+        }
       } else {
         // console.log('Image is not in view:', entry)
         const imgIndex = entry.target.getAttribute('data-img-index') || ''
         // visibleImages.value.delete(imgIndex)
-        throttledRemoveVisibleImage(imgIndex)
+        visibleImages.value.delete(imgIndex)
       }
     })
   }, {
     root: carouselContainer.value,
     filter: el => {
-      return el.classList.contains('carousel-item') && el.classList.contains('loaded')
+      return el.classList.contains('carousel-item') && el.classList.contains('resolved')
     },
     rootMargin: "200%"
   }) 
 }
 
 const initFirstPage = async () => {
-  if (!pages[0] || (pages[0].status !== 'resolved' && pages[0].status !== 'pending')) {
+  if (!pages[0] || (pages[0].status !== 'resolved')) {
     // console.log('Fetching first page')
     await fetchPage(0)
   }
   // Seed visibleImages for SSR
   const numVisible = props.numColsToShow * props.numRowsToShow
   for (let i = 0; i < numVisible; i++) {
-    const itemData = pageItems.value[i]
+    const itemData = pages[0].items[i]
     // console.log('Seeding visible image:', itemData.id, itemData.status)
     visibleImages.value.add(itemData.id);
   }
@@ -458,23 +338,8 @@ const scrollToItem = async (itemIndex: number) => {
 
   await checkItem()
 }
-const fetchItem = (itemInfo: ItemMetaData): any => {
-  // console.log('Fetching item:', itemInfo.id, itemInfo.status, itemInfo.page, itemInfo.itemIndex)
-  if (itemInfo.status === 'loaded' && itemInfo.itemIndex !== undefined && pages[itemInfo.page]) {
-    // console.log('Returning loaded item:', pages[itemInfo.page].items[itemInfo.itemIndex])
-    return pages[itemInfo.page].items[itemInfo.itemIndex]
-  } else if (itemInfo.status === 'pending') {
-    // console.log('Item is pending, returning null:', itemInfo.id)
-    return null
-  } else if (itemInfo.status === 'not-loaded' || itemInfo.status === 'not-loaded-item') {
-    // console.log('Item is not loaded, returning null:', itemInfo.id)
-    return null
-  }
-  // console.warn('Unknown item status:', itemInfo.status, 'for item:', itemInfo.id)
-  return null
-}
 const fixCacheSize = () => {
-  const newMaxPagesToCache = Math.ceil(props.numRowsToShow * props.numColsToShow * 3 * 3 / itemsPerPage)
+  const newMaxPagesToCache = Math.ceil(props.numRowsToShow * props.numColsToShow * 3 * 3 * 2 / itemsPerPage)
   if( props.infiniteList.maxPagesToCache >= newMaxPagesToCache) {
     return
   }
@@ -497,17 +362,18 @@ watch(
   [() => props.numColsToShow, () => props.numRowsToShow, () => props.gap, () => props.verticalScroll],
   () => {
     if (carouselContainer.value) {
-      pageObserver?.disconnect();
-      carouselItemObserver?.disconnect();
-      nextTick(() => {
+      // pageObserver?.disconnect();
+      // carouselItemObserver?.disconnect();
+      // nextTick(() => {
+        // visibleImages.value.clear();
         fixCacheSize();
         updateDimensions();
         scrollToItem(0); // Scroll to the first item after updating dimensions
-        setupObserver();
+        // setupObserver();
         // Update maxPagesToCache based on visible items + buffer
         
         
-      });
+      // });
     }
   },
   { immediate: true }
@@ -551,7 +417,7 @@ defineExpose({
   scroll-snap-type: y mandatory;
 }
 
-.carousel-item, .carousel-item.not-loaded-item {
+.carousel-item {
   scroll-snap-align: start;
   width: var(--item-width);
   height: var(--item-height);
@@ -583,10 +449,10 @@ defineExpose({
   height: var(--item-height);
 }
 
-.carousel-item.not-loaded .loading-overlay {
+/* .carousel-item.not-loaded .loading-overlay {
   width: var(--not-loaded-width);
   height: var(--container-height);
-}
+} */
 
 .loading-indicator,
 .error-message {
