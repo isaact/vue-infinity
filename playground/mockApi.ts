@@ -33,12 +33,25 @@ export async function fetchMockImages(
       
       const items: GalleryItem[] = []
       for (let i = startIndex; i < endIndex; i++) {
-        const seed = Math.floor(Math.random() * 1000)
+        const seed = Math.floor(Math.random() * 1000);
+        let width, height;
+        const aspectRatio = Math.random(); // 0-1
+ 
+        if (aspectRatio < 0.33) { // Square
+          width = height = 500;
+        } else if (aspectRatio < 0.66) { // Landscape
+          width = 600 + Math.floor(Math.random() * 400); // 600-1000
+          height = 400 + Math.floor(Math.random() * 200); // 400-600
+        } else { // Portrait
+          width = 400 + Math.floor(Math.random() * 200); // 400-600
+          height = 600 + Math.floor(Math.random() * 400); // 600-1000
+        }
+ 
         items.push({
-          url: `https://picsum.photos/seed/${seed}/500/500?random=${i}`,
-          thumbUrl: `https://picsum.photos/seed/${seed}/100/100?random=${i}`,
+          url: `https://picsum.photos/seed/${seed}/${width}/${height}?random=${i}`,
+          thumbUrl: `https://picsum.photos/seed/${seed}/${Math.floor(width/5)}/${Math.floor(height/5)}?random=${i}`, // Generate smaller thumb dimensions
           title: `img-${i}`
-        })
+        });
       }
       resolve(items)
     }, NETWORK_DELAY)

@@ -18,8 +18,8 @@
     v-resize-observer="updateDimensions"
   >
     <div class="carousel"
-        ref="carousel" 
-        :style="{ gap: props.gap }" 
+        ref="carousel"
+        :style="[ { gap: props.gap }, props.carouselStyle ]"
         :class="{ vertical: props.verticalScroll }">
       <template v-for="i in nextPageToTry + 1" :key="i - 1">
         <template v-if="pages[i - 1] && pages[i - 1].status === 'resolved'">
@@ -29,8 +29,7 @@
             :data-page-index="i - 1"
             :data-item-index="index"
             :data-load-page="index === 0 ? i - 1 : ''"
-            :style="{
-            }"
+            :style="props.itemStyleFn ? props.itemStyleFn(item, index) : {}"
           >
             <slot name="item" v-if="visibleImages.has(`${i - 1}-${index}`)" :item="item" :index="index" :page="i - 1">
               <div>Page: {{ i - 1 }}, Item {{ index }}</div>
@@ -47,8 +46,7 @@
             :data-page-index="i - 1"
             :data-item-index="index"
             :data-load-page="index === 0 ? i - 1 : ''"
-            :style="{
-            }"
+            :style="props.itemStyleFn ? props.itemStyleFn({ index: index, page: i - 1 }, index) : {}"
           >
             <slot name="loading" :index="index" :page="i - 1">
               <div class="loading-overlay">Page: {{ i - 1 }}, Item {{ index }}...</div>
@@ -67,6 +65,9 @@ import { vResizeObserver } from '@vueuse/components'
 import { InfiniteList, type InfiniteListPage } from '../composables/useInfiniteList'
 import { useAutoObserver, type AutoObserver } from '../composables/useAutoObserver'
 
+// Define type for the item style function
+type ItemStyleFn = (item: any, index: number) => any;
+
 const props = withDefaults(
   defineProps<{
     infiniteList: InfiniteList<any>
@@ -76,6 +77,8 @@ const props = withDefaults(
     numRowsToShow?: number
     gap?: string
     verticalScroll?: boolean
+    carouselStyle?: any // Add new prop for custom style
+    itemStyleFn?: ItemStyleFn // Add new prop for item style function
   }>(),
   {
     gap: '1rem',
@@ -398,7 +401,7 @@ defineExpose({
   display: grid;
   grid-template-rows: repeat(var(--num-rows-to-show), var(--item-height));
   grid-template-columns: repeat(var(--num-cols-to-show), var(--item-width));
-  grid-auto-flow: column;
+  grid-auto-flow: column dense;
   grid-auto-columns: var(--item-width);
   grid-auto-rows: var(--item-height);
   gap: var(--gap-in-px);
@@ -410,7 +413,7 @@ defineExpose({
 }
 
 .carousel.vertical {
-  grid-auto-flow: row;
+  grid-auto-flow: row dense;
   /* grid-auto-rows: calc(
     (var(--container-height) - (var(--gap-in-px) * (var(--num-rows-to-show) - 1))) / var(--num-rows-to-show)
   ); */
@@ -419,8 +422,8 @@ defineExpose({
 
 .carousel-item {
   scroll-snap-align: start;
-  width: var(--item-width);
-  height: var(--item-height);
+  /* width: var(--item-width);
+  height: var(--item-height); */
 }
 
 /* .carousel-item.currentSlide {

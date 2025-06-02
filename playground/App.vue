@@ -47,6 +47,7 @@
       :gap="gapValue"
       :items-per-page="itemsPerPage"
       :verticalScroll="verticalScroll"
+      :itemStyleFn="getItemStyle"
     >
       <template #item="{ item, index }: { item: GalleryItem, index: number }">
         <img :src="item.url" :alt="item.title || `Image ${index}`" class="carousel-img"/>
@@ -79,6 +80,33 @@ const scrollToItem = () => {
     carouselRef.value.scrollToItem(scrollToIndex.value)
   }
 }
+
+const getItemStyle = (item: GalleryItem, index: number) => {
+  if (!item || !item.url) {
+    return {};
+  }
+
+  try {
+    const urlParts = item.url.split('/');
+    const width = parseInt(urlParts[urlParts.length - 2], 10);
+    const height = parseInt(urlParts[urlParts.length - 1].split('?')[0], 10);
+
+    if (width > height) {
+      // Landscape
+      return { gridColumn: 'span 2' };
+    } else if (height > width) {
+      // Portrait
+      return { gridRow: 'span 2' };
+    } else {
+      // Square
+      return {};
+    }
+  } catch (e) {
+    console.error("Error parsing image dimensions:", e);
+    return {};
+  }
+};
+
 const maxPagesToCache = ref(3)//ref(Math.ceil(numRowsToShow.value * numColsToShow.value * 3 / itemsPerPage.value) + 2) // 3 pages of items to cache
 
 const maxSlides = computed(() => itemsPerPage.value * maxPagesToCache.value)
