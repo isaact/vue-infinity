@@ -66,7 +66,12 @@ import { InfiniteList, type InfiniteListPage } from '../composables/useInfiniteL
 import { useAutoObserver, type AutoObserver } from '../composables/useAutoObserver'
 
 // Define type for the item style function
+type ItemSpan = {
+  colSpan: number
+  rowSpan: number
+}
 type ItemStyleFn = (item: any, index: number) => any;
+type ItemSpanFn = (item: any, index: number) => ItemSpan;
 
 const props = withDefaults(
   defineProps<{
