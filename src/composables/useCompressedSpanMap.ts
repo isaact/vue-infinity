@@ -2,14 +2,19 @@
 import { ref } from 'vue';
 
 type Span = [number, number]; // [colSpan, rowSpan]
+export type ItemSpan = {
+  colSpan: number
+  rowSpan: number
+}
 
-export function useCompressedSpanMap(defaultSpan: Span = [1, 1]) {
-  const reverseDict: Span[] = [defaultSpan];
+
+export function useCompressedSpanMap(defaultSpan: ItemSpan = { colSpan: 1, rowSpan: 1 }) {
+  const reverseDict: Span[] = [[defaultSpan.colSpan, defaultSpan.rowSpan]]; // 0 is the default span
   const spanDict = new Map<string, number>(); // "col:row" → spanId
   const indexToSpanId = ref(new Map<number, number>()); // index → spanId
 
   function getSpanId(col: number, row: number): number {
-    if (col === defaultSpan[0] && row === defaultSpan[1]) return 0;
+    if (col === defaultSpan.colSpan && row === defaultSpan.rowSpan) return 0;
 
     const key = `${col}:${row}`;
     if (!spanDict.has(key)) {
@@ -21,8 +26,8 @@ export function useCompressedSpanMap(defaultSpan: Span = [1, 1]) {
     return spanDict.get(key)!;
   }
 
-  function set(index: number, col: number, row: number) {
-    const spanId = getSpanId(col, row);
+  function set(index: number, span: ItemSpan) {
+    const spanId = getSpanId(span.colSpan, span.rowSpan);
     if (spanId === 0) {
       indexToSpanId.value.delete(index);
     } else {
@@ -30,9 +35,12 @@ export function useCompressedSpanMap(defaultSpan: Span = [1, 1]) {
     }
   }
 
-  function get(index: number): Span {
+  function get(index: number): ItemSpan {
     const spanId = indexToSpanId.value.get(index) ?? 0;
-    return reverseDict[spanId];
+    return {
+      colSpan: reverseDict[spanId][0],
+      rowSpan: reverseDict[spanId][1],
+    };
   }
 
   function has(index: number): boolean {

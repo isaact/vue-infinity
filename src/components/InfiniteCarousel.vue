@@ -8,10 +8,6 @@
       '--num-cols-to-show': adjustedNumColsToShow,
       '--num-rows-to-show': adjustedNumRowsToShow,
       '--gap-in-px': `${gapInPixels}px`,
-      '--not-loaded-col-span': notLoadedColSpan,
-      '--not-loaded-row-span': notLoadedRowSpan,
-      '--not-loaded-width': `${notLoadedWidth}px`,
-      '--not-loaded-height': `${notLoadedHeight}px`,
       '--container-height': props.height,
       '--container-width': props.width
     }"
@@ -29,7 +25,7 @@
             :data-page-index="i - 1"
             :data-item-index="index"
             :data-load-page="index === 0 ? i - 1 : ''"
-            :style="props.itemStyleFn ? props.itemStyleFn(item, index) : {}"
+            :style="getItemStyle(item, i - 1, index)"
           >
             <slot name="item" v-if="visibleImages.has(`${i - 1}-${index}`)" :item="item" :index="index" :page="i - 1">
               <div>Page: {{ i - 1 }}, Item {{ index }}</div>
@@ -46,7 +42,7 @@
             :data-page-index="i - 1"
             :data-item-index="index"
             :data-load-page="index === 0 ? i - 1 : ''"
-            :style="props.itemStyleFn ? props.itemStyleFn({ index: index, page: i - 1 }, index) : {}"
+            :style="getNotLoadedItemStyle(i - 1, index)"
           >
             <slot name="loading" :index="index" :page="i - 1">
               <div class="loading-overlay">Page: {{ i - 1 }}, Item {{ index }}...</div>
@@ -64,14 +60,11 @@ import { useThrottleFn, useDebounceFn } from '@vueuse/core'
 import { vResizeObserver } from '@vueuse/components'
 import { InfiniteList, type InfiniteListPage } from '../composables/useInfiniteList'
 import { useAutoObserver, type AutoObserver } from '../composables/useAutoObserver'
+import { useCompressedSpanMap, type ItemSpan } from '../composables/useCompressedSpanMap'
 
-// Define type for the item style function
-type ItemSpan = {
-  colSpan: number
-  rowSpan: number
-}
-type ItemStyleFn = (item: any, index: number) => any;
-type ItemSpanFn = (item: any, index: number) => ItemSpan;
+// type ItemStyleFn = (item: any, index: number) => any;
+type ItemSpanFn = (item: any) => ItemSpan;
+const spanMap = useCompressedSpanMap() //new Map<number, ItemSpan>()
 
 const props = withDefaults(
   defineProps<{
@@ -83,7 +76,7 @@ const props = withDefaults(
     gap?: string
     verticalScroll?: boolean
     carouselStyle?: any // Add new prop for custom style
-    itemStyleFn?: ItemStyleFn // Add new prop for item style function
+    ItemSpanFn?: ItemSpanFn // Add new prop for item style function
   }>(),
   {
     gap: '1rem',
@@ -139,35 +132,37 @@ const itemHeight = computed(() => {
   return (container_size.value.height - totalGapHeight.value) / adjustedNumRowsToShow.value
 })
 
-const notLoadedColSpan = computed(() => {
-  if (!props.verticalScroll) {
-    return Math.floor(itemsPerPage / props.numColsToShow)
+const getItemSpan = (item: any): ItemSpan => {
+  if (props.ItemSpanFn) {
+    return props.ItemSpanFn(item)
   }
-  return Math.floor(props.numColsToShow)
-})
+  // Default span logic
+  return { colSpan: 1, rowSpan: 1 }
+}
 
-const notLoadedRowSpan = computed(() => {
-  if (!props.verticalScroll) {
-    return Math.floor(props.numRowsToShow)
+const getItemStyle = (item: any, pageIndex: number, itemIndex: number) => {
+  const globalIndex = pageIndex * props.infiniteList.itemsPerPage + itemIndex;
+  const { colSpan, rowSpan } = getItemSpan(item)
+  // Store the span in the spanMap
+  spanMap.set(globalIndex, { colSpan, rowSpan });
+  return {
+    gridColumn: `span ${colSpan}`,
+    gridRow: `span ${rowSpan}`,
   }
-  return Math.floor(itemsPerPage / props.numRowsToShow)
-})
+}
 
-const notLoadedRemainingItems = computed(() => {
-  // console.log('Not loaded remaining items:', itemsPerPage, props.numColsToShow, props.numRowsToShow)
-  if (!props.verticalScroll) {
-    return itemsPerPage % adjustedNumRowsToShow.value
+const getNotLoadedItemStyle = (pageIndex: number, itemIndex: number) => {
+  const globalIndex = pageIndex * props.infiniteList.itemsPerPage + itemIndex;
+  const itemSpan = spanMap.get(globalIndex);
+  if (!itemSpan) {
+    // Default span if not found in the map
+    return {};
   }
-  return itemsPerPage % adjustedNumColsToShow.value
-})
-
-const notLoadedWidth = computed(() => {
-  return itemWidth.value * notLoadedColSpan.value
-})
-
-const notLoadedHeight = computed(() => {
-  return itemHeight.value * notLoadedRowSpan.value
-})
+  return {
+    gridColumn: `span ${itemSpan.colSpan}`,
+    gridRow: `span ${itemSpan.rowSpan}`,
+  };
+};
 
 // Fetch the page, if it is not undefined and the pageNumber is > than nextPageToTry to set nextPageToTry to that page + 1. If the page is <= previousPageToTry, set previousPageToTry to that page - 1 unless it is 0
 const fetchPage = async (pageNumber: number) => {
@@ -222,10 +217,6 @@ const setupObserver = () => {
   if (!carouselContainer.value) return
   // console.log('Setting up observer for container:', carousel.value)
 
-  const throttledFetchPage = useDebounceFn((pageIndex: number) => {
-    // console.log('Debounced fetch for page:', pageIndex)
-    fetchPage(pageIndex)
-  }, 100)
   pageObserver =  useAutoObserver(carouselContainer, (entries) => {
     entries.forEach(entry => {
       if (entry.isIntersecting) {

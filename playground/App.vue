@@ -47,7 +47,7 @@
       :gap="gapValue"
       :items-per-page="itemsPerPage"
       :verticalScroll="verticalScroll"
-      :itemStyleFn="getItemStyle"
+      :ItemSpanFn="getItemSpan"
     >
       <template #item="{ item, index }: { item: GalleryItem, index: number }">
         <img :src="item.url" :alt="item.title || `Image ${index}`" class="carousel-img"/>
@@ -81,9 +81,9 @@ const scrollToItem = () => {
   }
 }
 
-const getItemStyle = (item: GalleryItem, index: number) => {
+const getItemSpan = (item: GalleryItem) => {
   if (!item || !item.url) {
-    return {};
+    return { colSpan: 1, rowSpan: 1 };
   }
 
   try {
@@ -93,17 +93,17 @@ const getItemStyle = (item: GalleryItem, index: number) => {
 
     if (width > height) {
       // Landscape
-      return { gridColumn: 'span 2' };
+      return { colSpan: 2, rowSpan: 1 };
     } else if (height > width) {
       // Portrait
-      return { gridRow: 'span 2' };
+      return { colSpan: 1, rowSpan: 2 };
     } else {
       // Square
-      return {};
+      return { colSpan: 1, rowSpan: 1 };
     }
   } catch (e) {
     console.error("Error parsing image dimensions:", e);
-    return {};
+    return { colSpan: 1, rowSpan: 1 };
   }
 };
 
