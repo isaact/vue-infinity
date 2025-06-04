@@ -47,7 +47,7 @@
       :gap="gapValue"
       :items-per-page="itemsPerPage"
       :verticalScroll="verticalScroll"
-      :ItemSpanFn="getItemSpan"
+      :onGetItemAspectRatio="getItemAspectRatio"
     >
       <template #item="{ item, index }: { item: GalleryItem, index: number }">
         <img :src="item.url" :alt="item.title || `Image ${index}`" class="carousel-img"/>
@@ -64,14 +64,14 @@ import { fetchMockImages } from './mockApi'
 import type { GalleryItem } from './mockApi'
 
 
-const numRowsToShow = ref(2)
-const numColsToShow = ref(2)
+const numRowsToShow = ref(3)
+const numColsToShow = ref(3)
 const carouselHeight = ref('45vh')
 const carouselWidth = ref('100%')
 const gapValue = ref('10px')
 const numItems = ref(3000)
 const verticalScroll = ref(false)
-const itemsPerPage = ref(7) // Still needed for the infinite list
+const itemsPerPage = ref(17) // Still needed for the infinite list
 const scrollToIndex = ref(0)
 const carouselRef = ref<InstanceType<typeof InfiniteCarousel>>()
 
@@ -81,29 +81,21 @@ const scrollToItem = () => {
   }
 }
 
-const getItemSpan = (item: GalleryItem) => {
+const getItemAspectRatio = (item: GalleryItem): number => {
   if (!item || !item.url) {
-    return { colSpan: 1, rowSpan: 1 };
+    return 1;
   }
 
   try {
     const urlParts = item.url.split('/');
     const width = parseInt(urlParts[urlParts.length - 2], 10);
     const height = parseInt(urlParts[urlParts.length - 1].split('?')[0], 10);
+    // console.log(`Parsed dimensions for ${item.url}: width=${width}, height=${height}, aspectRatio=${width / height}`);
 
-    if (width > height) {
-      // Landscape
-      return { colSpan: 2, rowSpan: 1 };
-    } else if (height > width) {
-      // Portrait
-      return { colSpan: 1, rowSpan: 2 };
-    } else {
-      // Square
-      return { colSpan: 1, rowSpan: 1 };
-    }
+    return width / height;
   } catch (e) {
     console.error("Error parsing image dimensions:", e);
-    return { colSpan: 1, rowSpan: 1 };
+    return 1
   }
 };
 
