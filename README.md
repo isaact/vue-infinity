@@ -38,6 +38,7 @@ A general-purpose virtual scroll component optimized for grid-like or carousel-b
 - Supports custom templates for each item
 - Supports custom loading templates
 - Allows scrolling to any item with CSS-based scroll snapping
+- Supports dynamic item sizing by providing an `onGetItemAspectRatio` callback function that returns the aspect ratio of an item. The component uses this to determine the item's span within the grid.
 
 **Example:**
 
@@ -61,14 +62,64 @@ import { useInfiniteList } from 'vue-infinity';
 
 const infiniteList = useInfiniteList({
   fetchItems: (page) => fetchPage(page),
-  totalItems: 1000,
   itemsPerPage: 20,
   maxPagesToCache: 5
 });
 </script>
 ```
 
-### 🔎 AutoObserver
+ **Example with Dynamic Item Sizing:**
+
+ ```vue
+ <template>
+   <InfiniteCarousel
+     :infinite-list="infiniteList"
+     :height="'60vh'"
+     :width="'100%'"
+     :numColsToShow="4"
+     :numRowsToShow="3"
+     :onGetItemAspectRatio="getItemAspectRatio"
+   >
+     <template #item="{ item }">
+       <img :src="item.url" :alt="item.title" class="carousel-img"/>
+     </template>
+   </InfiniteCarousel>
+ </template>
+
+ <script setup>
+ import { useInfiniteList } from 'vue-infinity';
+
+ const fetchItems = async (page) => {
+   // Replace with your actual data fetching logic
+   const response = await fetch(`/api/items?page=${page}`);
+   return response.json();
+ };
+
+ const infiniteList = useInfiniteList({
+   fetchItems,
+   itemsPerPage: 30, // Adjust based on your data
+   maxPagesToCache: 5
+ });
+
+ const getItemAspectRatio = (item) => {
+   // Assuming item has width and height properties, or can be parsed from URL
+   if (!item || !item.url) {
+     return 1; // Default to square if aspect ratio cannot be determined
+   }
+   try {
+     const urlParts = item.url.split('/');
+     const width = parseInt(urlParts[urlParts.length - 2], 10);
+     const height = parseInt(urlParts[urlParts.length - 1].split('?')[0], 10);
+     return width / height;
+   } catch (e) {
+     console.error("Error parsing item aspect ratio:", e);
+     return 1;
+   }
+ };
+ </script>
+ ```
+
+ ### 🔎 AutoObserver
 
 Enhances the native `IntersectionObserver` by automatically handling new elements and cleaning up removed ones.
 
