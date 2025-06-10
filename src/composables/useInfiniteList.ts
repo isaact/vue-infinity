@@ -1,6 +1,9 @@
+interface HasId {
+  id: string | number;
+}
 import { reactive } from 'vue'
 
-export interface InfiniteList<T> {
+export interface InfiniteList<T extends HasId> {
   pages: Record<number, InfiniteListPage<T>>
   itemsPerPage: number
   getItem: (index: number) => Promise<T | undefined>
@@ -12,7 +15,7 @@ export interface InfiniteList<T> {
   updateMaxPagesToCache: (newMax: number) => void
 }
 
-export interface InfiniteListOptions<T> {
+export interface InfiniteListOptions<T extends HasId> {
   fetchItems: (page: number, signal: AbortSignal) => Promise<T[]>
   itemsPerPage: number
   maxPagesToCache: number
@@ -20,7 +23,7 @@ export interface InfiniteListOptions<T> {
   preloadedPages?: Record<number, InfiniteListPage<T>>
 }
 
-export interface InfiniteListPage<T> {
+export interface InfiniteListPage<T extends HasId> {
   pageNum: number
   items: T[]
   status: 'not-loaded' | 'pending' | 'resolved' | 'error'
@@ -28,7 +31,7 @@ export interface InfiniteListPage<T> {
   lastUsed?: number // Add timestamp for LRU
 }
 
-export function useInfiniteList<T>(options: InfiniteListOptions<T>): InfiniteList<T> {
+export function useInfiniteList<T extends HasId>(options: InfiniteListOptions<T>): InfiniteList<T> {
   const { fetchItems, itemsPerPage } = options
   let { maxPagesToCache } = options // Make maxPagesToCache mutable
 

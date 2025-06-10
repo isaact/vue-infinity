@@ -1,4 +1,5 @@
 export interface GalleryItem {
+  id: string | number;
   url: string
   thumbUrl: string
   title?: string
@@ -48,6 +49,7 @@ export async function fetchMockImages(
         }
  
         items.push({
+          id: i, // Add the id property
           url: `https://picsum.photos/seed/${seed}/${width}/${height}?random=${i}`,
           thumbUrl: `https://picsum.photos/seed/${seed}/${Math.floor(width/5)}/${Math.floor(height/5)}?random=${i}`, // Generate smaller thumb dimensions
           title: `img-${i}`

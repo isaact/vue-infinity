@@ -36,23 +36,34 @@
         Vertical Scroll
       </label>
     </div>
+    <div style="height:100vh">Filler space</div>
 
-    <InfiniteCarousel
-      ref="carouselRef"
-      :infinite-list="infiniteList"
-      :height="carouselHeight"
-      :width="carouselWidth"
-      :numColsToShow="numColsToShow"
-      :numRowsToShow="numRowsToShow"
-      :gap="gapValue"
-      :items-per-page="itemsPerPage"
-      :verticalScroll="verticalScroll"
-      :onGetItemAspectRatio="getItemAspectRatio"
-    >
-      <template #item="{ item, index }: { item: GalleryItem, index: number }">
-        <img :src="item.url" :alt="item.title || `Image ${index}`" class="carousel-img"/>
+    <Ghost>
+      <template #default>
+        <InfiniteCarousel
+          ref="carouselRef"
+          :infinite-list="infiniteList"
+          :height="carouselHeight"
+          :width="carouselWidth"
+          :numColsToShow="numColsToShow"
+          :numRowsToShow="numRowsToShow"
+          :gap="gapValue"
+          :items-per-page="itemsPerPage"
+          :verticalScroll="verticalScroll"
+          :onGetItemAspectRatio="getItemAspectRatio"
+        >
+          <template #item="{ item, index }: { item: GalleryItem, index: number }">
+            <img :src="item.url" :alt="item.title || `Image ${index}`" class="carousel-img"/>
+          </template>
+        </InfiniteCarousel>
       </template>
-    </InfiniteCarousel>
+      <template #not-visible>
+        <!-- Placeholder content for when the carousel is not visible -->
+        <div class="ghost-placeholder">
+          Loading...
+        </div>
+      </template>
+    </Ghost>
   </div>
 </template>
 
@@ -60,6 +71,7 @@
 import { computed, watch, ref } from 'vue'
 import { useInfiniteList } from '../src/composables/useInfiniteList'
 import InfiniteCarousel from '../src/components/InfiniteCarousel.vue'
+import Ghost from '../src/components/Ghost.vue' // Import the Ghost component
 import { fetchMockImages } from './mockApi'
 import type { GalleryItem } from './mockApi'
 
@@ -71,7 +83,7 @@ const carouselWidth = ref('100%')
 const gapValue = ref('10px')
 const numItems = ref(3000)
 const verticalScroll = ref(false)
-const itemsPerPage = ref(17) // Still needed for the infinite list
+const itemsPerPage = ref(37) // Still needed for the infinite list
 const scrollToIndex = ref(0)
 const carouselRef = ref<InstanceType<typeof InfiniteCarousel>>()
 
@@ -99,7 +111,7 @@ const getItemAspectRatio = (item: GalleryItem): number => {
   }
 };
 
-const maxPagesToCache = ref(3)//ref(Math.ceil(numRowsToShow.value * numColsToShow.value * 3 / itemsPerPage.value) + 2) // 3 pages of items to cache
+const maxPagesToCache = ref(5)//ref(Math.ceil(numRowsToShow.value * numColsToShow.value * 3 / itemsPerPage.value) + 2) // 3 pages of items to cache
 
 const maxSlides = computed(() => itemsPerPage.value * maxPagesToCache.value)
 
