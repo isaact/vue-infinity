@@ -60,9 +60,11 @@ import { useThrottleFn, useDebounceFn } from '@vueuse/core'
 import { vResizeObserver } from '@vueuse/components'
 import { InfiniteList, type InfiniteListPage } from '../composables/useInfiniteList'
 import { useAutoObserver, type AutoObserver } from '../composables/useAutoObserver'
-import { useCompressedSpanMap, type ItemSpan } from '../composables/useCompressedSpanMap'
 
-// type ItemStyleFn = (item: any, index: number) => any;
+type ItemSpan = {
+  colSpan: number
+  rowSpan: number
+}
 type ItemAspectRatioFn = (item: any) => number
 const itemAspectMap = new Map<number, number>() //useCompressedSpanMap()
 
