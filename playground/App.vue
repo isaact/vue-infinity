@@ -37,33 +37,22 @@
       </label>
     </div>
     <div style="height:100vh">Filler space</div>
-
-    <Ghost>
-      <template #default>
-        <InfiniteCarousel
-          ref="carouselRef"
-          :infinite-list="infiniteList"
-          :height="carouselHeight"
-          :width="carouselWidth"
-          :numColsToShow="numColsToShow"
-          :numRowsToShow="numRowsToShow"
-          :gap="gapValue"
-          :items-per-page="itemsPerPage"
-          :verticalScroll="verticalScroll"
-          :onGetItemAspectRatio="getItemAspectRatio"
-        >
-          <template #item="{ item, index }: { item: GalleryItem, index: number }">
-            <img :src="item.url" :alt="item.title || `Image ${index}`" class="carousel-img"/>
-          </template>
-        </InfiniteCarousel>
-      </template>
-      <template #not-visible>
-        <!-- Placeholder content for when the carousel is not visible -->
-        <div class="ghost-placeholder">
-          Loading...
-        </div>
-      </template>
-    </Ghost>
+      <InfiniteCarousel
+        ref="carouselRef"
+        :infinite-list="infiniteList"
+        :height="carouselHeight"
+        :width="carouselWidth"
+        :numColsToShow="numColsToShow"
+        :numRowsToShow="numRowsToShow"
+        :gap="gapValue"
+        :items-per-page="itemsPerPage"
+        :verticalScroll="verticalScroll"
+        :onGetItemAspectRatio="getItemAspectRatio"
+      >
+        <template #item="{ item, index }: { item: GalleryItem, index: number }">
+          <img :src="item.url" :alt="item.title || `Image ${index}`" class="carousel-img"/>
+        </template>
+      </InfiniteCarousel>
   </div>
 </template>
 
