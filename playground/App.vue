@@ -5,7 +5,7 @@
     <h2 style="text-align: center;">Vue-Infinity Playground</h2>
     
     <h3 style="">Ghost component demo</h3>
-    <Ghost @became-visible="handleGhostVisible" @became-not-visible="handleGhostNotVisible" style="margin-bottom: 30vh;">
+    <Ghost @on-load="handleGhostVisible" @on-unload="handleGhostNotVisible" style="margin-bottom: 30vh;">
       <video ref="videoPlayer" width="100%" height="100%" loop controls>
         <source src="/gliding.mp4" type="video/mp4">
         Your browser does not support the video tag.
@@ -133,17 +133,13 @@ const fetchItems = async (page: number, signal: AbortSignal) => {
 const setupVideoPlayer = () => {
   if (videoPlayer.value) {
     const player = videoPlayer.value;
-    console.log('Setting up video player:', player);
-    player.addEventListener('canplay', (event) => {
-      console.log('Video can play', event);
-      // Restore playback time and state
-      player.currentTime = videoPlaybackTime.value;
-      if (videoIsPlaying.value) {
-        player.play().catch(error => console.error("Error playing video:", error));
-      }
-      // player.removeEventListener('canplay', () => {}); // Remove listener after first canplay
-    });
-
+    player.currentTime = videoPlaybackTime.value; // Restore playback time
+    player.playbackRate = 0.3; // Reset playback rate to normal speed
+    if (videoIsPlaying.value) {
+      player.play().catch(error => console.error("Error playing video:", error));
+    } else {
+      player.pause(); // Ensure it's paused if not playing
+    }
     player.addEventListener('timeupdate', () => {
       if (player) { // Check if player still exists
         videoPlaybackTime.value = player.currentTime;
@@ -152,16 +148,15 @@ const setupVideoPlayer = () => {
 
     player.addEventListener('play', () => {
       videoIsPlaying.value = true;
-      console.log('Video play event');
     });
 
     player.addEventListener('pause', () => {
-      videoIsPlaying.value = false;
-      console.log('Video pause event');
-      // Also save time on pause, in case timeupdate didn't fire recently
-      if (player) { // Check if player still exists
-        videoPlaybackTime.value = player.currentTime;
-      }
+      nextTick(() => {
+        if (videoPlayer.value) { // Check if player still exists as pause is also called when the component is destroyed
+          videoPlaybackTime.value = videoPlayer.value.currentTime;
+          videoIsPlaying.value = false;
+        }
+      });
     });
   } else {
     console.log('Video player not found in DOM yet.');
@@ -169,12 +164,10 @@ const setupVideoPlayer = () => {
 };
 
 const handleGhostVisible = () => {
-  console.log(`Ghost component visible. Attempting to set up video.`);
   setupVideoPlayer();
 };
 
 const handleGhostNotVisible = () => {
-  console.log(`Ghost component not visible. Saving state.`);
   if (videoPlayer.value) {
     // Save the current playing state *before* pausing
     // videoIsPlaying.value = !videoPlayer.value.paused;

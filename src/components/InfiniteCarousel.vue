@@ -95,7 +95,6 @@ const itemsPerPage = props.infiniteList.itemsPerPage
 const loading = ref(false)
 const error = ref(false)
 const visibleImages = ref(new Set<string>())
-const visiblePages = ref(new Set<number>())
 
 let pageObserver: AutoObserver | null = null
 let carouselItemObserver: AutoObserver | null = null
