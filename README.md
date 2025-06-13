@@ -122,10 +122,10 @@ const infiniteList = useInfiniteList({
  ### 🔎 AutoObserver
 
 Enhances the native `IntersectionObserver` by automatically handling new elements and cleaning up removed ones.
-
-- Automatically observes newly added elements
-- Stops observing removed elements
-- Filters elements to observe using custom logic
+- Assign it to a target container and it automatically:
+  - observes newly added elements
+  - Stops observing removed elements
+- Allows filtering elements to observe using custom logic
 - Cleans up automatically on component unmount
 
 **Example:**
@@ -150,7 +150,7 @@ const { disconnect } = useAutoObserver(
 
 ### 👻 Ghost Component
 
-The `Ghost` component is a utility that conditionally renders its slot content based on its visibility within the viewport. When the content is not visible, it's replaced by a placeholder div that maintains the same dimensions as the original content. This is particularly useful for performance optimization, as it allows heavy off-screen elements (like videos or complex interactive components) to be "unloaded" from the DOM while preserving the page layout.
+The `Ghost` component optimizes performance by conditionally rendering its slot content. When off-screen, the content is replaced by a dimensionally-identical placeholder, "unloading" heavy elements (like videos) while preserving layout.
 
 - **Performance Boost:** Unloads off-screen content to free up resources.
 - **Layout Stability:** Replaces hidden content with a correctly-sized placeholder.
