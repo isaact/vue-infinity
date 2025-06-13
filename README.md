@@ -162,31 +162,11 @@ The `Ghost` component optimizes performance by conditionally rendering its slot 
 **Example:**
 
 ```vue
-<template>
-  <div style="height: 200vh; padding-top: 80vh;"> <!-- Parent to allow scrolling -->
-    <Ghost @on-load="handleLoad" @before-unload="handleBeforeUnload" @on-unload="handleUnload">
-      <div style="height: 300px; background-color: lightblue;">
-        This content will be replaced when not visible.
-      </div>
-    </Ghost>
-  </div>
-</template>
-
-<script setup>
-import { Ghost } from 'vue-infinity'; // Assuming Ghost is exported
-
-const handleLoad = () => {
-  console.log('Ghost content loaded!');
-};
-
-const handleBeforeUnload = () => {
-  console.log('Ghost content is about to unload...');
-};
-
-const handleUnload = () => {
-  console.log('Ghost content unloaded.');
-};
-</script>
+  <Ghost @on-load="handleLoad" @before-unload="handleBeforeUnload" @on-unload="handleUnload">
+    <div style="height: 300px; background-color: lightblue;">
+      This content will be replaced when not visible.
+    </div>
+  </Ghost>
 ```
 ## 📦 Installation
 

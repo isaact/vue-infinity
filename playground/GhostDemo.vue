@@ -61,7 +61,7 @@ const setupVideoPlayer = () => {
 
     const pauseHandler = () => {
       nextTick(() => {
-        if (videoPlayer.value) {
+        if (videoPlayer.value) { // Pause only if videoPlayer is still in the DOM
           videoPlaybackTime.value = videoPlayer.value.currentTime;
           videoIsPlaying.value = false;
         }
