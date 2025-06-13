@@ -148,6 +148,46 @@ const { disconnect } = useAutoObserver(
 );
 ```
 
+### 👻 Ghost Component
+
+The `Ghost` component is a utility that conditionally renders its slot content based on its visibility within the viewport. When the content is not visible, it's replaced by a placeholder div that maintains the same dimensions as the original content. This is particularly useful for performance optimization, as it allows heavy off-screen elements (like videos or complex interactive components) to be "unloaded" from the DOM while preserving the page layout.
+
+- **Performance Boost:** Unloads off-screen content to free up resources.
+- **Layout Stability:** Replaces hidden content with a correctly-sized placeholder.
+- **Event-Driven:** Emits events when its content becomes visible or hidden:
+    - `on-load`: Fired when the component's content becomes visible and is rendered.
+    - `before-unload`: Fired in the same tick that the component's content starts to become hidden.
+    - `on-unload`: Fired in the next tick after the component's content has become hidden and replaced by the placeholder.
+
+**Example:**
+
+```vue
+<template>
+  <div style="height: 200vh; padding-top: 80vh;"> <!-- Parent to allow scrolling -->
+    <Ghost @on-load="handleLoad" @before-unload="handleBeforeUnload" @on-unload="handleUnload">
+      <div style="height: 300px; background-color: lightblue;">
+        This content will be replaced when not visible.
+      </div>
+    </Ghost>
+  </div>
+</template>
+
+<script setup>
+import { Ghost } from 'vue-infinity'; // Assuming Ghost is exported
+
+const handleLoad = () => {
+  console.log('Ghost content loaded!');
+};
+
+const handleBeforeUnload = () => {
+  console.log('Ghost content is about to unload...');
+};
+
+const handleUnload = () => {
+  console.log('Ghost content unloaded.');
+};
+</script>
+```
 ## 📦 Installation
 
 ```bash
