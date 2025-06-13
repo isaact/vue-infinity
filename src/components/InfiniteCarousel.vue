@@ -310,7 +310,7 @@ const initFirstPage = async () => {
   const numVisible = props.numColsToShow * props.numRowsToShow
   for (let i = 0; i < numVisible; i++) {
     const itemData = pages[0].items[i]
-    console.log('Seeding visible image:', itemData.id, 'at index:', i)
+    // console.log('Seeding visible image:', itemData.id, 'at index:', i)
     visibleImages.value.add(itemData.id);
   }
   // console.log('Initial visible images:', visibleImages.value)

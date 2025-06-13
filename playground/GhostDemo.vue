@@ -1,21 +1,30 @@
 <template>
   <div>
-    <h3 style="">Ghost component demo</h3>
-    <Ghost @on-load="handleGhostVisible" @on-unload="handleGhostNotVisible" style="width: 100%;">
-      <video ref="videoPlayer" width="100%" height="100%" loop controls>
-        <source src="/gliding.mp4" type="video/mp4">
-        Your browser does not support the video tag.
-      </video>
-    </Ghost>
-    <p>This is a demo of the Ghost component wrapped around a video element. When the video is not visible, it will be unloaded to save resources.</p>
-    <p>Video unloaded count: {{ videoUnloadCount }}</p>
+    <h3 style="">Ghost component demo (Unloaded: {{ videoUnloadCount }})</h3>
+    <p>Ghost component demo: video unloads when not visible.</p>
+    <p class="video-credit">
+      Video by Giorgi Chkhaidze from Pexels:<br/>
+      <a href="https://www.pexels.com/video/drone-footage-of-a-forested-mountain-range-at-sunset-19453544/" target="_blank" rel="noopener noreferrer">
+        Drone footage of a forested mountain range at sunset
+      </a>
+    </p>
+    <div class="scrollable-ghost-container">
+      <Ghost @on-load="handleGhostVisible" @on-unload="handleGhostNotVisible" style="padding-bottom: 80vh;">
+        <div>
+        <video ref="videoPlayer" width="100%" height="100%" loop controls>
+          <source src="/gliding.mp4" type="video/mp4">
+          Your browser does not support the video tag.
+        </video>
+        <p style="text-align: center;">Scroll down to unload the video.</p>
+        </div>
+      </Ghost>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, nextTick } from 'vue';
 import Ghost from '../src/components/Ghost.vue'; // Adjusted path
-import { vi } from 'vitest';
 
 const videoPlayer = ref<HTMLVideoElement | null>(null);
 const videoPlaybackTime = ref(0);
@@ -71,22 +80,39 @@ const handleGhostVisible = () => {
   setupVideoPlayer();
 };
 
-const handleGhostNotVisible = () => {
+const handleGhostNotVisible = (e) => {
   console.log('GhostDemo: Ghost became not visible (on-unload)');
-  // Logic from original handleGhostNotVisible in App.vue
-  if (videoPlayer.value) {
+  if (!videoPlayer.value) {
     // videoIsPlaying.value is updated by the 'pause' event listener
     // videoPlaybackTime.value is updated by 'timeupdate' and 'pause'
     // videoPlayer.value.pause(); // Ensure it's paused if necessary, though Ghost might handle this
+    videoUnloadCount.value++;
   }
-  videoUnloadCount.value++;
 };
 </script>
 
 <style scoped>
-/* Add any specific styles for GhostDemo if needed */
+.scrollable-ghost-container {
+  max-height: 40vh;
+  overflow-y: auto; /* Allow vertical scrolling */
+  border: 1px dashed #42b883; /* Optional: to visualize the container */
+  padding: 10px;
+  margin-bottom: 20px; /* Space below the container */
+  flex-direction: column; /* Stack children vertically */
+}
+
 p {
   color: #e0e0e0; /* Match playground style */
+  margin-bottom: 0.5rem;
+}
+
+.video-credit {
+  font-size: 0.8em;
+  color: #aaa;
+}
+
+.video-credit a {
+  color: #42b883;
 }
 h3 {
  color: #42b883; /* Match playground style */

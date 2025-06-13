@@ -4,7 +4,7 @@
     <h1 style="text-align: center;"><img src="/logo.svg" alt="Vue Infinity Logo" class="logo" />Vue-Infinity</h1>
     <h2 style="text-align: center;">Vue-Infinity Playground</h2>
     
-    <GhostDemo style="margin-bottom: 30vh;"/>
+    <GhostDemo />
     
     <h3 style="">InfiniteCarousel component demo</h3>
     <div class="controls">
