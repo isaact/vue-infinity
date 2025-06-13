@@ -45,7 +45,6 @@ const setupObserver = () => {
           measureSlotContent();
           isContentVisible.value = true;
           emit('on-load');
-          console.log('Component became visible, dimensions:', width.value, height.value);
         } else {
           console.warn('Ghost: defaultSlotContentRef not available after becoming visible.');
         }
@@ -54,10 +53,8 @@ const setupObserver = () => {
       isVisible.value = false;
       isContentVisible.value = false; // Content becomes hidden
       emit('before-unload'); // Emit before-unload in the same tick
-      console.log('Component is becoming not visible (before-unload fired)');
       nextTick(() => {
         emit('on-unload'); // Emit on-unload in the next tick
-        console.log('Component became not visible (on-unload fired)');
       });
     }
     // If newVisibility === isVisible.value, no change in state, do nothing.
@@ -65,7 +62,6 @@ const setupObserver = () => {
     root: null, // Use the viewport as the root
     rootMargin: '0px',
     filter: (entry) => {
-      console.log('Filtering entry:', entry);
       return entry.classList.contains('default-slot') || entry.classList.contains('not-visible-slot');
     },
     // Filter is intentionally removed here based on previous fix for contentObserver

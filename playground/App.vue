@@ -4,14 +4,7 @@
     <h1 style="text-align: center;"><img src="/logo.svg" alt="Vue Infinity Logo" class="logo" />Vue-Infinity</h1>
     <h2 style="text-align: center;">Vue-Infinity Playground</h2>
     
-    <h3 style="">Ghost component demo</h3>
-    <Ghost @on-load="handleGhostVisible" @on-unload="handleGhostNotVisible" style="margin-bottom: 30vh;">
-      <video ref="videoPlayer" width="100%" height="100%" loop controls>
-        <source src="/gliding.mp4" type="video/mp4">
-        Your browser does not support the video tag.
-      </video>
-    </Ghost>
-    <p>Video unloaded count: {{ videoUnloadCount }}</p>
+    <GhostDemo style="margin-bottom: 30vh;"/>
     
     <h3 style="">InfiniteCarousel component demo</h3>
     <div class="controls">
@@ -70,8 +63,8 @@
 import { computed, watch, ref, nextTick } from 'vue'
 import { useInfiniteList } from '../src/composables/useInfiniteList'
 import InfiniteCarousel from '../src/components/InfiniteCarousel.vue'
-import Ghost from '../src/components/Ghost.vue' // Import the Ghost component
 import { fetchMockImages } from './mockApi'
+import GhostDemo from './GhostDemo.vue'; // Import the new GhostDemo component
 import type { GalleryItem } from './mockApi'
 
 
@@ -85,11 +78,6 @@ const verticalScroll = ref(false)
 const itemsPerPage = ref(37) // Still needed for the infinite list
 const scrollToIndex = ref(0)
 const carouselRef = ref<InstanceType<typeof InfiniteCarousel>>()
-const videoPlayer = ref<HTMLVideoElement | null>(null);
-const videoPlaybackTime = ref(0);
-const videoUnloadCount = ref(0);
-const videoIsPlaying = ref(false);
-
 const scrollToItem = () => {
   if (carouselRef.value) {
     carouselRef.value.scrollToItem(scrollToIndex.value)
@@ -129,53 +117,6 @@ const fetchItems = async (page: number, signal: AbortSignal) => {
   // console.log('Fetching items for page:', page)
   return await fetchMockImages(numItems.value, page, itemsPerPage.value, signal)
 }
-
-const setupVideoPlayer = () => {
-  if (videoPlayer.value) {
-    const player = videoPlayer.value;
-    player.currentTime = videoPlaybackTime.value; // Restore playback time
-    player.playbackRate = 0.3; // Reset playback rate to normal speed
-    if (videoIsPlaying.value) {
-      player.play().catch(error => console.error("Error playing video:", error));
-    } else {
-      player.pause(); // Ensure it's paused if not playing
-    }
-    player.addEventListener('timeupdate', () => {
-      if (player) { // Check if player still exists
-        videoPlaybackTime.value = player.currentTime;
-      }
-    });
-
-    player.addEventListener('play', () => {
-      videoIsPlaying.value = true;
-    });
-
-    player.addEventListener('pause', () => {
-      nextTick(() => {
-        if (videoPlayer.value) { // Check if player still exists as pause is also called when the component is destroyed
-          videoPlaybackTime.value = videoPlayer.value.currentTime;
-          videoIsPlaying.value = false;
-        }
-      });
-    });
-  } else {
-    console.log('Video player not found in DOM yet.');
-  }
-};
-
-const handleGhostVisible = () => {
-  setupVideoPlayer();
-};
-
-const handleGhostNotVisible = () => {
-  if (videoPlayer.value) {
-    // Save the current playing state *before* pausing
-    // videoIsPlaying.value = !videoPlayer.value.paused;
-    // videoPlaybackTime is already being updated by 'timeupdate' and the 'pause' event listener
-    // videoPlayer.value.pause(); // Ensure it's paused
-  }
-  videoUnloadCount.value++;
-};
 
 const infiniteList = useInfiniteList<GalleryItem>({
   fetchItems,
