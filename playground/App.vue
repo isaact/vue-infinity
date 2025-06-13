@@ -2,8 +2,18 @@
   <div class="playground">
     
     <h1 style="text-align: center;"><img src="/logo.svg" alt="Vue Infinity Logo" class="logo" />Vue-Infinity</h1>
-    <h2 style="text-align: center;">InfiniteCarousel Playground</h2>
+    <h2 style="text-align: center;">Vue-Infinity Playground</h2>
     
+    <h3 style="">Ghost component demo</h3>
+    <Ghost @became-visible="handleGhostVisible" @became-not-visible="handleGhostNotVisible" style="margin-bottom: 30vh;">
+      <video ref="videoPlayer" width="100%" height="100%" loop controls>
+        <source src="/gliding.mp4" type="video/mp4">
+        Your browser does not support the video tag.
+      </video>
+    </Ghost>
+    <p>Video unloaded count: {{ videoUnloadCount }}</p>
+    
+    <h3 style="">InfiniteCarousel component demo</h3>
     <div class="controls">
       <button @click="resetGallery">Reset Gallery</button>
       <label>
@@ -36,7 +46,7 @@
         Vertical Scroll
       </label>
     </div>
-    <div style="height:100vh">Filler space</div>
+
       <InfiniteCarousel
         ref="carouselRef"
         :infinite-list="infiniteList"
@@ -57,7 +67,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, watch, ref } from 'vue'
+import { computed, watch, ref, nextTick } from 'vue'
 import { useInfiniteList } from '../src/composables/useInfiniteList'
 import InfiniteCarousel from '../src/components/InfiniteCarousel.vue'
 import Ghost from '../src/components/Ghost.vue' // Import the Ghost component
@@ -75,6 +85,10 @@ const verticalScroll = ref(false)
 const itemsPerPage = ref(37) // Still needed for the infinite list
 const scrollToIndex = ref(0)
 const carouselRef = ref<InstanceType<typeof InfiniteCarousel>>()
+const videoPlayer = ref<HTMLVideoElement | null>(null);
+const videoPlaybackTime = ref(0);
+const videoUnloadCount = ref(0);
+const videoIsPlaying = ref(false);
 
 const scrollToItem = () => {
   if (carouselRef.value) {
@@ -115,6 +129,61 @@ const fetchItems = async (page: number, signal: AbortSignal) => {
   // console.log('Fetching items for page:', page)
   return await fetchMockImages(numItems.value, page, itemsPerPage.value, signal)
 }
+
+const setupVideoPlayer = () => {
+  if (videoPlayer.value) {
+    const player = videoPlayer.value;
+    console.log('Setting up video player:', player);
+    player.addEventListener('canplay', (event) => {
+      console.log('Video can play', event);
+      // Restore playback time and state
+      player.currentTime = videoPlaybackTime.value;
+      if (videoIsPlaying.value) {
+        player.play().catch(error => console.error("Error playing video:", error));
+      }
+      // player.removeEventListener('canplay', () => {}); // Remove listener after first canplay
+    });
+
+    player.addEventListener('timeupdate', () => {
+      if (player) { // Check if player still exists
+        videoPlaybackTime.value = player.currentTime;
+      }
+    });
+
+    player.addEventListener('play', () => {
+      videoIsPlaying.value = true;
+      console.log('Video play event');
+    });
+
+    player.addEventListener('pause', () => {
+      videoIsPlaying.value = false;
+      console.log('Video pause event');
+      // Also save time on pause, in case timeupdate didn't fire recently
+      if (player) { // Check if player still exists
+        videoPlaybackTime.value = player.currentTime;
+      }
+    });
+  } else {
+    console.log('Video player not found in DOM yet.');
+  }
+};
+
+const handleGhostVisible = () => {
+  console.log(`Ghost component visible. Attempting to set up video.`);
+  setupVideoPlayer();
+};
+
+const handleGhostNotVisible = () => {
+  console.log(`Ghost component not visible. Saving state.`);
+  if (videoPlayer.value) {
+    // Save the current playing state *before* pausing
+    // videoIsPlaying.value = !videoPlayer.value.paused;
+    // videoPlaybackTime is already being updated by 'timeupdate' and the 'pause' event listener
+    // videoPlayer.value.pause(); // Ensure it's paused
+  }
+  videoUnloadCount.value++;
+};
+
 const infiniteList = useInfiniteList<GalleryItem>({
   fetchItems,
   itemsPerPage: itemsPerPage.value,
