@@ -9,7 +9,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, nextTick, defineEmits, watch } from 'vue';
+import { ref, computed, onMounted, onUnmounted, nextTick, defineEmits, watch, defineProps } from 'vue';
+
+const props = defineProps({
+  rootMargin: {
+    type: String,
+    default: '22%',
+  },
+});
+
 const emit = defineEmits(['on-load', 'before-unload', 'on-unload']);
 
 const ghostElement = ref<HTMLElement | null>(null);
@@ -35,7 +43,7 @@ const setupObserver = () => {
 
   const observerOptions = {
     root: null, // Use the viewport as the root
-    rootMargin: '0px',
+    rootMargin: props.rootMargin,
     threshold: 0.0, // Can be a single number or an array of numbers
   };
 

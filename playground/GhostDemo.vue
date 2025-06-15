@@ -1,6 +1,6 @@
 <template>
   <div>
-    <h3 style="">Ghost component demo (Unloaded: {{ videoUnloadCount }})</h3>
+    <h3 style="">Ghost component demo (Status: {{ videoStatus }})</h3>
     <p>Ghost component demo: video unloads when not visible.</p>
     <p class="video-credit">
       Video by Giorgi Chkhaidze from Pexels:<br/>
@@ -28,8 +28,8 @@ import Ghost from '../src/components/Ghost.vue'; // Adjusted path
 
 const videoPlayer = ref<HTMLVideoElement | null>(null);
 const videoPlaybackTime = ref(0);
-const videoUnloadCount = ref(0);
 const videoIsPlaying = ref(false);
+const videoStatus = ref('Loaded'); // Initial status
 
 const setupVideoPlayer = () => {
   if (videoPlayer.value) {
@@ -77,16 +77,17 @@ const setupVideoPlayer = () => {
 
 const handleGhostVisible = () => {
   console.log('GhostDemo: Ghost became visible');
+  videoStatus.value = 'Loaded';
   setupVideoPlayer();
 };
 
 const handleGhostNotVisible = (e) => {
   console.log('GhostDemo: Ghost became not visible (on-unload)');
+  videoStatus.value = 'Unloaded';
   if (!videoPlayer.value) {
     // videoIsPlaying.value is updated by the 'pause' event listener
     // videoPlaybackTime.value is updated by 'timeupdate' and 'pause'
     // videoPlayer.value.pause(); // Ensure it's paused if necessary, though Ghost might handle this
-    videoUnloadCount.value++;
   }
 };
 </script>
