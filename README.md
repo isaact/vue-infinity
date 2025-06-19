@@ -2,7 +2,7 @@
 
 # Vue-Infinity
 
-**Vue Infinity** is a modular toolkit designed to help developers build high-performance, memory-efficient, and media-rich applications with Vue. By leveraging smart data fetching and virtualized rendering, it ensures smooth user experiences even with large datasets.
+**Vue-Infinity** helps you build resource-efficient UIs by only keeping visible parts of your app in memory. It also includes a an easy to style carousel that can scroll through unlimited items without burning through RAM.
 
 ## 🚀 Key Features
 
@@ -38,7 +38,7 @@ A general-purpose virtual scroll component optimized for grid-like or carousel-b
 - Supports custom templates for each item
 - Supports custom loading templates
 - Allows scrolling to any item with CSS-based scroll snapping
-- Supports dynamic item sizing by providing an `onGetItemAspectRatio` callback function that returns the aspect ratio of an item. The component uses this to determine the item's span within the grid.
+- Supports dynamic item sizing by providing an `onGetItemAspectRatio` callback function that returns the aspect ratio of an item. 
 
 **Example:**
 
