@@ -3,7 +3,7 @@
     <!-- Default slot -->
     <div class="default-slot" ref="defaultSlotContentRef">
       <slot v-if="isVisible"></slot>
-      <div v-else class="not-visible-container"  :style="notVisibleSlotStyle"></div>
+      <div v-else class="not-visible-container" :style="notVisibleSlotStyle"></div>
     </div>
   </div>
 </template>
@@ -97,4 +97,8 @@ const notVisibleSlotStyle = computed(() => {
 </script>
 
 <style scoped>
+.not-visible-container {
+  contain: size;
+  content-visibility: auto;
+}
 </style>

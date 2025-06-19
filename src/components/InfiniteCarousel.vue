@@ -21,6 +21,7 @@
         <template v-if="pages[i - 1] && pages[i - 1].status === 'resolved'">
           <div
             v-for="(item, index) in pages[i - 1].items" :key="`${i - 1}-${index}`" class="carousel-item"
+            :id="`${carouselIdPrefix}-${i - 1}-${index}`"
             :class="pages[i - 1].status"
             :data-page-index="i - 1"
             :data-item-index="index"
@@ -38,6 +39,7 @@
         <template v-else>
           <div
             v-for="index in props.infiniteList.itemsPerPage" :key="`${i - 1}-${index}`" class="carousel-item"
+            :id="`${carouselIdPrefix}-${i - 1}-${index -1}`"
             :class="pages[i - 1]?.status || 'not-loaded'"
             :data-page-index="i - 1"
             :data-item-index="index - 1"
@@ -90,6 +92,7 @@ const props = withDefaults(
 )
 
 const carouselContainer = useTemplateRef('carousel')
+const carouselIdPrefix = `infinite-carousel-${Math.random().toString(36).substring(2, 9)}`;
 const container_size = ref({ width: 0, height: 0 })
 const itemsPerPage = props.infiniteList.itemsPerPage
 const loading = ref(false)
@@ -197,7 +200,7 @@ const fetchPage = async (pageNumber: number) => {
     await realfetchPage(pageNumber).then(() => {
       if (pages[pageNumber]?.status === 'resolved') {
         if (pageNumber >= nextPageToTry.value) {
-          // console.log('NextPage resolved:', pageNumber)
+          console.log('NextPage resolved:', pageNumber)
           nextPageToTry.value = pageNumber + 1
           // console.log('NextPageToTry:', nextPageToTry.value)
         }
@@ -315,7 +318,8 @@ const initFirstPage = async () => {
   }
   // console.log('Initial visible images:', visibleImages.value)
 }
-
+// TODO: Fix layout shifts when scrolling back over items skipped over as their aspect ratio is not known 
+// since the pages have not been loaded yet.
 const scrollToItem = async (itemIndex: number) => {
   if (!carouselContainer.value) return
 
@@ -325,10 +329,11 @@ const scrollToItem = async (itemIndex: number) => {
   
   const pageIndex = Math.floor(itemIndex / itemsPerPage)
   const itemInPage = itemIndex % itemsPerPage
+  console.log('Scrolling to item:', itemIndex, 'Page:', pageIndex, 'Item in page:', itemInPage)
   
   // First ensure the page is loaded
   if (!pages[pageIndex] || pages[pageIndex]?.status !== 'resolved') {
-    // console.log('Fetching page to scroll to:', pageIndex)
+    console.log('Fetching page to scroll to:', pageIndex)
     await fetchPage(pageIndex)
   }
   // Reconnect observers after scrolling
@@ -337,8 +342,9 @@ const scrollToItem = async (itemIndex: number) => {
   // Wait for the item to be rendered
   const checkItem = () => {
     return new Promise<void>((resolve) => {
-      const itemId = `${pageIndex}-${itemInPage}`;
+      const itemId = `${carouselIdPrefix}-${pageIndex}-${itemInPage}`;
       const itemElement = document.getElementById(itemId);
+      console.log('Checking for item:', itemId, 'Element:', itemElement);
       
       if (itemElement) {
         itemElement.scrollIntoView({
@@ -348,6 +354,7 @@ const scrollToItem = async (itemIndex: number) => {
         })
         resolve()
       } else {
+        // console.log('Item not found yet, waiting...')
         // If not found yet, wait and check again
         setTimeout(() => checkItem().then(resolve), 150)
       }
@@ -439,6 +446,10 @@ defineExpose({
   scroll-snap-align: start;
   /* width: var(--item-width);
   height: var(--item-height); */
+}
+.carousel-item.not-loaded {
+  contain: size;
+  content-visibility: auto;
 }
 
 /* .carousel-item.currentSlide {
