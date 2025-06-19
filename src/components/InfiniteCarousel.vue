@@ -195,6 +195,12 @@ const fetchPage = async (pageNumber: number) => {
   }
   loading.value = true
   error.value = false
+  let oldScrollTop = 0;
+  let oldScrollLeft = 0;
+  if (carouselContainer.value) {
+    oldScrollTop = carouselContainer.value.scrollTop;
+    oldScrollLeft = carouselContainer.value.scrollLeft;
+  }
   try {
     // console.log('Fetching page:', pageNumber)
     await realfetchPage(pageNumber).then(() => {
@@ -222,6 +228,12 @@ const fetchPage = async (pageNumber: number) => {
     error.value = true
   } finally {
     loading.value = false
+    nextTick(() => {
+      if (carouselContainer.value) {
+        carouselContainer.value.scrollTop = oldScrollTop;
+        carouselContainer.value.scrollLeft = oldScrollLeft;
+      }
+    });
   }
 }
 
@@ -329,11 +341,11 @@ const scrollToItem = async (itemIndex: number) => {
   
   const pageIndex = Math.floor(itemIndex / itemsPerPage)
   const itemInPage = itemIndex % itemsPerPage
-  console.log('Scrolling to item:', itemIndex, 'Page:', pageIndex, 'Item in page:', itemInPage)
+  // console.log('Scrolling to item:', itemIndex, 'Page:', pageIndex, 'Item in page:', itemInPage)
   
   // First ensure the page is loaded
   if (!pages[pageIndex] || pages[pageIndex]?.status !== 'resolved') {
-    console.log('Fetching page to scroll to:', pageIndex)
+    // console.log('Fetching page to scroll to:', pageIndex)
     await fetchPage(pageIndex)
   }
   // Reconnect observers after scrolling
@@ -344,7 +356,7 @@ const scrollToItem = async (itemIndex: number) => {
     return new Promise<void>((resolve) => {
       const itemId = `${carouselIdPrefix}-${pageIndex}-${itemInPage}`;
       const itemElement = document.getElementById(itemId);
-      console.log('Checking for item:', itemId, 'Element:', itemElement);
+      // console.log('Checking for item:', itemId, 'Element:', itemElement);
       
       if (itemElement) {
         itemElement.scrollIntoView({
@@ -356,7 +368,7 @@ const scrollToItem = async (itemIndex: number) => {
       } else {
         // console.log('Item not found yet, waiting...')
         // If not found yet, wait and check again
-        setTimeout(() => checkItem().then(resolve), 150)
+        setTimeout(() => checkItem().then(resolve), 100)
       }
     })
   }
@@ -368,7 +380,7 @@ const fixCacheSize = () => {
   if( props.infiniteList.maxPagesToCache >= newMaxPagesToCache) {
     return
   }
-  console.log('Updating max pages to cache:', newMaxPagesToCache);
+  // console.log('Updating max pages to cache:', newMaxPagesToCache);
   updateMaxPagesToCache(newMaxPagesToCache);
 }
 
