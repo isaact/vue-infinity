@@ -2,30 +2,33 @@
 
 # Vue-Infinity
 
-**Vue-Infinity** helps you build resource-efficient UIs by only keeping visible parts of your app in memory. It also includes a an easy to style carousel that can scroll through unlimited items without burning through RAM.
+## Build lightning-fast Vue apps that only render what the user can see
+
+Vue-Infinity brings a radical efficiency boost to your UI by applying the same principle that powers 3D engines: if it’s not in visible, it doesn’t get rendered. This lets your app handle hundreds or thousands of elements without bloating memory, janking or killing batteries.
+
+Whether you’re building infinite feeds, carousels, media galleries, or dashboards—Vue-Infinity keeps your app fast, smooth, and efficient.
 
 ## 🚀 Key Features
 
-### 🔄 InfiniteList
+### 👻 Ghost Component
 
-Provides reactive, paginated access to large datasets with full type support.
+The `Ghost` component optimizes performance by conditionally rendering its slot content. When off-screen, the content is replaced by a dimensionally-identical placeholder, "unloading" heavy elements (like videos) while preserving layout.
 
-- Paginated data access
-- Caching with automatic unloading of older pages based on least-recently-used basis
-- Item access by index
-- Supports cancellation of in-flight network requests using `AbortController`
+- **Performance Boost:** Unloads off-screen content to free up resources.
+- **Layout Stability:** Replaces hidden content with a correctly-sized placeholder.
+- **Event-Driven:** Emits events when its content becomes visible or hidden:
+    - `on-load`: Fired when the component's content becomes visible and is rendered.
+    - `before-unload`: Fired in the same tick that the component's content starts to become hidden.
+    - `on-unload`: Fired in the next tick after the component's content has become hidden and replaced by the placeholder.
 
 **Example:**
 
-```javascript
-const { pages, getItem, fetchPage } = useInfiniteList({
-  fetchItems: async (page, signal) => {
-    const response = await fetch(`/api/items?page=${page}`, { signal });
-    return response.json();
-  },
-  itemsPerPage: 50,
-  maxPagesToCache: 5
-});
+```vue
+  <Ghost @on-load="handleLoad" @before-unload="handleBeforeUnload" @on-unload="handleUnload">
+    <div style="height: 300px; background-color: lightblue;">
+      This content will be replaced when not visible.
+    </div>
+  </Ghost>
 ```
 
 ### 🪂 InfiniteCarousel
@@ -119,6 +122,28 @@ const infiniteList = useInfiniteList({
  </script>
  ```
 
+### 🔄 InfiniteList
+
+Provides reactive, paginated access to large datasets with full type support.
+
+- Paginated data access
+- Caching with automatic unloading of older pages based on least-recently-used basis
+- Item access by index
+- Supports cancellation of in-flight network requests using `AbortController`
+
+**Example:**
+
+```javascript
+const { pages, getItem, fetchPage } = useInfiniteList({
+  fetchItems: async (page, signal) => {
+    const response = await fetch(`/api/items?page=${page}`, { signal });
+    return response.json();
+  },
+  itemsPerPage: 50,
+  maxPagesToCache: 5
+});
+```
+
  ### 🔎 AutoObserver
 
 Enhances the native `IntersectionObserver` by automatically handling new elements and cleaning up removed ones.
@@ -148,26 +173,6 @@ const { disconnect } = useAutoObserver(
 );
 ```
 
-### 👻 Ghost Component
-
-The `Ghost` component optimizes performance by conditionally rendering its slot content. When off-screen, the content is replaced by a dimensionally-identical placeholder, "unloading" heavy elements (like videos) while preserving layout.
-
-- **Performance Boost:** Unloads off-screen content to free up resources.
-- **Layout Stability:** Replaces hidden content with a correctly-sized placeholder.
-- **Event-Driven:** Emits events when its content becomes visible or hidden:
-    - `on-load`: Fired when the component's content becomes visible and is rendered.
-    - `before-unload`: Fired in the same tick that the component's content starts to become hidden.
-    - `on-unload`: Fired in the next tick after the component's content has become hidden and replaced by the placeholder.
-
-**Example:**
-
-```vue
-  <Ghost @on-load="handleLoad" @before-unload="handleBeforeUnload" @on-unload="handleUnload">
-    <div style="height: 300px; background-color: lightblue;">
-      This content will be replaced when not visible.
-    </div>
-  </Ghost>
-```
 ## 📦 Installation
 
 ```bash
