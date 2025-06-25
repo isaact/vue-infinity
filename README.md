@@ -2,7 +2,7 @@
 
 # Vue-Infinity
 
-*Build lightning-fast Vue apps that only render what the user can see*
+*Build lightning-fast Vue apps that only render what is on-screen*
 
 Vue-Infinity brings a radical efficiency boost to your UI by applying the same principle that powers 3D engines: if it’s not in visible, it doesn’t get rendered. This lets your app handle hundreds or thousands of elements without bloating memory, janking or killing batteries.
 
