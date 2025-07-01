@@ -206,7 +206,7 @@ const fetchPage = async (pageNumber: number) => {
     await realfetchPage(pageNumber).then(() => {
       if (pages[pageNumber]?.status === 'resolved') {
         if (pageNumber >= nextPageToTry.value) {
-          console.log('NextPage resolved:', pageNumber)
+          // console.log('NextPage resolved:', pageNumber)
           nextPageToTry.value = pageNumber + 1
           // console.log('NextPageToTry:', nextPageToTry.value)
         }

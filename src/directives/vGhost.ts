@@ -102,11 +102,11 @@ const vGhost: Directive<HTMLElement, GhostBinding> = {
         if (entries.length === 0) return;
         const entry = entries[0];
         if (entry.isIntersecting) {
-            console.log('v-ghost: Element is visible', el);
+            // console.log('v-ghost: Element is visible', el);
           show(el, binding);
         } else {
           hide(el, binding);
-          console.log('v-ghost: Element is not visible', el);
+          // console.log('v-ghost: Element is not visible', el);
         }
       },
       {
