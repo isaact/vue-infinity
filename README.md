@@ -1,4 +1,18 @@
-<div align="center"><img width="300" src="https://tewolde.co/vi-logo.svg?width=200" alt="Vue Infinity Logo"></div>
+<div style="position: relative; display: flex; width:100%; height: 200px; align-items: center; justify-content:center; background-color: #444;border-radius:10px;">
+  <!-- Cloud background (behind) -->
+  <img
+    src="assets/clouds.svg"
+    alt="Decorative clouds"
+    style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0;"
+  />
+
+  <!-- Logo (in front) -->
+  <img
+    src="https://tewolde.co/vi-logo.svg?width=100"
+    alt="Vue Infinity Logo"
+    style="position: relative; z-index: 1; width: 100px;"
+  />
+</div>
 
 # Vue-Infinity
 
