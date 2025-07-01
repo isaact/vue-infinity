@@ -1,16 +1,9 @@
-<div style="position: relative; display: flex; width:100%; height: 200px; align-items: center; justify-content:center; background-color: #444;border-radius:10px;">
+<div style="background-color: #444;border-radius:10px; width:100%;height:200px">
   <!-- Cloud background (behind) -->
   <img
-    src="assets/clouds.svg"
+    src="assets/cloudsLogo.svg"
     alt="Decorative clouds"
-    style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0;"
-  />
-
-  <!-- Logo (in front) -->
-  <img
-    src="https://tewolde.co/vi-logo.svg?width=100"
-    alt="Vue Infinity Logo"
-    style="position: relative; z-index: 1; width: 100px;"
+    style="width:100%"
   />
 </div>
 
