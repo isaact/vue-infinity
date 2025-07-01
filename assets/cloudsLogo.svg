@@ -31,29 +31,29 @@
   
     <use href="#cloud1" x="20" y="200">
       <animateTransform id="cloud1-animation1" attributeName="transform" type="translate"
-        values="0 0; -150 150" dur="5s" repeatCount="indefinite" />
+        values="0 0; -150 150" dur="29s" repeatCount="indefinite" />
     </use>
     <use href="#cloud1" x="170" y="50">
       <animateTransform id="cloud1-animation1" attributeName="transform" type="translate"
-        values="0 0; -150 150" dur="5s" repeatCount="indefinite" />
+        values="0 0; -150 150" dur="29s" repeatCount="indefinite" />
     </use>
     <use href="#cloud1" x="320" y="-100">
       <animateTransform id="cloud1-animation1" attributeName="transform" type="translate"
-        values="0 0; -150 150" dur="5s" repeatCount="indefinite" />
+        values="0 0; -150 150" dur="29s" repeatCount="indefinite" />
     </use>
   </g>
   <g clip-path="url(#clip)">
     <use href="#cloud3" x="300" y="20">
       <animateTransform id="cloud3-animation1" attributeName="transform" type="translate"
-          values="0 0; -150 150" dur="5s" repeatCount="indefinite" />
+          values="0 0; -150 150" dur="29s" repeatCount="indefinite" />
     </use>
     <use href="#cloud3" x="150" y="170">
       <animateTransform id="cloud3-animation1" attributeName="transform" type="translate"
-          values="0 0; -150 150" dur="5s" repeatCount="indefinite" />
+          values="0 0; -150 150" dur="29s" repeatCount="indefinite" />
     </use>
     <use href="#cloud3" x="0" y="320">
       <animateTransform id="cloud3-animation1" attributeName="transform" type="translate"
-          values="0 0; -150 150" dur="5s" repeatCount="indefinite" />
+          values="0 0; -150 150" dur="29s" repeatCount="indefinite" />
     </use>
   </g>
   <svg x="125" y="125" width="50" height="50" viewBox="174.698 175.288 528.72 557.824" preserveAspectRatio="xMidYMid meet">
