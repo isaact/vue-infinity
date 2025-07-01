@@ -86,7 +86,7 @@ const show = (el: HTMLElement, binding: DirectiveBinding<GhostBinding>) => {
   state.children = [];
 
   binding.value?.onLoad?.();
-  console.log('v-ghost: Content shown', el);
+  // console.log('v-ghost: Content shown', el);
 };
 
 /**
@@ -127,7 +127,7 @@ const vGhost: Directive<HTMLElement, GhostBinding> = {
     // Initial measurement and start observing.
     measure(el);
     observer.observe(el);
-    console.log('v-ghost: Mounted and observing', el);
+    // console.log('v-ghost: Mounted and observing', el);
   },
 
   unmounted(el) {

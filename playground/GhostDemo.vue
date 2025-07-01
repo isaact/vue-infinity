@@ -14,6 +14,7 @@
       >
         <video 
           v-ghost="{
+            rootMargin: '22%',
             onLoad: handleGhostVisible,
             onUnload: handleGhostNotVisible,
           }"
