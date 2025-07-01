@@ -38,6 +38,32 @@ The `Ghost` component optimizes performance by conditionally rendering its slot 
   </Ghost>
 ```
 
+### 👻 v-ghost Directive
+
+The `v-ghost` directive offers a lightweight, flexible alternative to the `Ghost` component for optimizing performance. By applying `v-ghost` to any element, you can ensure its content is only rendered when it enters the viewport. When off-screen, the element's content is replaced by a placeholder, preserving layout integrity while freeing up system resources.
+
+- **Minimalist Approach:** A simple directive-based solution for lazy rendering.
+- **Layout Preservation:** Automatically measures the element and maintains its dimensions when off-screen.
+- **Event-Driven Control:** Provides `onLoad`, `beforeUnload`, and `onUnload` callbacks for fine-grained control over the element's lifecycle.
+
+**Example:**
+
+```vue
+<template>
+  <heavy-component v-ghost="{ onLoad: handleLoad, onUnload: handleUnload }"/>
+</template>
+
+<script setup>
+const handleLoad = () => {
+  console.log('Component loaded!');
+};
+
+const handleUnload = () => {
+  console.log('Component unloaded!');
+};
+</script>
+```
+
 ### 🪂 InfiniteCarousel
 
 A general-purpose virtual scroll component optimized for grid-like or carousel-based layouts.
@@ -197,6 +223,14 @@ To run the playground application locally:
 ```bash
 npm run playground
 ```
+
+## Releases
+
+### v0.7.0 (2024-07-01)
+
+- **v-ghost Directive**: Introduced the new `v-ghost` directive to optimize performance by automatically unloading off-screen content.
+- **Dynamic Item Sizing**: The `InfiniteCarousel` now supports an `onGetItemAspectRatio` callback, enabling it to render items with variable heights.
+- **Documentation Updates**: Added instructions for the `v-ghost` directive and the dynamic sizing feature.
 
 ## 📄 License
 
