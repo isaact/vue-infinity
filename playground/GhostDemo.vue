@@ -9,22 +9,27 @@
       </a>
     </p>
     <div class="scrollable-ghost-container">
-      <Ghost @on-load="handleGhostVisible" @on-unload="handleGhostNotVisible" style="padding-bottom: 80vh;">
-        <div>
-        <video ref="videoPlayer" width="100%" height="100%" loop controls>
-          <source src="/gliding.mp4" type="video/mp4">
+      <div
+        style="padding-bottom: 80vh;"
+      >
+        <video 
+          v-ghost="{
+            onLoad: handleGhostVisible,
+            onUnload: handleGhostNotVisible,
+          }"
+          ref="videoPlayer" width="100%" height="100%" loop controls>
+          <source src="/gliding.mp4" type="video/mp4" />
           Your browser does not support the video tag.
         </video>
         <p style="text-align: center;">Scroll down to unload the video.</p>
-        </div>
-      </Ghost>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, nextTick } from 'vue';
-import Ghost from '../src/components/Ghost.vue'; // Adjusted path
+import { vGhost } from '../src/index';
 
 const videoPlayer = ref<HTMLVideoElement | null>(null);
 const videoPlaybackTime = ref(0);
@@ -81,7 +86,7 @@ const handleGhostVisible = () => {
   setupVideoPlayer();
 };
 
-const handleGhostNotVisible = (e) => {
+const handleGhostNotVisible = () => {
   console.log('GhostDemo: Ghost became not visible (on-unload)');
   videoStatus.value = 'Unloaded';
   if (!videoPlayer.value) {
