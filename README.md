@@ -1,4 +1,4 @@
-<div style="background-color: #444;border-radius:10px; width:100%;height:200px">
+<div style="background-color: #444; width:100%;height:200px">
   <!-- Cloud background (behind) -->
   <img
     src="assets/cloudsLogo.svg"
