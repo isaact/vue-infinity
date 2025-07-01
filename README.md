@@ -3,7 +3,7 @@
   <img
     src="assets/cloudsLogo.svg"
     alt="Decorative clouds"
-    style="width:100%"
+    style="width:100%; height:200px"
   />
 </div>
 
