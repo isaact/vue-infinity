@@ -1,9 +1,9 @@
-<div style="background-color: #444; width:100%;height:200px">
+<div style="background-color: #444; width:100%;height:250px">
   <!-- Cloud background (behind) -->
   <img
     src="assets/cloudsLogo.svg"
     alt="Decorative clouds"
-    style="width:100%; height:200px"
+    style="width:100%; height:250px"
   />
 </div>
 
@@ -46,20 +46,41 @@ The `v-ghost` directive offers a lightweight, flexible alternative to the `Ghost
 - **Layout Preservation:** Automatically measures the element and maintains its dimensions when off-screen.
 - **Event-Driven Control:** Provides `onLoad`, `beforeUnload`, and `onUnload` callbacks for fine-grained control over the element's lifecycle.
 
-**Example:**
+**Basic Example (Video):**
 
 ```vue
 <template>
-  <heavy-component v-ghost="{ onLoad: handleLoad, onUnload: handleUnload }"/>
+  <video controls muted playsinline v-ghost>
+    <source src="your-video.mp4" type="video/mp4" />
+  </video>
+</template>
+```
+
+**Advanced Example (All Options):**
+
+```vue
+<template>
+  <div v-ghost="{
+    rootMargin: '100px',
+    onLoad: handleLoad,
+    beforeUnload: handleBeforeUnload,
+    onUnload: handleUnload
+  }">
+    <!-- Heavy content goes here -->
+  </div>
 </template>
 
 <script setup>
 const handleLoad = () => {
-  console.log('Component loaded!');
+  console.log('Content is now visible and rendered.');
+};
+
+const handleBeforeUnload = () => {
+  console.log('Content is about to be hidden.');
 };
 
 const handleUnload = () => {
-  console.log('Component unloaded!');
+  console.log('Content is hidden and replaced by a placeholder.');
 };
 </script>
 ```
