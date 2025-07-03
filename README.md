@@ -1,6 +1,8 @@
 <div style="background-color: #444; width:100%;height:250px">
   <!-- Cloud background (behind) -->
   <img
+    width="100%"
+    height="250"
     src="assets/cloudsLogo.svg"
     alt="Decorative clouds"
     style="width:100%; height:250px"
