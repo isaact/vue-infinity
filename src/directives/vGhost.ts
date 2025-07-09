@@ -14,15 +14,40 @@ interface GhostBinding {
   onUnload?: () => void;
 }
 
+// Map to hold shared IntersectionObservers, keyed by rootMargin.
+const observers = new Map<
+  string,
+  {
+    observer: IntersectionObserver;
+    elements: Set<HTMLElement>;
+  }
+>();
+
+// The shared callback for all IntersectionObservers.
+const intersectionCallback = (entries: IntersectionObserverEntry[]) => {
+  for (const entry of entries) {
+    const el = entry.target as HTMLElement;
+    const state = elementStateMap.get(el);
+    if (!state) continue;
+
+    if (entry.isIntersecting) {
+      show(el, state.binding);
+    } else {
+      hide(el, state.binding);
+    }
+  }
+};
+
 // Use a WeakMap to store state for each element, to avoid memory leaks.
 const elementStateMap = new WeakMap<
   HTMLElement,
   {
-    observer: IntersectionObserver;
+    binding: DirectiveBinding<GhostBinding>;
     children: ChildNode[];
     isVisible: boolean;
     width: number;
     height: number;
+    rootMargin: string;
   }
 >();
 
@@ -86,7 +111,6 @@ const show = (el: HTMLElement, binding: DirectiveBinding<GhostBinding>) => {
   state.children = [];
 
   binding.value?.onLoad?.();
-  // console.log('v-ghost: Content shown', el);
 };
 
 /**
@@ -97,43 +121,56 @@ const vGhost: Directive<HTMLElement, GhostBinding> = {
   mounted(el, binding) {
     const { rootMargin = '22%' } = binding.value || {};
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries.length === 0) return;
-        const entry = entries[0];
-        if (entry.isIntersecting) {
-            // console.log('v-ghost: Element is visible', el);
-          show(el, binding);
-        } else {
-          hide(el, binding);
-          // console.log('v-ghost: Element is not visible', el);
-        }
-      },
-      {
+    let observerData = observers.get(rootMargin);
+    if (!observerData) {
+      const observer = new IntersectionObserver(intersectionCallback, {
         root: null,
         rootMargin,
         threshold: 0.0,
-      },
-    );
+      });
+      observerData = { observer, elements: new Set() };
+      observers.set(rootMargin, observerData);
+    }
 
     elementStateMap.set(el, {
-      observer,
+      binding,
       children: [],
       isVisible: true, // Assume visible initially.
       width: 0,
       height: 0,
+      rootMargin,
     });
+
+    observerData.elements.add(el);
 
     // Initial measurement and start observing.
     measure(el);
-    observer.observe(el);
-    // console.log('v-ghost: Mounted and observing', el);
+    observerData.observer.observe(el);
+  },
+
+  updated(el, binding) {
+    const state = elementStateMap.get(el);
+    if (state) {
+      // Update the binding in the state.
+      state.binding = binding;
+      // NOTE: Changing rootMargin on update is not supported, as it would require
+      // moving the element to a different observer instance.
+    }
   },
 
   unmounted(el) {
     const state = elementStateMap.get(el);
     if (state) {
-      state.observer.disconnect();
+      const observerData = observers.get(state.rootMargin);
+      if (observerData) {
+        observerData.observer.unobserve(el);
+        observerData.elements.delete(el);
+
+        if (observerData.elements.size === 0) {
+          observerData.observer.disconnect();
+          observers.delete(state.rootMargin);
+        }
+      }
       elementStateMap.delete(el);
     }
   },
