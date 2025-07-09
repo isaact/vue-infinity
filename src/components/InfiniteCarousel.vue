@@ -340,7 +340,7 @@ const scrollToItem = async (itemIndex: number) => {
   // Disconnect observers before scrolling
   // pageObserver?.disconnect();
   // carouselItemObserver?.disconnect();
-  console.log('Scrolling to item index:', itemIndex)
+  // console.log('Scrolling to item index:', itemIndex)
   
   const pageIndex = Math.floor(itemIndex / itemsPerPage)
   const itemInPage = itemIndex % itemsPerPage
