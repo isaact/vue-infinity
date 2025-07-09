@@ -20,15 +20,17 @@
       <template v-for="i in nextPageToTry + 1" :key="i - 1">
         <template v-if="pages[i - 1] && pages[i - 1].status === 'resolved'">
           <div
-            v-for="(item, index) in pages[i - 1].items" :key="`${i - 1}-${index}`" class="carousel-item"
-            :id="`${carouselIdPrefix}-${i - 1}-${index}`"
+            v-for="(item, index) in pages[i - 1].items" 
+            class="carousel-item"
+            :key="getItemId(index, i - 1)" 
+            :id="getItemId(index, i - 1)"
             :class="pages[i - 1].status"
             :data-page-index="i - 1"
             :data-item-index="index"
             :data-load-page="index === 0 ? i - 1 : ''"
             :style="getItemStyle(item, i - 1, index)"
           >
-            <slot name="item" v-if="visibleImages.has(`${i - 1}-${index}`)" :item="item" :index="index" :page="i - 1">
+            <slot name="item" v-if="visibleImages.has(getItemId(index, i - 1))" :item="item" :index="index" :page="i - 1">
               <div>Page: {{ i - 1 }}, Item {{ index }}</div>
             </slot>
             <slot name="loading" v-else :index="`${item.index}`" :page="item.page">
@@ -39,7 +41,7 @@
         <template v-else>
           <div
             v-for="index in props.infiniteList.itemsPerPage" :key="`${i - 1}-${index}`" class="carousel-item"
-            :id="`${carouselIdPrefix}-${i - 1}-${index -1}`"
+            :id="getItemId(index, i - 1)"
             :class="pages[i - 1]?.status || 'not-loaded'"
             :data-page-index="i - 1"
             :data-item-index="index - 1"
@@ -99,8 +101,8 @@ const loading = ref(false)
 const error = ref(false)
 const visibleImages = ref(new Set<string>())
 
-let pageObserver: AutoObserver | null = null
-let carouselItemObserver: AutoObserver | null = null
+let pageObserver: AutoObserver
+let carouselItemObserver: AutoObserver
 
 const { pages, getItem, fetchPage: realfetchPage, updateMaxPagesToCache } = props.infiniteList
 const initialNextPage = (pages[0] && (pages[0].status === 'resolved' || pages[0].status === 'pending')) ? 1 : 0;
@@ -150,6 +152,10 @@ const getItemStyle = (item: any, pageIndex: number, itemIndex: number) => {
       }
     }
   }
+}
+
+const getItemId = (itemIndex: any, pageIndex: number) => {
+  return `${carouselIdPrefix}-${pageIndex}-${itemIndex}`;
 }
 
 const getItemSpan = (globalIndex: number, aspectRatio: number): ItemSpan | undefined => {
@@ -249,9 +255,9 @@ const updateDimensions = () => {
 
 const setupObserver = () => {
   if (!carouselContainer.value) return
-  // console.log('Setting up observer for container:', carousel.value)
+  console.log('Setting up observer for container:')
 
-  pageObserver =  useAutoObserver(carouselContainer, (entries) => {
+  pageObserver =  useAutoObserver((entries) => {
     entries.forEach(entry => {
       if (entry.isIntersecting) {
         // console.log('Page is in view:', entry)
@@ -285,26 +291,32 @@ const setupObserver = () => {
     root: carouselContainer.value,
     rootMargin: '300%'
   })
-  carouselItemObserver = useAutoObserver(carouselContainer, (entries) => {
+  pageObserver.observeContainer(carouselContainer.value)
+  carouselItemObserver = useAutoObserver((entries) => {
     entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        // console.log('Image is in view:', entry)
-        // const imgIndex = entry.target.getAttribute('data-img-index') || ''
-        // visibleImages.value.add(imgIndex)
-        // throttledAddVisibleImage(imgIndex)
-        const itemIndex = entry.target.getAttribute('data-item-index') || ''
-        const pageIndex = entry.target.getAttribute('data-page-index') || ''
-        if (itemIndex && pageIndex && pages[+pageIndex] && pages[+pageIndex].items) {
-          const itemData = pages[+pageIndex].items[+itemIndex]
-          if (itemData) {
-             visibleImages.value.add(`${pageIndex}-${itemIndex}`)
+      const itemIndex = entry.target.getAttribute('data-item-index') || ''
+      const pageIndex = entry.target.getAttribute('data-page-index') || ''
+      if(pageIndex && itemIndex){
+        const itemId = getItemId(itemIndex, +pageIndex)
+        if (entry.isIntersecting) {
+          // console.log('Image is in view:', entry)
+          // const imgIndex = entry.target.getAttribute('data-img-index') || ''
+          // visibleImages.value.add(imgIndex)
+          // throttledAddVisibleImage(imgIndex)
+          
+          if (itemIndex && pageIndex && pages[+pageIndex] && pages[+pageIndex].items) {
+            const itemData = pages[+pageIndex].items[+itemIndex]
+            if (itemData) {
+              visibleImages.value.add(itemId)
+            }
           }
+        } else {
+          // console.log('Image is not in view:', entry)
+          // const imgIndex = entry.target.getAttribute('data-img-index') || ''
+          // visibleImages.value.delete(imgIndex)
+          visibleImages.value.delete(itemId)
         }
-      } else {
-        // console.log('Image is not in view:', entry)
-        const imgIndex = entry.target.getAttribute('data-img-index') || ''
-        // visibleImages.value.delete(imgIndex)
-        visibleImages.value.delete(imgIndex)
+
       }
     })
   }, {
@@ -313,8 +325,10 @@ const setupObserver = () => {
       return el.classList.contains('carousel-item') && el.classList.contains('resolved')
     },
     rootMargin: "200%"
-  }) 
+  })
+  carouselItemObserver.observeContainer(carouselContainer.value)
 }
+
 
 const initFirstPage = async () => {
   if (!pages[0] || (pages[0].status !== 'resolved')) {
@@ -326,7 +340,7 @@ const initFirstPage = async () => {
   for (let i = 0; i < numVisible; i++) {
     const itemData = pages[0].items[i]
     // console.log('Seeding visible image:', itemData.id, 'at index:', i)
-    visibleImages.value.add(itemData.id);
+    visibleImages.value.add(getItemId(i, 0));
   }
   // console.log('Initial visible images:', visibleImages.value)
 }
@@ -338,6 +352,7 @@ const scrollToItem = async (itemIndex: number) => {
   // Disconnect observers before scrolling
   pageObserver?.disconnect();
   carouselItemObserver?.disconnect();
+  console.log('Scrolling to item index:', itemIndex)
   
   const pageIndex = Math.floor(itemIndex / itemsPerPage)
   const itemInPage = itemIndex % itemsPerPage
@@ -348,22 +363,33 @@ const scrollToItem = async (itemIndex: number) => {
     // console.log('Fetching page to scroll to:', pageIndex)
     await fetchPage(pageIndex)
   }
-  // Reconnect observers after scrolling
-  setupObserver();
 
   // Wait for the item to be rendered
   const checkItem = () => {
     return new Promise<void>((resolve) => {
-      const itemId = `${carouselIdPrefix}-${pageIndex}-${itemInPage}`;
+      const itemId = getItemId(itemInPage, pageIndex);
       const itemElement = document.getElementById(itemId);
-      // console.log('Checking for item:', itemId, 'Element:', itemElement);
+      console.log('Checking for item:', itemId, 'Element:', itemElement, itemElement?.innerHTML);
       
-      if (itemElement) {
-        itemElement.scrollIntoView({
-          behavior: 'smooth',
-          block: 'nearest',
-          inline: 'start'
-        })
+      if (itemElement && carouselContainer.value) {
+        // nextTick(() => {
+        //   itemElement.scrollIntoView({
+        //   behavior: 'smooth',
+        //   block: 'nearest',
+        //   inline: 'start'
+        // })
+        const itemPosition = itemElement.getBoundingClientRect();
+        const containerPosition = carouselContainer.value.getBoundingClientRect();
+        const scrollTop = itemPosition.top - containerPosition.top + carouselContainer.value.scrollTop;
+        const scrollLeft = itemPosition.left - containerPosition.left + carouselContainer.value.scrollLeft;
+        carouselContainer.value.scrollTo({
+          top: props.verticalScroll ? scrollTop : 0,
+          left: props.verticalScroll ? 0 : scrollLeft,
+          behavior: 'smooth'
+        });
+
+        // Reconnect observers after scrolling
+        setupObserver();
         resolve()
       } else {
         // console.log('Item not found yet, waiting...')
@@ -372,8 +398,11 @@ const scrollToItem = async (itemIndex: number) => {
       }
     })
   }
-
-  await checkItem()
+  nextTick(async () => {
+    // console.log('Waiting for item to be rendered before scrolling...')
+    await checkItem()
+  })
+  
 }
 const fixCacheSize = () => {
   const newMaxPagesToCache = Math.ceil(props.numRowsToShow * props.numColsToShow * 3 * 3 * 2 / itemsPerPage)

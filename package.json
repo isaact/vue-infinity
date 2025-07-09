@@ -18,8 +18,8 @@
   },
   "types": "dist/index.d.ts",
   "scripts": {
-    "dev": "vitest --ui",
-    "test": "vitest run",
+    "dev": "cd playground && vite dev",
+    "test": "vitest --ui",
     "build": "vite build",
     "playground": "cd playground && vite dev"
   },
