@@ -33,14 +33,14 @@ export function useAutoObserver(
   const observedElements = new Set<Element>()
 
   const observeContainer = (container: HTMLElement | null) => {
+    // console.log('Observing container:', container)
     cleanup()
     if (container) {
       mutationObserver.observe(container, {
         childList: true,
         subtree: false,
       })
-      console.log('Observing container:', container)
-      // observeChildren()
+      observeAdded(container.querySelectorAll(selector))
     }
   }
 
@@ -81,7 +81,7 @@ export function useAutoObserver(
   }
 
   const mutationObserver = new MutationObserver((mutations) => {
-    console.log('MutationObserver detected changes:', mutations)
+    // console.log('MutationObserver detected changes:', mutations)
     for (const mutation of mutations) {
       unobserveRemoved(mutation.removedNodes)
       observeAdded(mutation.addedNodes)
@@ -93,29 +93,6 @@ export function useAutoObserver(
     mutationObserver.disconnect()
     observedElements.clear()
   }
-
-  // watch(containerRef, (newVal) => {
-  //   cleanup()
-  //   if (newVal) {
-  //     console.log('Container ref changed:', newVal)
-  //     mutationObserver.observe(newVal, {
-  //       childList: true,
-  //       subtree: false,
-  //     })
-  //     // observeChildren()
-  //   }
-  // }, { immediate: true })
-
-  // onBeforeUnmount(cleanup)
-  // onMounted(() => {
-  //   if (containerRef.value) {
-  //     mutationObserver.observe(containerRef.value, {
-  //       childList: true,
-  //       subtree: true,
-  //     })
-  //     // observeChildren()
-  //   }
-  // })
 
   return {
     observedElements,

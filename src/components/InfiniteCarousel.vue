@@ -201,12 +201,6 @@ const fetchPage = async (pageNumber: number) => {
   }
   loading.value = true
   error.value = false
-  let oldScrollTop = 0;
-  let oldScrollLeft = 0;
-  if (carouselContainer.value) {
-    oldScrollTop = carouselContainer.value.scrollTop;
-    oldScrollLeft = carouselContainer.value.scrollLeft;
-  }
   try {
     // console.log('Fetching page:', pageNumber)
     await realfetchPage(pageNumber).then(() => {
@@ -234,12 +228,6 @@ const fetchPage = async (pageNumber: number) => {
     error.value = true
   } finally {
     loading.value = false
-    nextTick(() => {
-      if (carouselContainer.value) {
-        carouselContainer.value.scrollTop = oldScrollTop;
-        carouselContainer.value.scrollLeft = oldScrollLeft;
-      }
-    });
   }
 }
 
@@ -350,8 +338,8 @@ const scrollToItem = async (itemIndex: number) => {
   if (!carouselContainer.value) return
 
   // Disconnect observers before scrolling
-  pageObserver?.disconnect();
-  carouselItemObserver?.disconnect();
+  // pageObserver?.disconnect();
+  // carouselItemObserver?.disconnect();
   console.log('Scrolling to item index:', itemIndex)
   
   const pageIndex = Math.floor(itemIndex / itemsPerPage)
@@ -369,7 +357,7 @@ const scrollToItem = async (itemIndex: number) => {
     return new Promise<void>((resolve) => {
       const itemId = getItemId(itemInPage, pageIndex);
       const itemElement = document.getElementById(itemId);
-      console.log('Checking for item:', itemId, 'Element:', itemElement, itemElement?.innerHTML);
+      // console.log('Checking for item:', itemId, 'Element:', itemElement, itemElement?.innerHTML);
       
       if (itemElement && carouselContainer.value) {
         // nextTick(() => {
@@ -385,11 +373,8 @@ const scrollToItem = async (itemIndex: number) => {
         carouselContainer.value.scrollTo({
           top: props.verticalScroll ? scrollTop : 0,
           left: props.verticalScroll ? 0 : scrollLeft,
-          behavior: 'smooth'
+          behavior: 'instant'
         });
-
-        // Reconnect observers after scrolling
-        setupObserver();
         resolve()
       } else {
         // console.log('Item not found yet, waiting...')
