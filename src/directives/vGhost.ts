@@ -1,4 +1,5 @@
 import type { Directive, DirectiveBinding } from 'vue';
+import { useSharedObserver } from '../composables/useSharedObserver';
 
 /**
  * Interface for the binding value of the v-ghost directive.
@@ -14,30 +15,6 @@ interface GhostBinding {
   onUnload?: () => void;
 }
 
-// Map to hold shared IntersectionObservers, keyed by rootMargin.
-const observers = new Map<
-  string,
-  {
-    observer: IntersectionObserver;
-    elements: Set<HTMLElement>;
-  }
->();
-
-// The shared callback for all IntersectionObservers.
-const intersectionCallback = (entries: IntersectionObserverEntry[]) => {
-  for (const entry of entries) {
-    const el = entry.target as HTMLElement;
-    const state = elementStateMap.get(el);
-    if (!state) continue;
-
-    if (entry.isIntersecting) {
-      show(el, state.binding);
-    } else {
-      hide(el, state.binding);
-    }
-  }
-};
-
 // Use a WeakMap to store state for each element, to avoid memory leaks.
 const elementStateMap = new WeakMap<
   HTMLElement,
@@ -47,7 +24,6 @@ const elementStateMap = new WeakMap<
     isVisible: boolean;
     width: number;
     height: number;
-    rootMargin: string;
   }
 >();
 
@@ -119,60 +95,43 @@ const show = (el: HTMLElement, binding: DirectiveBinding<GhostBinding>) => {
  */
 const vGhost: Directive<HTMLElement, GhostBinding> = {
   mounted(el, binding) {
+    const { observe } = useSharedObserver();
     const { rootMargin = '22%' } = binding.value || {};
 
-    let observerData = observers.get(rootMargin);
-    if (!observerData) {
-      const observer = new IntersectionObserver(intersectionCallback, {
-        root: null,
-        rootMargin,
-        threshold: 0.0,
-      });
-      observerData = { observer, elements: new Set() };
-      observers.set(rootMargin, observerData);
-    }
+    const intersectionCallback = (isIntersecting: boolean) => {
+      const state = elementStateMap.get(el);
+      if (!state) return;
+
+      if (isIntersecting) {
+        show(el, state.binding);
+      } else {
+        hide(el, state.binding);
+      }
+    };
 
     elementStateMap.set(el, {
       binding,
       children: [],
-      isVisible: true, // Assume visible initially.
+      isVisible: true, // Assume visible initially to hide it correctly
       width: 0,
       height: 0,
-      rootMargin,
     });
 
-    observerData.elements.add(el);
-
-    // Initial measurement and start observing.
     measure(el);
-    observerData.observer.observe(el);
+    observe(el, intersectionCallback, rootMargin);
   },
 
   updated(el, binding) {
     const state = elementStateMap.get(el);
     if (state) {
-      // Update the binding in the state.
       state.binding = binding;
-      // NOTE: Changing rootMargin on update is not supported, as it would require
-      // moving the element to a different observer instance.
     }
   },
 
   unmounted(el) {
-    const state = elementStateMap.get(el);
-    if (state) {
-      const observerData = observers.get(state.rootMargin);
-      if (observerData) {
-        observerData.observer.unobserve(el);
-        observerData.elements.delete(el);
-
-        if (observerData.elements.size === 0) {
-          observerData.observer.disconnect();
-          observers.delete(state.rootMargin);
-        }
-      }
-      elementStateMap.delete(el);
-    }
+    const { unobserve } = useSharedObserver();
+    unobserve(el);
+    elementStateMap.delete(el);
   },
 };
 

@@ -1,6 +1,6 @@
 <template>
   <div>
-    <h3 style="">Ghost component demo (Status: {{ videoStatus }})</h3>
+    <h3 style="">Ghost component demo</h3>
     <p>Ghost component demo: video unloads when not visible.</p>
     <p class="video-credit">
       Video by Giorgi Chkhaidze from Pexels:<br/>
@@ -8,34 +8,66 @@
         Drone footage of a forested mountain range at sunset
       </a>
     </p>
-    <div class="scrollable-ghost-container">
-      <div
-        style="padding-bottom: 80vh;"
-      >
-        <video 
-          v-ghost="{
-            rootMargin: '22%',
-            onLoad: handleGhostVisible,
-            onUnload: handleGhostNotVisible,
-          }"
-          ref="videoPlayer" width="100%" height="100%" loop controls>
-          <source src="/gliding.mp4" type="video/mp4" />
-          Your browser does not support the video tag.
-        </video>
-        <p style="text-align: center;">Scroll down to unload the video.</p>
+    <p>Video Status: {{ activeTab === 'directive' ? directiveVideoStatus : componentVideoStatus }})</p>
+    <div class="tabs">
+      <button @click="activeTab = 'directive'" :class="{ active: activeTab === 'directive' }">Directive Mode</button>
+      <button @click="activeTab = 'component'" :class="{ active: activeTab === 'component' }">Component Mode</button>
+    </div>
+    <div v-if="activeTab === 'directive'">
+      <p>The <code>v-ghost</code> directive is used to conditionally render the video.</p>
+      <div class="scrollable-ghost-container">
+        <div
+          style="padding-bottom: 80vh;"
+        >
+          <video
+            v-ghost="{
+              rootMargin: '22%',
+              onLoad: handleGhostVisible,
+              onUnload: handleGhostNotVisible,
+            }"
+            ref="videoPlayer" width="100%" height="100%" loop controls>
+            <source src="/gliding.mp4" type="video/mp4" />
+            Your browser does not support the video tag.
+          </video>
+          <p style="text-align: center;">Scroll down to unload the video.</p>
+        </div>
+      </div>
+    </div>
+    <div v-if="activeTab === 'component'">
+      <p>The <code>&lt;Ghost&gt;</code> component is used to conditionally render the video.</p>
+      <div class="scrollable-ghost-container">
+        <div
+          style="padding-bottom: 80vh;"
+        >
+          <Ghost
+            :rootMargin="'22%'"
+            @on-load="handleGhostVisible"
+            @on-unload="handleGhostNotVisible"
+          >
+            <video
+              ref="videoPlayer" width="100%" height="100%" loop controls>
+              <source src="/gliding.mp4" type="video/mp4" />
+              Your browser does not support the video tag.
+            </video>
+          </Ghost>
+          <p style="text-align: center;">Scroll down to unload the video.</p>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, nextTick } from 'vue';
-import { vGhost } from '../src/index';
+import { ref, nextTick, watch } from 'vue';
+import { vGhost, Ghost } from '../src/index';
+
+const activeTab = ref('directive');
 
 const videoPlayer = ref<HTMLVideoElement | null>(null);
 const videoPlaybackTime = ref(0);
 const videoIsPlaying = ref(false);
-const videoStatus = ref('Loaded'); // Initial status
+const directiveVideoStatus = ref('Loaded');
+const componentVideoStatus = ref('Loaded');
 
 const setupVideoPlayer = () => {
   if (videoPlayer.value) {
@@ -82,20 +114,37 @@ const setupVideoPlayer = () => {
 };
 
 const handleGhostVisible = () => {
-  console.log('GhostDemo: Ghost became visible');
-  videoStatus.value = 'Loaded';
+  // console.log('GhostDemo: Ghost became visible');
+  if (activeTab.value === 'directive') {
+    directiveVideoStatus.value = 'Loaded';
+  } else {
+    componentVideoStatus.value = 'Loaded';
+  }
   setupVideoPlayer();
 };
 
 const handleGhostNotVisible = () => {
-  console.log('GhostDemo: Ghost became not visible (on-unload)');
-  videoStatus.value = 'Unloaded';
+  // console.log('GhostDemo: Ghost became not visible (on-unload)');
+  if (activeTab.value === 'directive') {
+    directiveVideoStatus.value = 'Unloaded';
+  } else {
+    componentVideoStatus.value = 'Unloaded';
+  }
   if (!videoPlayer.value) {
     // videoIsPlaying.value is updated by the 'pause' event listener
     // videoPlaybackTime.value is updated by 'timeupdate' and 'pause'
     // videoPlayer.value.pause(); // Ensure it's paused if necessary, though Ghost might handle this
   }
 };
+watch(activeTab, () => {
+  videoPlaybackTime.value = 0;
+  videoIsPlaying.value = false;
+  nextTick(() => {
+    if (videoPlayer.value) {
+      setupVideoPlayer();
+    }
+  });
+});
 </script>
 
 <style scoped>
@@ -125,5 +174,31 @@ h3 {
  color: #42b883; /* Match playground style */
  margin-top: 1.5rem;
  margin-bottom: 1rem;
+}
+.tabs {
+  margin-bottom: 1rem;
+}
+.tabs button {
+  padding: 0.5rem 1rem;
+  border: 1px solid #42b883;
+  background-color: transparent;
+  color: #42b883;
+  cursor: pointer;
+  margin-right: 0.5rem;
+  border-radius: 4px;
+}
+.tabs button:hover {
+  background-color: #42b883;
+  color: #1e1e1e;
+}
+.tabs button.active {
+  background-color: #42b883;
+  color: #fff;
+}
+code {
+  background-color: #2c2c2c;
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  color: #e0e0e0;
 }
 </style>
