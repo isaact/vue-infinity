@@ -4,8 +4,8 @@
     
     <!-- Gallery with fetched images -->
     <h2>Gallery with Mock API Images</h2>
-    <Gallery
-      :items="galleryItems"
+    <vue-gallery
+      :items="JSON.stringify(galleryItems)"
       height="400px"
       :numColsToShow="3"
       gap="1rem"
@@ -16,11 +16,9 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import { Gallery } from '../src/elements'; // Import the Gallery component
 import { fetchMockImages, GalleryItem } from './mockApi';
 
 const galleryItems = ref<GalleryItem[]>([]);
-customElements.define('gallery', Gallery); // Register the Gallery component
 
 // Function to calculate aspect ratio for images
 const getItemAspectRatio = (item: GalleryItem) => {

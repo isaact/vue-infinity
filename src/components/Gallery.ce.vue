@@ -1,6 +1,6 @@
 <template>
   <Carousel
-    :items="items"
+    :items="parsedItems"
     :height="height"
     :width="width"
     :numColsToShow="numColsToShow"
@@ -33,22 +33,29 @@
 </template>
 
 <script setup lang="ts">
-import { defineProps } from 'vue';
+import { computed, defineProps } from 'vue';
 import Carousel from './Carousel.vue';
 
 // Define props for Gallery component
 const props = defineProps({
   items: {
-    type: Array,
-    required: true,
-    validator: (value: any[]) => {
-      if (value.length === 0) return true;
-      if (typeof value[0] === 'string') {
-        return value.every(item => typeof item === 'string');
-      } else if (typeof value[0] === 'object' && value[0] !== null) {
-        return value.every(item => typeof item === 'object' && item !== null && 'url' in item);
+    type: String,
+    default: '[]',
+    validator: (value: string) => {
+      if (typeof value !== 'string') return false;
+      try {
+        const parsed = JSON.parse(value);
+        if (!Array.isArray(parsed)) return false;
+        if (parsed.length === 0) return true;
+        if (typeof parsed[0] === 'string') {
+          return parsed.every(item => typeof item === 'string');
+        } else if (typeof parsed[0] === 'object' && parsed[0] !== null) {
+          return parsed.every(item => typeof item === 'object' && item !== null && 'url' in item);
+        }
+        return false;
+      } catch (e) {
+        return false;
       }
-      return false;
     }
   },
   height: {
@@ -82,6 +89,15 @@ const props = defineProps({
   onGetItemAspectRatio: {
     type: Function as unknown as () => (item: any) => number,
     default: undefined
+  }
+});
+
+// Parse items from JSON string
+const parsedItems = computed(() => {
+  try {
+    return JSON.parse(props.items);
+  } catch (e) {
+    return [];
   }
 });
 
