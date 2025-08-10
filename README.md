@@ -17,6 +17,29 @@ Vue-Infinity brings a radical efficiency boost to your UI by applying the same p
 
 Whether you’re building infinite feeds, carousels, media galleries, or dashboards—Vue-Infinity keeps your app fast, smooth, and efficient.
 
+## Table of Contents
+
+- [Key Features](#-key-features)
+  - [Ghost Component](#-ghost-component)
+  - [v-ghost Directive](#-v-ghost-directive)
+  - [InfiniteCarousel](#-infinitecarousel)
+  - [InfiniteList](#-infinitelist)
+  - [AutoObserver](#-autoobserver)
+  - [Gallery Web Component](#-gallery-web-component)
+- [Installation](#-installation)
+- [Live Demo](#-live-demo)
+- [Run Playground App](#-run-playground-app)
+- [Releases](#releases)
+- [License](#-license)
+
+## 🚀 Key Features
+
+*Build lightning-fast Vue apps that only render what is on-screen*
+
+Vue-Infinity brings a radical efficiency boost to your UI by applying the same principle that powers 3D engines: if it’s not in visible, it doesn’t get rendered. This lets your app handle hundreds or thousands of elements without bloating memory, janking or killing batteries.
+
+Whether you’re building infinite feeds, carousels, media galleries, or dashboards—Vue-Infinity keeps your app fast, smooth, and efficient.
+
 ## 🚀 Key Features
 
 ### 👻 Ghost Component
@@ -228,6 +251,252 @@ const { disconnect } = useAutoObserver(
   }
 );
 ```
+
+### 🖼️ Gallery Web Component
+
+The `vue-gallery` is a web component built on top of the Carousel component that provides an easy way to display a gallery of images with features like lazy loading, responsive layout, and dynamic sizing. It's designed to efficiently handle large collections of images while maintaining smooth performance.
+
+- **Web Component**: Can be used in any framework or vanilla JavaScript
+- **Flexible Layout**: Configurable grid layout with customizable columns and rows
+- **Image Handling**: Supports both simple URL arrays and complex objects with metadata
+- **Responsive Design**: Automatically adapts to container size
+- **Lazy Loading**: Only renders visible images for optimal performance
+- **Error Handling**: Gracefully handles broken images with fallback placeholders
+- **Dynamic Sizing**: Supports variable aspect ratios for images
+- **Programmatic Control**: Exposes methods for updating images and scrolling to specific items
+
+**Basic Example (Simple URLs):**
+
+```html
+<vue-gallery
+  items='["image1.jpg", "image2.jpg", "image3.jpg"]'
+  height="400px"
+  width="100%"
+  num-cols-to-show="3"
+  gap="1rem"
+/>
+```
+
+**Advanced Example (With Metadata):**
+
+```html
+<vue-gallery
+  id="my-gallery"
+  items='[
+    {"url": "image1.jpg", "title": "Beautiful Landscape", "alt": "Mountain landscape"},
+    {"url": "image2.jpg", "title": "Ocean View", "alt": "Beach with blue water"},
+    {"url": "image3.jpg", "title": "City Skyline", "alt": "Night view of city"}
+  ]'
+  height="50vh"
+  width="100%"
+  num-cols-to-show="2.5"
+  gap="1rem"
+  :on-get-item-aspect-ratio="getItemAspectRatio"
+/>
+```
+
+**JavaScript Integration:**
+
+```javascript
+// Get reference to the gallery
+const gallery = document.getElementById('my-gallery');
+
+// Update images programmatically
+gallery.updateImages([
+  'newImage1.jpg',
+  'newImage2.jpg',
+  'newImage3.jpg'
+]);
+
+// Scroll to a specific item
+gallery.scrollToItem(5);
+
+// Function to calculate aspect ratio (for dynamic sizing)
+function getItemAspectRatio(item) {
+  // Extract from URL or use item metadata
+  if (item.width && item.height) {
+    return item.width / item.height;
+  }
+  return 1; // Default square aspect ratio
+}
+```
+
+**Vue Integration:**
+
+```vue
+<template>
+  <vue-gallery
+    ref="galleryRef"
+    :items="JSON.stringify(galleryItems)"
+    height="43vh"
+    :num-cols-to-show="2.5"
+    gap="1rem"
+    :on-get-item-aspect-ratio="getItemAspectRatio"
+  />
+</template>
+
+<script setup>
+import { ref, onMounted } from 'vue';
+
+const galleryRef = ref();
+const galleryItems = ref([
+  { url: 'image1.jpg', title: 'Beautiful Landscape', alt: 'Mountain landscape' },
+  { url: 'image2.jpg', title: 'Ocean View', alt: 'Beach with blue water' },
+  { url: 'image3.jpg', title: 'City Skyline', alt: 'Night view of city' }
+]);
+
+const getItemAspectRatio = (item) => {
+  if (item.width && item.height) {
+    return item.width / item.height;
+  }
+  return 1; // Default square aspect ratio
+};
+
+// Update gallery items
+const updateGallery = (newItems) => {
+  galleryItems.value = newItems;
+};
+
+// Scroll to item
+const scrollToItem = (index) => {
+  galleryRef.value.scrollToItem(index);
+};
+</script>
+```
+
+**Props:**
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `items` | String (JSON) | `'[]'` | Array of image URLs or objects with `url`, `title`, and `alt` properties |
+| `height` | String | `'400px'` | Height of the gallery container |
+| `width` | String | `'100%'` | Width of the gallery container |
+| `num-cols-to-show` | Number | `1` | Number of columns to show (can be fractional for partial items) |
+| `num-rows-to-show` | Number | `1` | Number of rows to show |
+| `gap` | String | `'1rem'` | Gap between items |
+| `vertical-scroll` | Boolean | `false` | Whether to scroll vertically instead of horizontally |
+| `carousel-style` | Object | `{}` | Additional styles to apply to the carousel |
+| `on-get-item-aspect-ratio` | Function | `undefined` | Function to calculate aspect ratio for dynamic sizing |
+
+**Methods:**
+
+| Method | Parameters | Description |
+|--------|------------|-------------|
+| `updateImages` | `newItems` (Array or JSON string) | Update the gallery with new images |
+| `scrollToItem` | `itemIndex` (Number) | Scroll to a specific item by index |
+
+### 🌐 Using Gallery as a Web Component Outside of Vue
+
+The Gallery component can be used as a standalone web component in any framework or even in vanilla HTML/JavaScript projects. To use it outside of Vue, you need to register the custom elements first.
+
+**Installation:**
+
+```bash
+npm install vue-infinity
+```
+
+**Usage in HTML/JavaScript:**
+
+```html
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Gallery Web Component Demo</title>
+</head>
+<body>
+  <vue-gallery
+    id="my-gallery"
+    height="50vh"
+    width="100%"
+    num-cols-to-show="3"
+    gap="1rem">
+  </vue-gallery>
+
+  <script type="module">
+    // Import and register the custom elements
+    import { registerElements } from 'vue-infinity';
+    
+    // Register custom elements
+    registerElements();
+    
+    // Now you can use the gallery
+    const gallery = document.getElementById('my-gallery');
+    
+    // Set the images (must be valid JSON string)
+    gallery.items = JSON.stringify([
+      'image1.jpg',
+      'image2.jpg',
+      'image3.jpg'
+    ]);
+    
+    // You can also update images later
+    setTimeout(() => {
+      gallery.updateImages([
+        'newImage1.jpg',
+        'newImage2.jpg',
+        'newImage3.jpg'
+      ]);
+    }, 5000);
+  </script>
+</body>
+</html>
+```
+
+**Usage in Other Frameworks (e.g., React):**
+
+```jsx
+import React, { useEffect } from 'react';
+import { registerElements } from 'vue-infinity';
+
+// Register custom elements once
+registerElements();
+
+function GalleryComponent() {
+  const galleryRef = React.useRef(null);
+  
+  useEffect(() => {
+    if (galleryRef.current) {
+      // Set the images
+      galleryRef.current.items = JSON.stringify([
+        { url: 'image1.jpg', title: 'Image 1' },
+        { url: 'image2.jpg', title: 'Image 2' },
+        { url: 'image3.jpg', title: 'Image 3' }
+      ]);
+    }
+  }, []);
+  
+  const updateImages = () => {
+    if (galleryRef.current) {
+      galleryRef.current.updateImages([
+        'newImage1.jpg',
+        'newImage2.jpg'
+      ]);
+    }
+  };
+  
+  return (
+    <div>
+      <vue-gallery
+        ref={galleryRef}
+        height="50vh"
+        width="100%"
+        num-cols-to-show="2.5"
+        gap="1rem"
+      />
+      <button onClick={updateImages}>Update Images</button>
+    </div>
+  );
+}
+
+export default GalleryComponent;
+```
+
+**Important Notes:**
+
+1. The `items` attribute must be a valid JSON string. When setting it programmatically, use `JSON.stringify()` to convert your array to a JSON string.
+2. The `registerElements()` function must be called once before using any vue-infinity web components.
+3. All component methods like `updateImages()` and `scrollToItem()` are available on the DOM element.
+4. Event handling follows standard web component patterns.
 
 ## 📦 Installation
 
