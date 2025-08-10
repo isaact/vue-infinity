@@ -6,6 +6,8 @@
     
     <GhostDemo />
     
+    <GalleryDemo />
+    
     <h3 style="">InfiniteCarousel component demo</h3>
     <div class="controls">
       <button @click="resetGallery">Reset Gallery</button>
@@ -65,6 +67,7 @@ import { useInfiniteList } from '../src/composables/useInfiniteList'
 import InfiniteCarousel from '../src/components/InfiniteCarousel.vue'
 import { fetchMockImages } from './mockApi'
 import GhostDemo from './GhostDemo.vue'; // Import the new GhostDemo component
+import GalleryDemo from './GalleryDemo.vue';
 import type { GalleryItem } from './mockApi'
 
 
