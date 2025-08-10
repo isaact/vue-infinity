@@ -1,5 +1,6 @@
 <template>
   <Carousel
+    ref="carouselRef"
     :items="parsedItems"
     :height="height"
     :width="width"
@@ -33,8 +34,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed, defineProps } from 'vue';
+import { computed, defineProps, useTemplateRef, ref, watch } from 'vue';
 import Carousel from './Carousel.ce.vue';
+
+const carouselRef = useTemplateRef<typeof Carousel>('carouselRef')
+
+// Internal ref to store items
+const internalItems = ref<any[]>([])
 
 // Define props for Gallery component
 const props = defineProps({
@@ -94,12 +100,21 @@ const props = defineProps({
 
 // Parse items from JSON string
 const parsedItems = computed(() => {
-  try {
-    return JSON.parse(props.items);
-  } catch (e) {
-    return [];
-  }
+  return internalItems.value;
 });
+
+// Watch for changes to the items prop and update internal ref
+watch(
+  () => props.items,
+  (newItems) => {
+    try {
+      internalItems.value = JSON.parse(newItems);
+    } catch (e) {
+      internalItems.value = [];
+    }
+  },
+  { immediate: true }
+);
 
 // Helper functions to handle different item types
 const getImageUrl = (item: any): string => {
@@ -135,6 +150,36 @@ const handleImageError = (event: Event) => {
   const target = event.target as HTMLImageElement;
   target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZGRkIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPuKAlCBJbWFnZSBOb3QgRm91bmQg4oCUITwvdGV4dD48L3N2Zz4=';
 };
+
+// Exposed methods
+const updateImages = (newItems: string | any[]) => {
+  try {
+    if (typeof newItems === 'string') {
+      internalItems.value = JSON.parse(newItems);
+    } else if (Array.isArray(newItems)) {
+      internalItems.value = newItems;
+    } else {
+      console.warn('Invalid items format provided to updateImages');
+      internalItems.value = [];
+    }
+  } catch (e) {
+    console.error('Error updating images:', e);
+    internalItems.value = [];
+  }
+};
+
+const scrollToItem = (itemIndex: number) => {
+  if (carouselRef.value && typeof carouselRef.value.scrollToItem === 'function') {
+    carouselRef.value.scrollToItem(itemIndex);
+  } else {
+    console.warn('Carousel ref is not available or scrollToItem method is missing');
+  }
+};
+
+defineExpose({
+  updateImages,
+  scrollToItem
+});
 </script>
 
 <style scoped>
