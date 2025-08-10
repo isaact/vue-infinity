@@ -1,6 +1,6 @@
 <template>
   <div
-    class="infinite-carousel"
+    class="carousel-container"
     ref="container"
     :style="{
       '--item-width': `${itemWidth}px`,
@@ -70,7 +70,7 @@ const props = withDefaults(
 )
 
 const carouselContainer = useTemplateRef('carousel')
-const carouselIdPrefix = `infinite-carousel-${Math.random().toString(36).substring(2, 9)}`;
+const carouselIdPrefix = `carousel-${Math.random().toString(36).substring(2, 9)}`;
 const container_size = ref({ width: 0, height: 0 })
 const loading = ref(false)
 const error = ref(false)
@@ -255,7 +255,7 @@ defineExpose({
 </script>
 
 <style scoped>
-.infinite-carousel {
+.carousel-container {
   overflow: hidden;
 }
 
