@@ -17,23 +17,21 @@
         ref="carousel"
         :style="[ { gap: props.gap }, props.carouselStyle ]"
         :class="{ vertical: props.verticalScroll }">
-        <template>
-          <div
-            v-for="(item, index) in props.items" 
-            class="carousel-item"
-            :key="getItemId(index)" 
-            :id="getItemId(index)"
-            :data-item-index="index"
-            :style="getItemStyle(item, index)"
-          >
-            <slot name="item" v-if="visibleImages.has(getItemId(index))" :item="item" :index="index">
-              <div>Item {{ index }}</div>
-            </slot>
-            <slot name="loading" v-else :index="`${item.index}`" :page="item.page">
-              <div class="loading-overlay">Loading Item {{ index }}...</div>
-            </slot>
-          </div>
-        </template>
+        <div
+          v-for="(item, index) in props.items"
+          class="carousel-item"
+          :key="getItemId(index)"
+          :id="getItemId(index)"
+          :data-item-index="index"
+          :style="getItemStyle(item, index)"
+        >
+          <slot name="item" v-if="visibleImages.has(getItemId(index))" :item="item" :index="index">
+            <div>Item {{ index }}</div>
+          </slot>
+          <slot name="loading" v-else :index="`${item.index}`" :page="item.page">
+            <div class="loading-overlay">Loading Item {{ index }}...</div>
+          </slot>
+        </div>
     </div>
   </div>
 </template>

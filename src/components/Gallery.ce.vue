@@ -34,7 +34,7 @@
 
 <script setup lang="ts">
 import { computed, defineProps } from 'vue';
-import Carousel from './Carousel.vue';
+import Carousel from './Carousel.ce.vue';
 
 // Define props for Gallery component
 const props = defineProps({
