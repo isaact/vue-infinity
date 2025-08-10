@@ -183,7 +183,7 @@ const setupObserver = () => {
   }, {
     root: carouselContainer.value,
     filter: el => {
-      return el.classList.contains('carousel-item') && el.classList.contains('resolved')
+      return el.classList.contains('carousel-item')
     },
     rootMargin: "200%"
   })
