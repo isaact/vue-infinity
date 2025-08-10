@@ -1,6 +1,5 @@
 <template>
   <div>
-    <h3 style="">Ghost component demo</h3>
     <p>Ghost component demo: video unloads when not visible.</p>
     <p class="video-credit">
       Video by Giorgi Chkhaidze from Pexels:<br/>

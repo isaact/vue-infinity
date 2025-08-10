@@ -3,45 +3,49 @@
     
     <h1 style="text-align: center;"><img src="/logo.svg" alt="Vue Infinity Logo" class="logo" />Vue-Infinity</h1>
     <h2 style="text-align: center;">Vue-Infinity Playground</h2>
-    
-    <GhostDemo />
-    
-    <GalleryDemo />
-    
-    <h3 style="">InfiniteCarousel component demo</h3>
-    <div class="controls">
-      <button @click="resetGallery">Reset Gallery</button>
-      <label>
-        Scroll to item:
-        <input type="number" v-model.number="scrollToIndex" :min="0" :max="numItems - 1" />
-        <button @click="scrollToItem">Go</button>
-      </label>
-      <label class="slider-label">
-        Slides to show per row: <span>{{ numColsToShow.toFixed(1) }}</span>
-        <input type="range" v-model.number="numColsToShow" :min="1" :max="3" step="0.1" />
-      </label>
-      <label class="slider-label">
-        Number of rows: <span>{{ numRowsToShow.toFixed(1) }}</span>
-        <input type="range" v-model.number="numRowsToShow" :min="1" :max="3" step="0.1" />
-      </label>
-      <label>
-        Height:
-        <input type="text" v-model="carouselHeight" />
-      </label>
-      <label>
-        Width:
-        <input type="text" v-model="carouselWidth" />
-      </label>
-      <label>
-        Gap:
-        <input type="text" v-model="gapValue" />
-      </label>
-      <label>
-        <input type="checkbox" v-model="verticalScroll" />
-        Vertical Scroll
-      </label>
-    </div>
 
+    <div class="demo-section">
+      <h3 style="">Ghost component demo</h3>
+      <GhostDemo />
+    </div>
+    <div class="demo-section">
+      <h3 style="">Gallery web component demo</h3>
+      <GalleryDemo />
+    </div>
+    <div class="demo-section">
+      <h3 style="">InfiniteCarousel component demo</h3>
+      <div class="controls">
+        <button @click="resetGallery">Reset Gallery</button>
+        <label>
+          Scroll to item:
+          <input type="number" v-model.number="scrollToIndex" :min="0" :max="numItems - 1" />
+          <button @click="scrollToItem">Go</button>
+        </label>
+        <label class="slider-label">
+          Slides to show per row: <span>{{ numColsToShow.toFixed(1) }}</span>
+          <input type="range" v-model.number="numColsToShow" :min="1" :max="3" step="0.1" />
+        </label>
+        <label class="slider-label">
+          Number of rows: <span>{{ numRowsToShow.toFixed(1) }}</span>
+          <input type="range" v-model.number="numRowsToShow" :min="1" :max="3" step="0.1" />
+        </label>
+        <label>
+          Height:
+          <input type="text" v-model="carouselHeight" />
+        </label>
+        <label>
+          Width:
+          <input type="text" v-model="carouselWidth" />
+        </label>
+        <label>
+          Gap:
+          <input type="text" v-model="gapValue" />
+        </label>
+        <label>
+          <input type="checkbox" v-model="verticalScroll" />
+          Vertical Scroll
+        </label>
+      </div>
       <InfiniteCarousel
         ref="carouselRef"
         :infinite-list="infiniteList"
@@ -58,6 +62,8 @@
           <img :src="item.url" :alt="item.title || `Image ${index}`" class="carousel-img"/>
         </template>
       </InfiniteCarousel>
+    </div>
+    
   </div>
 </template>
 
@@ -136,6 +142,18 @@ const resetGallery = () => {
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
 
+.demo-section {
+  margin-bottom: 2rem;
+  background-color: #ffffff0d;
+  padding: 2rem;
+  border-radius: 10px;
+  box-shadow:
+    inset 0 4px 8px rgba(0, 0, 0, 0.1),
+    inset 0 2px 4px rgba(0, 0, 0, 0.06),
+    0 2px 6px rgba(0, 0, 0, 0.1),
+    0 2px 4px rgba(0, 0, 0, 0.06);
+}
+
 .logo {
   display: block;
   margin: 0 auto 2rem;
@@ -159,6 +177,11 @@ h1 {
   margin-bottom: 1.5rem;
   font-size: 2rem;
   line-height: 1.2;
+}
+h3 {
+  color: #42b883; /* Match playground style */
+  margin-top: 0;
+  margin-bottom: 1rem;
 }
 
 .controls {
