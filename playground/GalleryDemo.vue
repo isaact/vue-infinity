@@ -1,20 +1,36 @@
 <template>
   <div class="gallery-demo">
     <vue-gallery
-      :items="JSON.stringify(galleryItems)"
+      ref="galleryRef"
+      :items="JSON.stringify([])"
       height="43vh"
       :numColsToShow="2.5"
       gap="1rem"
       :onGetItemAspectRatio="getItemAspectRatio"
     />
+    
+    <div class="controls">
+      <input
+        type="range"
+        min="0"
+        :max="galleryItems.length - 1"
+        v-model="currentItemIndex"
+        @change="onSliderChange"
+        @input="onSliderInput"
+        class="slider"
+      />
+      <p>Current Item: {{ currentItemIndex }}</p>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, useTemplateRef } from 'vue';
 import { fetchMockImages, GalleryItem } from './mockApi';
 
+const galleryRef = useTemplateRef('galleryRef')
 const galleryItems = ref<GalleryItem[]>([]);
+const currentItemIndex = ref(0);
 
 // Function to calculate aspect ratio for images
 const getItemAspectRatio = (item: GalleryItem) => {
@@ -41,8 +57,36 @@ const fetchImages = async () => {
   }
 };
 
+// Handle slider input (while dragging)
+const onSliderInput = (event: Event) => {
+  const target = event.target as HTMLInputElement;
+  currentItemIndex.value = parseInt(target.value, 10);
+};
+
+// Handle slider change (when released)
+const onSliderChange = (event: Event) => {
+  const target = event.target as HTMLInputElement;
+  const index = parseInt(target.value, 10);
+  currentItemIndex.value = index;
+  
+  // Scroll to the selected item
+  if (galleryRef.value && typeof galleryRef.value.scrollToItem === 'function') {
+    galleryRef.value.scrollToItem(index);
+  }
+};
+
+// Update gallery items using the updateImages method
+const updateGalleryItems = () => {
+  if (galleryRef.value && typeof galleryRef.value.updateImages === 'function') {
+    galleryRef.value.updateImages(galleryItems.value);
+  }
+};
+
 onMounted(() => {
-  fetchImages();
+  fetchImages().then(() => {
+    // Update gallery items after fetching
+    setTimeout(updateGalleryItems, 0);
+  });
 });
 </script>
 
@@ -50,5 +94,16 @@ onMounted(() => {
 .gallery-demo {
   width: 100%;
   margin: 0 auto;
+}
+
+.controls {
+  margin-top: 20px;
+  text-align: center;
+}
+
+.slider {
+  width: 80%;
+  margin: 10px auto;
+  display: block;
 }
 </style>

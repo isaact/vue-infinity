@@ -203,8 +203,9 @@ const scrollToItem = async (itemIndex: number) => {
   if (!carouselContainer.value) return
 
   const elementId = getItemId(itemIndex)
-  const itemElement = document.getElementById(elementId)
-  if (itemElement && carouselContainer.value) {
+  // Find the element within the shadow DOM
+  const itemElement = carouselContainer.value.querySelector(`#${elementId}`)
+  if (itemElement) {
     nextTick(() => {
         itemElement.scrollIntoView({
             behavior: 'smooth',
@@ -213,7 +214,7 @@ const scrollToItem = async (itemIndex: number) => {
         })
     })
   } else {
-    console.warn(`Item with ID ${elementId} not found in the DOM.`);
+    console.warn(`Item with ID ${elementId} not found in the carousel.`, itemElement);
   }
 }
 
