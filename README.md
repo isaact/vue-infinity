@@ -338,12 +338,17 @@ npm run playground
 
 ### v0.8.0 (2025-08-11)
 
-- **Gallery Web Component**:
-  - Simple: Easy to use web component for displaying image galleries with lazy loading, responsive layout and memory efficiency.
-  - Framework Agnostic: Use in any frontend framework or even plain JavaScript.
-  - Flexible: Methods to update images and scroll to specific items
-  - Documentation Updates: Added comprehensive examples for Vue, React, Svelte, and plain JavaScript
-  - Playground Demo: Added a playground demo
+#### New Components and Features
+**Gallery Web Component**:
+- Simple: Easy to use web component for displaying image galleries with lazy loading, responsive layout and memory efficiency.
+- Framework Agnostic: Use in any frontend framework or even plain JavaScript.
+- Flexible: Methods to update images and scroll to specific items
+- Playground App: Added a demo for the Gallery component in the playground app.
+- Documentation Updates: Added comprehensive examples for Vue, React, Svelte, and plain JavaScript
+**Carousel Component**:
+- Similar to the Gallery but for any type of content.
+- Supports lazy loading, easy layout and memory efficiency.
+- Supports custom item templates and dynamic content sizing.
 
 ### v0.7.0 (2024-07-01)
 
