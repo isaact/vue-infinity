@@ -1,6 +1,6 @@
 <template>
   <div class="gallery-demo">
-    <vue-gallery
+    <gallery-ce
       ref="galleryRef"
       :items="JSON.stringify([])"
       height="43vh"

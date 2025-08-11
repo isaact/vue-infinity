@@ -10,5 +10,5 @@ export { Gallery }
 
 export function registerElements() {
   // Register custom elements
-  customElements.define('vue-gallery', Gallery)
+  customElements.define('gallery-ce', Gallery)
 }

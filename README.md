@@ -32,7 +32,7 @@ Whether you’re building infinite feeds, carousels, media galleries, or dashboa
 
 ## 🖼️ Gallery Web Component
 
-The `vue-gallery` is a web component built on top of the Carousel component that provides an easy way to display a gallery of images with features like lazy loading, responsive layout, and dynamic sizing. It's designed to efficiently handle large collections of images while maintaining smooth performance.
+The `gallery-ce` is a web component built on top of the Carousel component that provides an easy way to display a gallery of images with features like lazy loading, responsive layout, and dynamic sizing. It's designed to efficiently handle large collections of images while maintaining smooth performance.
 
 - **Easy to use**: Suitable when you have a big static list of images you want to browse
 - **Framework agnostic**: Can be used without Vue in any framework or vanilla JavaScript
@@ -44,7 +44,7 @@ The `vue-gallery` is a web component built on top of the Carousel component that
 #### Plain JavaScript
 
 ```html
-<vue-gallery id="gallery" height="400px" num-cols-to-show="3"></vue-gallery>
+<gallery-ce id="gallery" height="400px" num-cols-to-show="3"></gallery-ce>
 
 <script type="module">
   import { registerElements } from 'vue-infinity';
@@ -80,7 +80,7 @@ function Gallery() {
     }
   }, []);
   
-  return <vue-gallery ref={galleryRef} height="400px" num-cols-to-show="3" />;
+  return <gallery-ce ref={galleryRef} height="400px" num-cols-to-show="3" />;
 }
 ```
 
@@ -104,14 +104,14 @@ function Gallery() {
   });
 </script>
 
-<vue-gallery bind:this={gallery} height="400px" num-cols-to-show="3" />
+<gallery-ce bind:this={gallery} height="400px" num-cols-to-show="3" />
 ```
 
 #### Vue
 
 ```vue
 <template>
-  <vue-gallery ref="galleryRef" height="400px" :num-cols-to-show="3" />
+  <gallery-ce ref="galleryRef" height="400px" :num-cols-to-show="3" />
 </template>
 
 <script setup>
