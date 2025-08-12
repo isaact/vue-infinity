@@ -7,6 +7,7 @@
       :numColsToShow="2.5"
       gap="1rem"
       :onGetItemAspectRatio="getItemAspectRatio"
+      @image-click="handleImageClick"
     />
     
     <div class="controls">
@@ -27,13 +28,14 @@
 <script setup lang="ts">
 import { ref, onMounted, useTemplateRef } from 'vue';
 import { fetchMockImages, GalleryItem } from './mockApi';
+import { type GalleryImage } from '../src/types';
 
 const galleryRef = useTemplateRef('galleryRef')
-const galleryItems = ref<GalleryItem[]>([]);
+const galleryItems = ref<GalleryImage[]>([]);
 const currentItemIndex = ref(0);
 
 // Function to calculate aspect ratio for images
-const getItemAspectRatio = (item: GalleryItem) => {
+const getItemAspectRatio = (item: GalleryImage) => {
   if (item.url) {
     // Extract width and height from the URL
     const urlParts = item.url.split('/');
@@ -47,11 +49,18 @@ const getItemAspectRatio = (item: GalleryItem) => {
   return 1; // default
 };
 
+// Handle image click event
+const handleImageClick = (payload: { image: any; index: number; element: HTMLElement }) => {
+  console.log('Image clicked:', payload);
+  // You can add your custom logic here
+  // For example, open a modal with the clicked image
+};
+
 // Fetch images from mock API
 const fetchImages = async () => {
   try {
     const items = await fetchMockImages(300, 0, 300);
-    galleryItems.value = items;
+    galleryItems.value = items as GalleryImage[];
   } catch (error) {
     console.error('Error fetching images:', error);
   }

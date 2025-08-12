@@ -9,7 +9,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, nextTick, defineEmits, defineProps } from 'vue';
+import { ref, computed, onMounted, onUnmounted, nextTick, defineEmits } from 'vue';
 import { useSharedObserver } from '../composables/useSharedObserver';
 
 const props = defineProps({

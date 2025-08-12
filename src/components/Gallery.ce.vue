@@ -12,15 +12,15 @@
     :onGetItemAspectRatio="onGetItemAspectRatio"
   >
     <template #item="{ item, index }">
-      <div class="gallery-item">
-        <img 
-          :src="getImageUrl(item)" 
-          :alt="getImageAlt(item)" 
+      <div class="gallery-item" @click="handleImageClick(item, index, $event)">
+        <img
+          :src="geturl(item)"
+          :alt="item.alt || ''"
           class="gallery-image"
           @error="handleImageError"
         />
-        <div v-if="hasTitle(item)" class="image-title">
-          {{ getImageTitle(item) }}
+        <div v-if="item.title" class="image-title">
+          {{ item.title }}
         </div>
       </div>
     </template>
@@ -34,8 +34,14 @@
 </template>
 
 <script setup lang="ts">
-import { computed, defineProps, useTemplateRef, ref, watch } from 'vue';
+import { computed, useTemplateRef, ref, watch } from 'vue';
 import Carousel from './Carousel.ce.vue';
+import type { GalleryImage } from '../types';
+
+// Define emit function
+const emit = defineEmits<{
+  (e: 'imageClick', payload: { image: GalleryImage; index: number; element: HTMLElement }): void
+}>();
 
 const carouselRef = useTemplateRef<typeof Carousel>('carouselRef')
 
@@ -117,38 +123,21 @@ watch(
 );
 
 // Helper functions to handle different item types
-const getImageUrl = (item: any): string => {
-  if (typeof item === 'string') {
-    return item;
-  } else if (typeof item === 'object' && item !== null && 'url' in item) {
-    return item.url;
-  }
-  return '';
-};
-
-const getImageAlt = (item: any): string => {
-  if (typeof item === 'object' && item !== null && 'alt' in item) {
-    return item.alt;
-  } else if (typeof item === 'object' && item !== null && 'title' in item) {
-    return item.title;
-  }
-  return 'Gallery image';
-};
-
-const getImageTitle = (item: any): string => {
-  if (typeof item === 'object' && item !== null && 'title' in item) {
-    return item.title;
-  }
-  return '';
-};
-
-const hasTitle = (item: any): boolean => {
-  return typeof item === 'object' && item !== null && 'title' in item && item.title;
+const geturl = (item: GalleryImage): string => {
+  return item.url || '';
 };
 
 const handleImageError = (event: Event) => {
   const target = event.target as HTMLImageElement;
   target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZGRkIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPuKAlCBJbWFnZSBOb3QgRm91bmQg4oCUITwvdGV4dD48L3N2Zz4=';
+};
+
+const handleImageClick = (image: GalleryImage, index: number, event: Event) => {
+  // Get the gallery item element
+  const element = event.currentTarget as HTMLElement;
+  
+  // Emit the imageClick event with image data, index, and element
+  emit('imageClick', { image, index, element });
 };
 
 // Exposed methods
@@ -189,6 +178,7 @@ defineExpose({
   height: 100%;
   width: 100%;
   position: relative;
+  cursor: pointer;
 }
 
 .gallery-image {
