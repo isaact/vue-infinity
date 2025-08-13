@@ -22,6 +22,14 @@
       />
       <p>Current Item: {{ currentItemIndex }}</p>
     </div>
+    
+    <!-- Full-screen modal -->
+    <div v-if="isModalOpen" class="modal-overlay" @click="isModalOpen = false">
+      <div class="modal-content" @click.stop>
+        <button class="close-button" @click="isModalOpen = false">&times;</button>
+        <img v-if="selectedImage" :src="selectedImage.url" class="modal-image" />
+      </div>
+    </div>
   </div>
 </template>
 
@@ -33,6 +41,8 @@ import { type GalleryImage } from '../src/types';
 const galleryRef = useTemplateRef('galleryRef')
 const galleryItems = ref<GalleryImage[]>([]);
 const currentItemIndex = ref(0);
+const isModalOpen = ref(false);
+const selectedImage = ref<GalleryImage | null>(null);
 
 // Function to calculate aspect ratio for images
 const getItemAspectRatio = (item: GalleryImage) => {
@@ -50,10 +60,11 @@ const getItemAspectRatio = (item: GalleryImage) => {
 };
 
 // Handle image click event
-const handleImageClick = (payload: { image: any; index: number; element: HTMLElement }) => {
-  console.log('Image clicked:', payload);
-  // You can add your custom logic here
-  // For example, open a modal with the clicked image
+const handleImageClick = (event: CustomEvent) => {
+  console.log('Image clicked:', event);
+  const payload = event.detail[0];
+  selectedImage.value = payload.image;
+  isModalOpen.value = true;
 };
 
 // Fetch images from mock API
@@ -114,5 +125,53 @@ onMounted(() => {
   width: 80%;
   margin: 10px auto;
   display: block;
+}
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.9);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  position: relative;
+  max-width: 90%;
+  max-height: 90%;
+}
+
+.close-button {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  background: rgba(0, 0, 0, 0.5);
+  color: white;
+  border: none;
+  font-size: 36px;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  cursor: pointer;
+  z-index: 1001;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.close-button:hover {
+  background: rgba(0, 0, 0, 0.7);
+}
+
+.modal-image {
+  max-width: 80vw;
+  max-height: 80vh;
+  object-fit: contain;
 }
 </style>
