@@ -35,9 +35,8 @@
 
 <script setup lang="ts">
 import { computed, useTemplateRef, ref, watch } from 'vue';
-import Carousel from './Carousel.ce.vue';
+import Carousel from './Carousel.vue';
 import type { GalleryImage } from '../types';
-
 // Define emit function
 const emit = defineEmits<{
   (e: 'imageClick', payload: { image: GalleryImage; index: number; element: HTMLElement }): void

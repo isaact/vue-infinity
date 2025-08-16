@@ -20,7 +20,8 @@
   "scripts": {
     "dev": "cd playground && vite dev",
     "test": "vitest --ui",
-    "build": "vite build",
+    "build": "vite build && vite build --mode ce",
+    "build:ce": "vite build --mode ce",
     "playground": "cd playground && vite dev"
   },
   "keywords": [],

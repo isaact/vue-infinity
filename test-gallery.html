@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Gallery Custom Element Test</title>
+  <script type="module" src="./dist/gallery-ce.js"></script>
+</head>
+<body>
+  <h1>Gallery Custom Element Test</h1>
+  <gallery-ce 
+    items='[{"url": "https://picsum.photos/200/300", "alt": "Image 1"}, {"url": "https://picsum.photos/300/200", "alt": "Image 2"}]'
+    height="400px"
+    width="100%"
+    numColsToShow="2"
+    gap="1rem">
+  </gallery-ce>
+</body>
+</html>

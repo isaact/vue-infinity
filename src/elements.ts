@@ -1,4 +1,3 @@
-
 import { defineCustomElement } from 'vue'
 import GalleryCe from './components/Gallery.ce.vue'
 import type { GalleryImage } from './types'
