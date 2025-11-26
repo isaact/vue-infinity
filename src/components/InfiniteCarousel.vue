@@ -30,7 +30,7 @@
             :data-load-page="index === 0 ? i - 1 : ''"
             :style="getItemStyle(item, i - 1, index)"
           >
-            <slot name="item" v-if="visibleImages.has(getItemId(index, i - 1))" :item="item" :index="index" :page="i - 1">
+            <slot name="item" v-if="loadableItems.has(getItemId(index, i - 1))" :item="item" :index="index" :page="i - 1">
               <div>Page: {{ i - 1 }}, Item {{ index }}</div>
             </slot>
             <slot name="loading" v-else :index="`${item.index}`" :page="item.page">
@@ -64,6 +64,7 @@ import { useThrottleFn, useDebounceFn } from '@vueuse/core'
 import { vResizeObserver } from '@vueuse/components'
 import { InfiniteList, type InfiniteListPage } from '../composables/useInfiniteList'
 import { useAutoObserver, type AutoObserver } from '../composables/useAutoObserver'
+import { useSortedElements } from '../composables/useSortedElements'
 
 type ItemSpan = {
   colSpan: number
@@ -95,14 +96,19 @@ const props = withDefaults(
   }
 )
 
+const emit = defineEmits<{
+  (e: 'update:startingPosition', value: number): void
+}>()
+
 const carouselContainer = useTemplateRef('carousel')
 const carouselIdPrefix = `infinite-carousel-${Math.random().toString(36).substring(2, 9)}`;
 const container_size = ref({ width: 0, height: 0 })
 const itemsPerPage = props.infiniteList.itemsPerPage
 const loading = ref(false)
 const error = ref(false)
-const visibleImages = ref(new Set<string>())
+const loadableItems = ref(new Set<string>())
 const topLeftItemIndex = ref(0)
+const { sortedElements, insert, remove, clear } = useSortedElements()
 
 let pageObserver: AutoObserver
 let carouselItemPreloadObserver: AutoObserver
@@ -299,14 +305,14 @@ const setupObserver = () => {
           if (itemIndex && pageIndex && pages[+pageIndex] && pages[+pageIndex].items) {
             const itemData = pages[+pageIndex].items[+itemIndex]
             if (itemData) {
-              visibleImages.value.add(itemId)
+              loadableItems.value.add(itemId)
             }
           }
         } else {
           // console.log('Image is not in view:', entry)
           // const imgIndex = entry.target.getAttribute('data-img-index') || ''
           // visibleImages.value.delete(imgIndex)
-          visibleImages.value.delete(itemId)
+          loadableItems.value.delete(itemId)
         }
 
       }
@@ -321,46 +327,26 @@ const setupObserver = () => {
   carouselItemPreloadObserver.observeContainer(carouselContainer.value)
 
   visibleItemsObserver = useAutoObserver((entries) => {
-    // Track the top-left most intersecting item
-    let topMostItem: { top: number; left: number; itemIndex: number; pageIndex: number } | undefined;
-    
+    // Update sorted elements with intersecting items
     entries.forEach(entry => {
-      const itemIndex = entry.target.getAttribute('data-item-index') || ''
-      const pageIndex = entry.target.getAttribute('data-page-index') || ''
-      if(pageIndex && itemIndex){
-        if (entry.isIntersecting) {          
-          if (itemIndex && pageIndex && pages[+pageIndex] && pages[+pageIndex].items) {
-            const itemData = pages[+pageIndex].items[+itemIndex]
-            if (itemData) {
-              
-              // Check if this is the top-left most intersecting item
-              const rect = entry.target.getBoundingClientRect();
-              const containerRect = carouselContainer.value?.getBoundingClientRect();
-              
-              if (containerRect) {
-                const relativeTop = rect.top - containerRect.top;
-                const relativeLeft = rect.left - containerRect.left;
-                
-                if (!topMostItem ||
-                    relativeTop < topMostItem.top ||
-                    (relativeTop === topMostItem.top && relativeLeft < topMostItem.left)) {
-                  topMostItem = {
-                    top: relativeTop,
-                    left: relativeLeft,
-                    itemIndex: +itemIndex,
-                    pageIndex: +pageIndex
-                  };
-                }
-              }
-            }
-          }
-        }
+      if (entry.isIntersecting) {
+        insert(entry.target);
+      } else {
+        remove(entry.target);
       }
-    })
+    });
     
     // Update topLeftItemIndex with the index of the top-left most intersecting item
-    if (topMostItem) {
-      topLeftItemIndex.value = (topMostItem.pageIndex * itemsPerPage) + topMostItem.itemIndex;
+    const topMostElement = sortedElements.value[0];
+    if (topMostElement) {
+      const itemIndex = topMostElement.getAttribute('data-item-index');
+      const pageIndex = topMostElement.getAttribute('data-page-index');
+      if (itemIndex && pageIndex) {
+        topLeftItemIndex.value = (parseInt(pageIndex) * itemsPerPage) + parseInt(itemIndex);
+      }
+    } else {
+      // If no elements are intersecting, reset to 0
+      topLeftItemIndex.value = 0;
     }
   }, {
     root: carouselContainer.value,
@@ -369,6 +355,11 @@ const setupObserver = () => {
     },
   })
   visibleItemsObserver.observeContainer(carouselContainer.value)
+  
+  // Watch for changes to topLeftItemIndex and emit update:startingPosition event
+  watch(topLeftItemIndex, (newIndex) => {
+    emit('update:startingPosition', newIndex);
+  });
 }
 
 
@@ -390,7 +381,7 @@ const initFirstPage = async () => {
   for (let i = 0; i < numVisible; i++) {
     const itemData = pages[0].items[i]
     // console.log('Seeding visible image:', itemData.id, 'at index:', i)
-    visibleImages.value.add(getItemId(i, 0));
+    loadableItems.value.add(getItemId(i, 0));
   }
   // console.log('Initial visible images:', visibleImages.value)
 }
@@ -491,6 +482,15 @@ watch(
   },
   { immediate: true }
 )
+
+// Watch for changes to startingPosition prop and scroll to that item
+watch(() => props.startingPosition, (newPosition) => {
+  if (newPosition !== undefined && newPosition !== topLeftItemIndex.value) {
+    nextTick(() => {
+      scrollToItem(newPosition);
+    });
+  }
+})
 
 onUnmounted(() => {
   pageObserver?.disconnect()

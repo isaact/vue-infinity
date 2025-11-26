@@ -21,6 +21,10 @@
           <input type="number" v-model.number="scrollToIndex" :min="0" :max="numItems - 1" />
           <button @click="scrollToItem">Go</button>
         </label>
+        <label>
+          Top-left item index:
+          <input type="number" v-model.number="startingPosition" :min="0" :max="numItems - 1" />
+        </label>
         <label class="slider-label">
           Slides to show per row: <span>{{ numColsToShow.toFixed(1) }}</span>
           <input type="range" v-model.number="numColsToShow" :min="1" :max="3" step="0.1" />
@@ -56,7 +60,7 @@
         :gap="gapValue"
         :items-per-page="itemsPerPage"
         :verticalScroll="verticalScroll"
-        :onGetItemAspectRatio="getItemAspectRatio"
+        v-model:startingPosition="startingPosition"
       >
         <template #item="{ item, index }: { item: GalleryItem, index: number }">
           <img :src="item.url" :alt="item.title || `Image ${index}`" class="carousel-img"/>
@@ -77,8 +81,8 @@ import GalleryDemo from './GalleryDemo.vue';
 import type { GalleryItem } from './mockApi'
 
 
-const numRowsToShow = ref(3)
-const numColsToShow = ref(3)
+const numRowsToShow = ref(1)
+const numColsToShow = ref(3.2)
 const carouselHeight = ref('45vh')
 const carouselWidth = ref('100%')
 const gapValue = ref('10px')
@@ -86,6 +90,7 @@ const numItems = ref(3000)
 const verticalScroll = ref(false)
 const itemsPerPage = ref(37) // Still needed for the infinite list
 const scrollToIndex = ref(0)
+const startingPosition = ref(0)
 const carouselRef = ref<InstanceType<typeof InfiniteCarousel>>()
 const scrollToItem = () => {
   if (carouselRef.value) {
