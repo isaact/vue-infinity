@@ -1,16 +1,15 @@
 import { ref } from 'vue'
 
 export function useSortedElements() {
-  // Reactive, sorted array of HTMLElements
   const sortedElements = ref<Element[]>([])
+  const elementSet = new Set<Element>() // track membership
 
-  // Helper: get bounding rect
+  // helper: get bounding rect
   const rect = (el: Element): DOMRect => el.getBoundingClientRect()
 
-  // Insert element at the correct position
   const insert = (el: Element): void => {
-    // Avoid duplicates
-    if (sortedElements.value.includes(el)) return
+    // O(1) check
+    if (elementSet.has(el)) return
 
     const r = rect(el)
     const arr = sortedElements.value
@@ -23,17 +22,20 @@ export function useSortedElements() {
     }
 
     arr.splice(i, 0, el)
+    elementSet.add(el)
   }
 
-  // Remove element
   const remove = (el: Element): void => {
     const idx = sortedElements.value.indexOf(el)
-    if (idx !== -1) sortedElements.value.splice(idx, 1)
+    if (idx !== -1) {
+      sortedElements.value.splice(idx, 1)
+      elementSet.delete(el)
+    }
   }
 
-  // Reset the list completely
   const clear = (): void => {
     sortedElements.value = []
+    elementSet.clear()
   }
 
   return {
