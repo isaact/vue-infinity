@@ -336,6 +336,17 @@ npm run playground
 
 ## Releases
 
+### v0.8.4 (2025-11-26)
+
+#### Enhancements
+**InfiniteCarousel Component**:
+- Added `startingPosition` prop with two-way binding support (`v-model:startingPosition`)
+- Integrated `useSortedElements` composable for improved top-left item detection
+
+**Playground App**:
+- Updated to show `startingPosition` control for InfiniteCarousel
+
+
 ### v0.8.0 (2025-08-11)
 
 #### New Components and Features
