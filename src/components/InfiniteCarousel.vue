@@ -83,13 +83,15 @@ const props = withDefaults(
     verticalScroll?: boolean
     carouselStyle?: any
     onGetItemAspectRatio?: ItemAspectRatioFn
+    startingPosition?: number
   }>(),
   {
     gap: '1rem',
     numColsToShow: 1,
     numRowsToShow: 1,
     maxPagesToCache: 5,
-    verticalScroll: false
+    verticalScroll: false,
+    startingPosition: 0
   }
 )
 
@@ -100,9 +102,11 @@ const itemsPerPage = props.infiniteList.itemsPerPage
 const loading = ref(false)
 const error = ref(false)
 const visibleImages = ref(new Set<string>())
+const topLeftItemIndex = ref(0)
 
 let pageObserver: AutoObserver
-let carouselItemObserver: AutoObserver
+let carouselItemPreloadObserver: AutoObserver
+let visibleItemsObserver: AutoObserver
 
 const { pages, getItem, fetchPage: realfetchPage, updateMaxPagesToCache } = props.infiniteList
 const initialNextPage = (pages[0] && (pages[0].status === 'resolved' || pages[0].status === 'pending')) ? 1 : 0;
@@ -280,7 +284,7 @@ const setupObserver = () => {
     rootMargin: '300%'
   })
   pageObserver.observeContainer(carouselContainer.value)
-  carouselItemObserver = useAutoObserver((entries) => {
+  carouselItemPreloadObserver = useAutoObserver((entries) => {
     entries.forEach(entry => {
       const itemIndex = entry.target.getAttribute('data-item-index') || ''
       const pageIndex = entry.target.getAttribute('data-page-index') || ''
@@ -314,7 +318,57 @@ const setupObserver = () => {
     },
     rootMargin: "200%"
   })
-  carouselItemObserver.observeContainer(carouselContainer.value)
+  carouselItemPreloadObserver.observeContainer(carouselContainer.value)
+
+  visibleItemsObserver = useAutoObserver((entries) => {
+    // Track the top-left most intersecting item
+    let topMostItem: { top: number; left: number; itemIndex: number; pageIndex: number } | undefined;
+    
+    entries.forEach(entry => {
+      const itemIndex = entry.target.getAttribute('data-item-index') || ''
+      const pageIndex = entry.target.getAttribute('data-page-index') || ''
+      if(pageIndex && itemIndex){
+        if (entry.isIntersecting) {          
+          if (itemIndex && pageIndex && pages[+pageIndex] && pages[+pageIndex].items) {
+            const itemData = pages[+pageIndex].items[+itemIndex]
+            if (itemData) {
+              
+              // Check if this is the top-left most intersecting item
+              const rect = entry.target.getBoundingClientRect();
+              const containerRect = carouselContainer.value?.getBoundingClientRect();
+              
+              if (containerRect) {
+                const relativeTop = rect.top - containerRect.top;
+                const relativeLeft = rect.left - containerRect.left;
+                
+                if (!topMostItem ||
+                    relativeTop < topMostItem.top ||
+                    (relativeTop === topMostItem.top && relativeLeft < topMostItem.left)) {
+                  topMostItem = {
+                    top: relativeTop,
+                    left: relativeLeft,
+                    itemIndex: +itemIndex,
+                    pageIndex: +pageIndex
+                  };
+                }
+              }
+            }
+          }
+        }
+      }
+    })
+    
+    // Update topLeftItemIndex with the index of the top-left most intersecting item
+    if (topMostItem) {
+      topLeftItemIndex.value = (topMostItem.pageIndex * itemsPerPage) + topMostItem.itemIndex;
+    }
+  }, {
+    root: carouselContainer.value,
+    filter: el => {
+      return el.classList.contains('carousel-item') && el.classList.contains('resolved')
+    },
+  })
+  visibleItemsObserver.observeContainer(carouselContainer.value)
 }
 
 
@@ -323,6 +377,14 @@ const initFirstPage = async () => {
     // console.log('Fetching first page')
     await fetchPage(0)
   }
+  
+  // If startingPosition is specified and greater than 0, scroll to that item
+  if (props.startingPosition > 0) {
+    nextTick(() => {
+      scrollToItem(props.startingPosition);
+    });
+  }
+  
   // Seed visibleImages for SSR
   const numVisible = props.numColsToShow * props.numRowsToShow
   for (let i = 0; i < numVisible; i++) {
@@ -432,7 +494,8 @@ watch(
 
 onUnmounted(() => {
   pageObserver?.disconnect()
-  carouselItemObserver?.disconnect()
+  carouselItemPreloadObserver?.disconnect()
+  visibleItemsObserver?.disconnect()
 })
 
 defineExpose({
