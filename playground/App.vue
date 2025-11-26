@@ -16,15 +16,6 @@
       <h3 style="">InfiniteCarousel component demo</h3>
       <div class="controls">
         <button @click="resetGallery">Reset Gallery</button>
-        <label>
-          Scroll to item:
-          <input type="number" v-model.number="scrollToIndex" :min="0" :max="numItems - 1" />
-          <button @click="scrollToItem">Go</button>
-        </label>
-        <label>
-          Top-left item index:
-          <input type="number" v-model.number="startingPosition" :min="0" :max="numItems - 1" />
-        </label>
         <label class="slider-label">
           Slides to show per row: <span>{{ numColsToShow.toFixed(1) }}</span>
           <input type="range" v-model.number="numColsToShow" :min="1" :max="3" step="0.1" />
@@ -48,6 +39,17 @@
         <label>
           <input type="checkbox" v-model="verticalScroll" />
           Vertical Scroll
+        </label>
+      </div>
+      <div class="controls">
+        <!-- <label>
+          Scroll to item:
+          <input type="number" v-model.number="scrollToIndex" :min="0" :max="numItems - 1" />
+          <button @click="scrollToItem">Go</button>
+        </label> -->
+        <label>
+          Top-left item index:
+          <input type="number" v-model.number="startingPosition" :min="0" :max="numItems - 1" />
         </label>
       </div>
       <InfiniteCarousel
