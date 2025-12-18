@@ -364,9 +364,13 @@ const setupObserver = () => {
 
 
 const initFirstPage = async () => {
-  if (!pages[0] || (pages[0].status !== 'resolved')) {
+  let startPage = 0
+  if (props.startingPosition > 0) {
+    startPage = Math.floor(props.startingPosition / itemsPerPage)
+  }
+  if (!pages[startPage] || (pages[startPage].status !== 'resolved')) {
     // console.log('Fetching first page')
-    await fetchPage(0)
+    await fetchPage(startPage)
   }
   
   // If startingPosition is specified and greater than 0, scroll to that item
@@ -379,7 +383,7 @@ const initFirstPage = async () => {
   // Seed visibleImages for SSR
   const numVisible = props.numColsToShow * props.numRowsToShow
   for (let i = 0; i < numVisible; i++) {
-    const itemData = pages[0].items[i]
+    // const itemData = pages[0].items[i]
     // console.log('Seeding visible image:', itemData.id, 'at index:', i)
     loadableItems.value.add(getItemId(i, 0));
   }

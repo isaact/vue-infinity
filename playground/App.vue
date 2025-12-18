@@ -92,7 +92,7 @@ const numItems = ref(3000)
 const verticalScroll = ref(false)
 const itemsPerPage = ref(37) // Still needed for the infinite list
 const scrollToIndex = ref(0)
-const startingPosition = ref(0)
+const startingPosition = ref(342)
 const carouselRef = ref<InstanceType<typeof InfiniteCarousel>>()
 const scrollToItem = () => {
   if (carouselRef.value) {
