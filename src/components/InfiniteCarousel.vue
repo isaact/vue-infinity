@@ -9,7 +9,8 @@
       '--num-rows-to-show': adjustedNumRowsToShow,
       '--gap-in-px': `${gapInPixels}px`,
       '--container-height': props.height,
-      '--container-width': props.width
+      '--container-width': props.width,
+      '--scroll-snap-type': props.scrollSnapping ? (props.verticalScroll ? 'y mandatory' : 'x mandatory') : 'none'
     }"
     v-resize-observer="updateDimensions"
   >
@@ -85,6 +86,10 @@ const props = withDefaults(
     carouselStyle?: any
     onGetItemAspectRatio?: ItemAspectRatioFn
     startingPosition?: number
+    /**
+     * Enable or disable CSS scroll snapping. When false, scroll snapping is turned off.
+     */
+    scrollSnapping?: boolean
   }>(),
   {
     gap: '1rem',
@@ -92,7 +97,8 @@ const props = withDefaults(
     numRowsToShow: 1,
     maxPagesToCache: 5,
     verticalScroll: false,
-    startingPosition: 0
+    startingPosition: 0,
+    scrollSnapping: true
   }
 )
 
@@ -522,7 +528,7 @@ defineExpose({
   gap: var(--gap-in-px);
   overflow-x: scroll;
   overflow-y: scroll;
-  scroll-snap-type: x mandatory;
+  scroll-snap-type: var(--scroll-snap-type);
   height: var(--container-height);
   width: var(--container-width);
 }
@@ -532,7 +538,7 @@ defineExpose({
   /* grid-auto-rows: calc(
     (var(--container-height) - (var(--gap-in-px) * (var(--num-rows-to-show) - 1))) / var(--num-rows-to-show)
   ); */
-  scroll-snap-type: y mandatory;
+  scroll-snap-type: var(--scroll-snap-type);
 }
 
 .carousel-item {

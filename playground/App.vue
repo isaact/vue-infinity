@@ -40,6 +40,10 @@
           <input type="checkbox" v-model="verticalScroll" />
           Vertical Scroll
         </label>
+        <label>
+          <input type="checkbox" v-model="scrollSnapping" />
+          Enable Scroll Snapping
+        </label>
       </div>
       <div class="controls">
         <!-- <label>
@@ -62,6 +66,7 @@
         :gap="gapValue"
         :items-per-page="itemsPerPage"
         :verticalScroll="verticalScroll"
+        :scrollSnapping="scrollSnapping"
         v-model:startingPosition="startingPosition"
       >
         <template #item="{ item, index }: { item: GalleryItem, index: number }">
@@ -90,6 +95,8 @@ const carouselWidth = ref('100%')
 const gapValue = ref('10px')
 const numItems = ref(3000)
 const verticalScroll = ref(false)
+// Control whether CSS scroll snapping is enabled for the carousel
+const scrollSnapping = ref(true)
 const itemsPerPage = ref(37) // Still needed for the infinite list
 const scrollToIndex = ref(0)
 const startingPosition = ref(342)
