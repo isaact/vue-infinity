@@ -85,7 +85,15 @@ const props = withDefaults(
     verticalScroll?: boolean
     carouselStyle?: any
     onGetItemAspectRatio?: ItemAspectRatioFn
-    startingPosition?: number
+    /**
+     * Index of the item to start at (legacy prop). Retained for backward compatibility.
+     */
+    startingIndex?: number
+    /**
+     * Fractional scroll position (0‑1) representing the current scroll offset.
+     * This prop is two‑way bound via the `update:scrollPosition` event.
+     */
+    scrollPosition?: number
     /**
      * Enable or disable CSS scroll snapping. When false, scroll snapping is turned off.
      */
@@ -97,13 +105,15 @@ const props = withDefaults(
     numRowsToShow: 1,
     maxPagesToCache: 5,
     verticalScroll: false,
-    startingPosition: 0,
+    startingIndex: 0,
+    scrollPosition: 0,
     scrollSnapping: true
   }
 )
 
 const emit = defineEmits<{
-  (e: 'update:startingPosition', value: number): void
+  (e: 'update:startingIndex', value: number): void
+  (e: 'update:scrollPosition', value: number): void
 }>()
 
 const carouselContainer = useTemplateRef('carousel')
@@ -362,27 +372,27 @@ const setupObserver = () => {
   })
   visibleItemsObserver.observeContainer(carouselContainer.value)
   
-  // Watch for changes to topLeftItemIndex and emit update:startingPosition event
+  // Watch for changes to topLeftItemIndex and emit update:startingIndex event
   watch(topLeftItemIndex, (newIndex) => {
-    emit('update:startingPosition', newIndex);
+    emit('update:startingIndex', newIndex);
   });
 }
 
 
 const initFirstPage = async () => {
   let startPage = 0
-  if (props.startingPosition > 0) {
-    startPage = Math.floor(props.startingPosition / itemsPerPage)
+  if (props.startingIndex > 0) {
+    startPage = Math.floor(props.startingIndex / itemsPerPage)
   }
   if (!pages[startPage] || (pages[startPage].status !== 'resolved')) {
     // console.log('Fetching first page')
     await fetchPage(startPage)
   }
   
-  // If startingPosition is specified and greater than 0, scroll to that item
-  if (props.startingPosition > 0) {
+  // If startingIndex is specified and greater than 0, scroll to that item
+  if (props.startingIndex > 0) {
     nextTick(() => {
-      scrollToItem(props.startingPosition);
+      scrollToItem(props.startingIndex);
     });
   }
   
@@ -461,11 +471,23 @@ const fixCacheSize = () => {
   updateMaxPagesToCache(newMaxPagesToCache);
 }
 
+// Helper to emit the current scroll position whenever the carousel scrolls
+const emitScrollPosition = () => {
+  if (!carouselContainer.value) return
+  const el = carouselContainer.value
+  const maxScroll = props.verticalScroll ? (el.scrollHeight - el.clientHeight) : (el.scrollWidth - el.clientWidth)
+  const current = props.verticalScroll ? el.scrollTop : el.scrollLeft
+  const fraction = maxScroll > 0 ? current / maxScroll : 0
+  emit('update:scrollPosition', fraction)
+}
+
 onMounted(async () => {
   fixCacheSize()
   await initFirstPage()
   if (carouselContainer.value) {
     gapInPixels.value = parseFloat(getComputedStyle(carouselContainer.value).gap)
+    // Attach scroll listener for two‑way binding of scrollPosition
+    carouselContainer.value.addEventListener('scroll', emitScrollPosition, { passive: true })
   }
   nextTick(() => {
     setupObserver()
@@ -493,12 +515,27 @@ watch(
   { immediate: true }
 )
 
-// Watch for changes to startingPosition prop and scroll to that item
-watch(() => props.startingPosition, (newPosition) => {
-  if (newPosition !== undefined && newPosition !== topLeftItemIndex.value) {
+// Watch for changes to startingIndex prop and scroll to that item
+watch(() => props.startingIndex, (newIndex) => {
+  if (newIndex !== undefined && newIndex !== topLeftItemIndex.value) {
     nextTick(() => {
-      scrollToItem(newPosition);
+      scrollToItem(newIndex);
     });
+  }
+})
+
+watch(() => props.scrollPosition, (newPosition) => {
+  if (!carouselContainer.value) return
+  const el = carouselContainer.value
+  const maxScroll = props.verticalScroll ? (el.scrollHeight - el.clientHeight) : (el.scrollWidth - el.clientWidth)
+  const targetScroll = newPosition * maxScroll
+  const currentScroll = props.verticalScroll ? el.scrollTop : el.scrollLeft
+  if (Math.abs(targetScroll - currentScroll) > 1) { // Only scroll if the difference is significant
+    if (props.verticalScroll) {
+      el.scrollTo({ top: targetScroll, behavior: 'instant' })
+    } else {
+      el.scrollTo({ left: targetScroll,  behavior: 'instant' })
+    }
   }
 })
 

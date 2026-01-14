@@ -53,7 +53,11 @@
         </label> -->
         <label>
           Top-left item index:
-          <input type="number" v-model.number="startingPosition" :min="0" :max="numItems - 1" />
+          <input type="number" v-model.number="startingIndex" :min="0" :max="numItems - 1" />
+        </label>
+        <label>
+          Scroll position (0‑1):
+          <input type="number" v-model.number="scrollPosition" :min="0" :max="1" step="0.01" />
         </label>
       </div>
       <InfiniteCarousel
@@ -67,7 +71,8 @@
         :items-per-page="itemsPerPage"
         :verticalScroll="verticalScroll"
         :scrollSnapping="scrollSnapping"
-        v-model:startingPosition="startingPosition"
+        v-model:startingIndex="startingIndex"
+        v-model:scrollPosition="scrollPosition"
       >
         <template #item="{ item, index }: { item: GalleryItem, index: number }">
           <img :src="item.url" :alt="item.title || `Image ${index}`" class="carousel-img"/>
@@ -99,7 +104,9 @@ const verticalScroll = ref(false)
 const scrollSnapping = ref(true)
 const itemsPerPage = ref(37) // Still needed for the infinite list
 const scrollToIndex = ref(0)
-const startingPosition = ref(342)
+const startingIndex = ref(342)
+// Fractional scroll position (0‑1) bound to the carousel via v-model
+const scrollPosition = ref(0)
 const carouselRef = ref<InstanceType<typeof InfiniteCarousel>>()
 const scrollToItem = () => {
   if (carouselRef.value) {

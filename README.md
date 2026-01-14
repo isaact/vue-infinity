@@ -336,6 +336,20 @@ npm run playground
 
 ## Releases
 
+### v0.8.6 (2026-01-14)
+#### API Changes
+**InfiniteCarousel Component**:
+- Changed `startingPosition` prop to `startingIndex` for clarity
+- Added `scrollPosition` event emit to track scroll position as a fraction (0-1)
+- Added two-way binding support for `scrollPosition` via `v-model:scrollPosition`
+- Updated Playground app to reflect these changes
+
+### v0.8.5 (2025-12-10)
+#### Bug Fixes
+**InfiniteCarousel Component**:
+- Fixed issue where updating `startingPosition` did not scroll to the correct item
+
+
 ### v0.8.4 (2025-11-26)
 
 #### Enhancements
