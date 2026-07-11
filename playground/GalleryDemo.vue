@@ -1,15 +1,16 @@
 <template>
   <div class="gallery-demo">
-    <gallery-ce
+    <carousel
       ref="galleryRef"
-      :items="JSON.stringify([])"
+      :items="galleryItems"
       height="43vh"
+      width="100%"
       :numColsToShow="2.5"
       gap="1rem"
       :onGetItemAspectRatio="getItemAspectRatio"
       @image-click="handleImageClick"
     />
-    
+
     <div class="controls">
       <input
         type="range"
@@ -36,6 +37,7 @@
 <script setup lang="ts">
 import { ref, onMounted, useTemplateRef } from 'vue';
 import { fetchMockImages, GalleryItem } from './mockApi';
+import Carousel from '../src/components/Carousel.vue';
 import { type GalleryImage } from '../src/types';
 
 const galleryRef = useTemplateRef('galleryRef')

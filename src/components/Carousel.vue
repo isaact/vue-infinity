@@ -18,12 +18,13 @@
         :style="[ { gap: props.gap }, props.carouselStyle ]"
         :class="{ vertical: props.verticalScroll }">
         <div
-          v-for="(item, index) in props.items"
+          v-for="(item, index) in carouselItems"
           class="carousel-item"
           :key="getItemId(index)"
           :id="getItemId(index)"
           :data-item-index="index"
           :style="getItemStyle(item, index)"
+          @click.stop="handleItemClick(item, index, $event)"
         >
           <slot name="item" v-if="visibleImages.has(getItemId(index))" :item="item" :index="index">
             <div>Item {{ index }}</div>
@@ -40,6 +41,18 @@
 import { ref, computed, onMounted, onUnmounted, watch, useTemplateRef, nextTick } from 'vue'
 import { vResizeObserver } from '@vueuse/components'
 import { useAutoObserver, type AutoObserver } from '../composables/useAutoObserver'
+
+const emit = defineEmits<{
+  (e: 'itemClick', payload: { item: any; index: number; element: HTMLElement }): void
+}>()
+
+const handleItemClick = (item: any, index: number, event: Event) => {
+  // Get the carousel item element
+  const element = event.currentTarget as HTMLElement;
+  
+  // Emit the itemClick event with item data, index, and element
+  emit('itemClick', { item, index, element });
+};
 
 type ItemSpan = {
   colSpan: number
@@ -70,10 +83,11 @@ const props = withDefaults(
 )
 
 const carouselContainer = useTemplateRef('carousel')
-const carouselIdPrefix = `carousel-${Math.random().toString(36).substring(2, 9)}`;
+const carouselIdPrefix = `carousel-`;
 const container_size = ref({ width: 0, height: 0 })
 const loading = ref(false)
 const error = ref(false)
+const carouselItems = ref<any[]>(props.items)
 const visibleImages = ref(new Set<string>())
 
 // let pageObserver: AutoObserver
@@ -229,7 +243,7 @@ onMounted(async () => {
 })
 
 watch(
-  [() => props.numColsToShow, () => props.numRowsToShow, () => props.gap, () => props.verticalScroll],
+  [() => props.numColsToShow, () => props.numRowsToShow, () => props.gap, () => props.verticalScroll, () => props.items],
   () => {
     if (carouselContainer.value) {
       // pageObserver?.disconnect();
@@ -245,6 +259,14 @@ watch(
   },
   { immediate: true }
 )
+watch(() => props.items, (newItems) => {
+  // Update the carousel items when the items prop changes
+  nextTick(() => {
+    carouselItems.value = newItems;
+    carouselItemObserver?.disconnect()
+    setupObserver();
+  });
+});
 
 onUnmounted(() => {
   carouselItemObserver?.disconnect()
