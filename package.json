@@ -1,29 +1,17 @@
 {
   "name": "vue-infinity",
-  "version": "0.8.2",
-  "main": "dist/vue-infinity.umd.js",
-  "module": "dist/vue-infinity.es.js",
+  "private": true,
   "type": "module",
-  "style": "dist/vue-infinity.css",
-  "files": [
-    "dist"
-  ],
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/vue-infinity.es.js",
-      "require": "./dist/vue-infinity.umd.js"
-    },
-    "./style.css": "./dist/vue-infinity.css"
-  },
-  "types": "dist/index.d.ts",
   "scripts": {
-    "dev": "cd playground && vite dev",
-    "test": "vitest --ui",
-    "build": "vite build && vite build --mode ce",
-    "build:ce": "vite build --mode ce",
-    "playground": "cd playground && vite dev"
+    "build": "nx run-many -t build",
+    "test": "nx run-many -t test",
+    "dev:core": "nx serve demo-vue",
+    "dev:elements": "nx serve demo-elements"
   },
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
   "keywords": [],
   "author": "",
   "license": "Apache-2.0",
@@ -37,11 +25,12 @@
     "@vueuse/components": "^13.1.0"
   },
   "devDependencies": {
+    "nx": "^20.0.0",
+    "@nx/vite": "^20.0.0",
     "@types/node": "^22.14.0",
     "@vitejs/plugin-vue": "^5.2.3",
     "@vitest/ui": "^3.1.1",
     "happy-dom": "^17.4.4",
-    "tsup": "^8.4.0",
     "typescript": "^5.8.3",
     "vite": "^6.3.4",
     "vite-plugin-dts": "^4.5.3",

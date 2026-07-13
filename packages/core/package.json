@@ -1,0 +1,30 @@
+{
+  "name": "@vue-infinity/core",
+  "version": "0.8.2",
+  "type": "module",
+  "main": "dist/vue-infinity.umd.js",
+  "module": "dist/vue-infinity.es.js",
+  "style": "dist/vue-infinity.css",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/vue-infinity.es.js",
+      "require": "./dist/vue-infinity.umd.js"
+    },
+    "./style.css": "./dist/vue-infinity.css"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "vite build",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@vueuse/components": "^13.1.0"
+  },
+  "peerDependencies": {
+    "vue": "^3.5.0"
+  }
+}

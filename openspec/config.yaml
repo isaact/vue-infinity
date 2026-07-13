@@ -1,0 +1,55 @@
+strict_tdd: true
+context: |
+  vue-infinity is a Node.js/TypeScript ESM, Vue project.
+  Detected markers: package.json, tsconfig.json, npm package manager.
+  Package managers: npm.
+  Additional evidence: Test-like files detected (1); examples: test/useInfiniteList.test.ts.
+  Primary test command: npm test.
+  Unit tests: Vitest (npm test).
+  Integration tests: none.
+  E2E tests: none.
+rules:
+  proposal:
+    require_problem_statement: true
+  spec:
+    require_acceptance_criteria: true
+  design:
+    require_tradeoffs: true
+  tasks:
+    protect_review_workload: true
+  apply:
+    test_command: "npm test"
+  verify:
+    test_command: "npm test"
+testing:
+  detected: "2026-07-11"
+  runner:
+    command: "npm test"
+    framework: "Vitest"
+  layers:
+    unit: "Vitest"
+    integration: ""
+    e2e: ""
+  commands:
+    unit:
+      - scope: "."
+        command: "npm test"
+        framework: "Vitest"
+    integration:
+      []
+    e2e:
+      []
+  coverage:
+    command: ""
+    commands:
+      []
+quality:
+  lint: ""
+  lint_commands:
+    []
+  typecheck: ""
+  typecheck_commands:
+    []
+  format: ""
+  format_commands:
+    []

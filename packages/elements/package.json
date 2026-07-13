@@ -1,0 +1,26 @@
+{
+  "name": "@vue-infinity/elements",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "dist/gallery-ce.js",
+  "module": "dist/gallery-ce.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/gallery-ce.js",
+      "require": "./dist/gallery-ce.umd.cjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "vite build",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@vue-infinity/core": "*",
+    "vue": "^3.5.13"
+  }
+}

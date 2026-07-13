@@ -1,0 +1,12 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "declarationDir": "./dist",
+    "paths": {
+      "@vue-infinity/core": ["../core/src/index.ts"],
+      "@vue-infinity/elements": ["./src/index.ts"]
+    }
+  },
+  "include": ["src"]
+}
