@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vue-Infinity Demo (Custom Elements)</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 20px;
+        background-color: #1a1a1a;
+        color: #ffffff;
+        font-family: system-ui, sans-serif;
+      }
+      h1 {
+        color: #42b883;
+        text-align: center;
+      }
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+      .info {
+        background: #ffffff0d;
+        padding: 1rem 2rem;
+        border-radius: 10px;
+        margin-bottom: 2rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Vue-Infinity Custom Elements Demo</h1>
+      <div class="info">
+        <p>
+          This page uses <code>&lt;gallery-ce&gt;</code> — a Vue-powered custom
+          element loaded <strong>without</strong> <code>createApp</code> or Vue
+          imports.
+        </p>
+        <p>
+          The <code>@vue-infinity/elements</code> bundle includes the Vue
+          runtime internally.
+        </p>
+      </div>
+      <gallery-ce
+        items='[{"url":"https://picsum.photos/seed/1/800/600","title":"Image 1"},{"url":"https://picsum.photos/seed/2/600/800","title":"Image 2"},{"url":"https://picsum.photos/seed/3/800/800","title":"Image 3"},{"url":"https://picsum.photos/seed/4/1000/500","title":"Image 4"},{"url":"https://picsum.photos/seed/5/500/1000","title":"Image 5"}]'
+        height="50vh"
+        width="100%"
+        num-cols-to-show="2"
+        gap="0.5rem"
+      ></gallery-ce>
+    </div>
+    <script type="module" src="/main.ts"></script>
+  </body>
+</html>
