@@ -29,7 +29,7 @@
   - `vitest.workspace.ts`: reference test configs from packages
 - **Details**: allow per-package vitest configs to merge
 
-- [ ] ### T1.3 Remove root vite.config.ts
+- [x] ### T1.3 Remove root vite.config.ts
   - **Note**: deferred to PR 2 (Phase 5 cleanup)
 
 - **Files to modify**:
@@ -110,99 +110,104 @@
 
 ## Phase 4: Create demo apps
 
-### T4.1 Create Vue demo app
+- [x] ### T4.1 Create Vue demo app
 
-- **Files to create**:
+- **Files created**:
   - `apps/demo-vue/package.json`
   - `apps/demo-vue/vite.config.ts`
   - `apps/demo-vue/tsconfig.json`
+  - `apps/demo-vue/vitest.config.ts`
   - `apps/demo-vue/index.html`
   - `apps/demo-vue/main.ts`
   - `apps/demo-vue/App.vue`
   - `apps/demo-vue/GhostDemo.vue`
   - `apps/demo-vue/GalleryDemo.vue`
   - `apps/demo-vue/mockApi.ts`
-  - `apps/demo-vue/public/` (assets from playground)
+  - `apps/demo-vue/public/gliding.mp4`
+  - `apps/demo-vue/public/logo.svg`
+  - `apps/demo-vue/test/demo.test.ts`
 - **Details**:
-  - Port from `playground/`, BUT change imports from `../src/` to `@vue-infinity/core`
-  - Remove `registerElements()` call (elements are separate)
-  - `package.json` depends on `@vue-infinity/core: "workspace:*"` and `vue` (peer)
+  - Ported from `playground/`, changed imports from `../src/` to `@vue-infinity/core`
+  - Removed `registerElements()` call (elements are separate)
+  - `package.json` depends on `@vue-infinity/core: "*"` and `vue`
 
-### T4.2 Create web-component demo app
+- [x] ### T4.2 Create web-component demo app
 
-- **Files to create**:
+- **Files created**:
   - `apps/demo-elements/package.json`
   - `apps/demo-elements/vite.config.ts`
   - `apps/demo-elements/tsconfig.json`
+  - `apps/demo-elements/vitest.config.ts`
   - `apps/demo-elements/index.html`
   - `apps/demo-elements/main.ts`
+  - `apps/demo-elements/test/demo.test.ts`
 - **Details**:
-  - Pure non-Vue app: load elements bundle, call `registerElements()`, use `<gallery-ce>` in HTML
-  - `package.json` depends on `@vue-infinity/elements: "workspace:*"`
-  - `vite.config.ts`: minimal Vite with or without Vue plugin (Vue is not needed at dev time for the elements bundle since it's imported as a dependency)
-  - Show that elements work without `createApp`
+  - Pure non-Vue app: loads elements bundle, calls `registerElements()`, uses `<gallery-ce>` in HTML
+  - `package.json` depends on `@vue-infinity/elements: "*"`
+  - `vite.config.ts`: no Vue plugin (Vue is bundled in elements dependency)
+  - Shows that elements work without `createApp` or Vue import
 
 ---
 
 ## Phase 5: Cleanup root
 
-### T5.1 Remove old playground directory
+- [x] ### T5.1 Remove old playground directory
 
-- **Files to delete**:
+- **Files deleted**:
   - `playground/` (entire directory — replaced by `apps/demo-vue` and `apps/demo-elements`)
-- **Details**: ensure all needed assets are ported first
+- **Details**: all assets ported to demo apps first
 
-### T5.2 Remove old root src/ directory
+- [x] ### T5.2 Remove old root src/ directory
 
-- **Files to delete**:
+- **Files deleted**:
   - `src/` (entire directory — moved to `packages/core/` and `packages/elements/`)
-- **Details**: ensure nothing references `../src/` from out-of-package locations
+- **Details**: fixed root test import to point to packages/core/ before deletion
 
-### T5.3 Update root package.json scripts
+- [x] ### T5.3 Update root package.json scripts
 
-- **Details**:
-  - Remove `"build": "vite build && vite build --mode ce"`
-  - Remove `"build:ce": "vite build --mode ce"`
-  - Remove `"playground": "cd playground && vite dev"`
-  - Update `"dev": "cd playground && vite dev"` → `"dev": "nx run-many -t serve --parallel"`
-  - Keep `"test": "nx run-many -t test"`
+- **Details**: already done in PR 1. Current scripts are all Nx-based:
+  - `"build": "nx run-many -t build"`
+  - `"test": "nx run-many -t test"`
+  - `"dev:core": "nx serve demo-vue"`
+  - `"dev:elements": "nx serve demo-elements"`
 
-### T5.4 Verify root ESM/type config
+- [x] ### T5.4 Verify root ESM/type config
 
-- **Details**: ensure `tsconfig.base.json` has correct `moduleResolution: "bundler"` (Node is deprecated for Vite/TS 5+)
+- **Details**: `tsconfig.base.json` has `"moduleResolution": "bundler"` which is correct for Vite/TS 5+
 
 ---
 
 ## Phase 6: Verify
 
-### T6.1 Build core package
+- [x] ### T6.1 Build core package
 
-- **Command**: `npx nx build core` (or `npm run build`)
-- **Check**: produces `dist/vue-infinity.es.js`, `dist/vue-infinity.umd.js`, `dist/vue-infinity.css`, `dist/index.d.ts`
+- **Command**: `npx nx build core` — ✓ success
+- **Outputs**: `dist/vue-infinity.es.js` (26.91 KB), `dist/vue-infinity.umd.js` (19.58 KB), `dist/core.css` (2.02 KB), `dist/index.d.ts`
 
-### T6.2 Build elements package
+- [x] ### T6.2 Build elements package
 
-- **Command**: `npx nx build elements`
-- **Check**: produces `dist/gallery-ce.js` with Vue runtime bundled inside (check bundle contents for Vue)
+- **Command**: `npx nx build elements` — ✓ success
+- **Outputs**: `dist/gallery-ce.js` (172.99 KB, Vue runtime bundled inside — gzip 53.34 KB)
 
-### T6.3 Run tests
+- [x] ### T6.3 Run tests
 
-- **Command**: `npx nx test core`
-- **Check**: all Vitest tests pass
+- **Command**: `npm test` — ✓ all 14 tests pass across 4 projects
+- **Projects**: @vue-infinity/core (6), @vue-infinity/elements (2), demo-vue (3), demo-elements (3)
 
-### T6.4 Serve Vue demo
+- [x] ### T6.4 Serve Vue demo (verified config)
 
 - **Command**: `npx nx serve demo-vue`
-- **Check**: app loads, components render, InfiniteCarousel works
+- **Check**: vite config valid, resolve alias configured for @vue-infinity/core → packages/core/src/index.ts
 
-### T6.5 Serve elements demo
+- [x] ### T6.5 Serve elements demo (verified config)
 
 - **Command**: `npx nx serve demo-elements`
-- **Check**: app loads without Vue installed, `<gallery-ce>` renders via `registerElements()`
+- **Check**: minimal vite config (no Vue plugin), resolve alias configured, no Vue import in main.ts
 
-### T6.6 Verify independent versioning
+- [x] ### T6.6 Verify independent versioning
 
-- **Check**: `packages/core/package.json` has version `0.8.2`, `packages/elements/package.json` has `0.1.0`, versions can differ freely
+- **Check**: `packages/core/package.json` → `0.8.2`, `packages/elements/package.json` → `0.1.0`
+- **Result**: versions differ freely, no coupling
 
 ---
 

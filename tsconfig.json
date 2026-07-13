@@ -1,8 +1,7 @@
 {
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
-    "declarationDir": "dist/types",
-    "outDir": "dist"
+    "noEmit": true
   },
-  "include": ["src", "test", "packages", "vitest.workspace.ts"]
+  "include": ["test", "packages", "apps", "vitest.workspace.ts"]
 }
