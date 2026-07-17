@@ -13,6 +13,10 @@
       }
     }
   ],
+  "release": {
+    "projectsRelationship": "independent",
+    "releaseTagPattern": "{projectName}-v{version}"
+  },
   "targetDefaults": {
     "test": {
       "options": {

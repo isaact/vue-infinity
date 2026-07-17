@@ -35,7 +35,7 @@
 
 <script setup lang="ts">
 import { computed, useTemplateRef, ref, watch } from 'vue';
-import { Carousel } from '@vue-infinity/core';
+import { Carousel } from 'vue-infinity';
 import type { GalleryImage } from './types';
 // Define emit function
 const emit = defineEmits<{

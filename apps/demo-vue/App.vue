@@ -65,7 +65,7 @@
 
 <script setup lang="ts">
 import { computed, watch, ref, nextTick } from 'vue'
-import { useInfiniteList, InfiniteCarousel } from '@vue-infinity/core'
+import { useInfiniteList, InfiniteCarousel } from 'vue-infinity'
 import { fetchMockImages } from './mockApi'
 import GhostDemo from './GhostDemo.vue'
 import type { GalleryItem } from './mockApi'

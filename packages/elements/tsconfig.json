@@ -4,7 +4,7 @@
     "outDir": "./dist",
     "declarationDir": "./dist",
     "paths": {
-      "@vue-infinity/core": ["../core/src/index.ts"],
+      "vue-infinity": ["../core/src/index.ts"],
       "@vue-infinity/elements": ["./src/index.ts"]
     }
   },

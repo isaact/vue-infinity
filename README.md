@@ -37,7 +37,7 @@ This project is organized as an Nx monorepo with two packages and two demo apps:
 
 | Package | npm Name | Description |
 |---------|----------|-------------|
-| `packages/core` | `vue-infinity` (published) / `@vue-infinity/core` (workspace) | Core Vue 3 components: Carousel, InfiniteCarousel, Ghost, AutoObserver, composables |
+| `packages/core` | `vue-infinity` (published) / `vue-infinity` (workspace) | Core Vue 3 components: Carousel, InfiniteCarousel, Ghost, AutoObserver, composables |
 | `packages/elements` | `@vue-infinity/elements` | Framework-agnostic custom elements (web components) built on the core package |
 
 | App | Command | Description |

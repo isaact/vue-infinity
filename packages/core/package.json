@@ -1,6 +1,6 @@
 {
-  "name": "@vue-infinity/core",
-  "version": "0.8.2",
+  "name": "vue-infinity",
+  "version": "0.9.0",
   "type": "module",
   "main": "dist/vue-infinity.umd.js",
   "module": "dist/vue-infinity.es.js",

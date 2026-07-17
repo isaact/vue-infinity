@@ -6,7 +6,7 @@ describe("demo-vue app", () => {
 	it("should have a directory with package.json", async () => {
 		const pkg = await import("../package.json");
 		expect(pkg.name).toBe("demo-vue");
-		expect(pkg.dependencies).toHaveProperty("@vue-infinity/core");
+		expect(pkg.dependencies).toHaveProperty("vue-infinity");
 	});
 
 	it("should have a main.ts entry point", () => {

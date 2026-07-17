@@ -4,7 +4,7 @@ import path from "path";
 export default defineConfig({
 	resolve: {
 		alias: {
-			"@vue-infinity/core": path.resolve(
+			"vue-infinity": path.resolve(
 				__dirname,
 				"../../packages/core/src/index.ts",
 			),

@@ -15,7 +15,7 @@ Provide a clear Nx-based monorepo split for Vue components and custom elements t
 
 ## User Stories
 
-- As a maintainer, I can release `@vue-infinity/core` and `@vue-infinity/elements` independently.
+- As a maintainer, I can release `@vuevue-infinity` and `@vue-infinity/elements` independently.
 - As a consumer, I can drop `@vue-infinity/elements` into a non-Vue app without installing Vue.
 - As a developer, I can run a Vue demo and a web-component demo locally against workspace packages.
 
@@ -35,19 +35,19 @@ The system MUST configure an Nx workspace alongside npm workspaces for the repo,
 
 ### Requirement: Two publishable packages with correct boundaries
 
-The system MUST define two publishable packages named `@vue-infinity/core` and `@vue-infinity/elements`, and `@vue-infinity/elements` MUST declare a dependency on `@vue-infinity/core`.
+The system MUST define two publishable packages named `@vuevue-infinity` and `@vue-infinity/elements`, and `@vue-infinity/elements` MUST declare a dependency on `@vuevue-infinity`.
 
 #### Scenario: Package metadata and dependency boundary
 
 - GIVEN the workspace packages
 - WHEN each package’s `package.json` is inspected
-- THEN one package is named `@vue-infinity/core`
+- THEN one package is named `@vuevue-infinity`
 - AND one package is named `@vue-infinity/elements`
-- AND `@vue-infinity/elements` declares a dependency on `@vue-infinity/core`
+- AND `@vue-infinity/elements` declares a dependency on `@vuevue-infinity`
 
 ### Requirement: Independent versioning
 
-Each package MUST be versioned independently, without any requirement that `@vue-infinity/core` and `@vue-infinity/elements` share the same version.
+Each package MUST be versioned independently, without any requirement that `@vuevue-infinity` and `@vue-infinity/elements` share the same version.
 
 #### Scenario: Version fields are independent
 
@@ -89,13 +89,13 @@ The elements package MUST build custom elements using Vue custom element mode (`
 
 ### Requirement: Two local demo apps
 
-The system MUST provide two local-only demo apps, one consuming `@vue-infinity/core` and one consuming `@vue-infinity/elements` via workspace dependencies.
+The system MUST provide two local-only demo apps, one consuming `@vuevue-infinity` and one consuming `@vue-infinity/elements` via workspace dependencies.
 
 #### Scenario: Demo apps consume workspace packages
 
 - GIVEN the demo app manifests
 - WHEN dependencies are inspected
-- THEN the Vue demo app depends on `@vue-infinity/core`
+- THEN the Vue demo app depends on `@vuevue-infinity`
 - AND the web-component demo app depends on `@vue-infinity/elements`
 
 ### Requirement: Vitest targets remain available via Nx
@@ -111,7 +111,7 @@ The system MUST retain Vitest tests and expose Nx targets to run package tests.
 ## Acceptance Criteria
 
 - Nx configuration is present, npm workspaces are configured, and the root package is private by default.
-- `@vue-infinity/core` and `@vue-infinity/elements` are publishable packages with correct package metadata and dependency boundaries.
+- `@vuevue-infinity` and `@vue-infinity/elements` are publishable packages with correct package metadata and dependency boundaries.
 - Packages can be versioned independently without tooling conflicts.
 - Both packages produce ES/UMD/CSS/d.ts outputs with entry names matching pre-monorepo expectations.
 - `@vue-infinity/elements` is drop-in for non-Vue apps, bundles the Vue runtime, and exposes `registerElements()`.

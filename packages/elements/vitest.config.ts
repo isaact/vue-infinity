@@ -6,7 +6,7 @@ export default defineConfig({
 	plugins: [vue({ customElement: true })],
 	resolve: {
 		alias: {
-			"@vue-infinity/core": path.resolve(__dirname, "../core/src/index.ts"),
+			"vue-infinity": path.resolve(__dirname, "../core/src/index.ts"),
 		},
 	},
 	test: {

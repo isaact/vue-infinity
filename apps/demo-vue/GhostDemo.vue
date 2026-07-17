@@ -54,7 +54,7 @@
 
 <script setup lang="ts">
 import { ref, nextTick, watch } from 'vue'
-import { vGhost, Ghost } from '@vue-infinity/core'
+import { vGhost, Ghost } from 'vue-infinity'
 
 const activeTab = ref('directive')
 

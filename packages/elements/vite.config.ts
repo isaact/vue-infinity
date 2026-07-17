@@ -13,7 +13,7 @@ export default defineConfig({
 	},
 	resolve: {
 		alias: {
-			"@vue-infinity/core": path.resolve(__dirname, "../core/src/index.ts"),
+			"vue-infinity": path.resolve(__dirname, "../core/src/index.ts"),
 			vue: "@vue/runtime-dom",
 		},
 	},

@@ -1,6 +1,6 @@
 {
   "name": "@vue-infinity/elements",
-  "version": "0.1.0",
+  "version": "0.9.0",
   "type": "module",
   "main": "dist/gallery-ce.js",
   "module": "dist/gallery-ce.js",
@@ -20,7 +20,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@vue-infinity/core": "*",
+    "vue-infinity": "*",
     "vue": "^3.5.13"
   }
 }
