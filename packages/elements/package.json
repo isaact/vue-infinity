@@ -16,7 +16,7 @@
     "dist"
   ],
   "scripts": {
-    "build": "vite build",
+    "build": "vite build && esbuild dist/gallery-ce.js --minify --format=esm --outfile=dist/gallery-ce.js --allow-overwrite",
     "test": "vitest run"
   },
   "dependencies": {

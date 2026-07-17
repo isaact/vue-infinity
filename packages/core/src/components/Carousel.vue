@@ -173,7 +173,6 @@ const updateDimensions = () => {
 
 const setupObserver = () => {
   if (!carouselContainer.value) return
-  console.log('Setting up observer for container:')
 
   carouselItemObserver = useAutoObserver((entries) => {
     entries.forEach(entry => {
@@ -243,28 +242,22 @@ onMounted(async () => {
 })
 
 watch(
-  [() => props.numColsToShow, () => props.numRowsToShow, () => props.gap, () => props.verticalScroll, () => props.items],
+  [() => props.numColsToShow, () => props.numRowsToShow, () => props.gap, () => props.verticalScroll],
   () => {
     if (carouselContainer.value) {
-      // pageObserver?.disconnect();
-      // carouselItemObserver?.disconnect();
-      // nextTick(() => {
-        // visibleImages.value.clear();
-        updateDimensions();
-        scrollToItem(0); // Scroll to the first item after updating dimensions
-        // setupObserver();
-        // Update maxPagesToCache based on visible items + buffer
-      // });
+      updateDimensions();
+      nextTick(() => scrollToItem(0));
     }
   },
   { immediate: true }
 )
 watch(() => props.items, (newItems) => {
   // Update the carousel items when the items prop changes
+  carouselItems.value = newItems;
   nextTick(() => {
-    carouselItems.value = newItems;
     carouselItemObserver?.disconnect()
     setupObserver();
+    nextTick(() => scrollToItem(0));
   });
 });
 

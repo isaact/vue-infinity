@@ -1,4 +1,4 @@
-import { defineCustomElement } from "vue";
+import { defineCustomElement } from "@vue/runtime-dom";
 import GalleryCe from "./Gallery.ce.vue";
 import type { GalleryImage } from "./types";
 

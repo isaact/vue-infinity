@@ -9,10 +9,6 @@
       <GhostDemo />
     </div>
     <div class="demo-section">
-      <h3>Gallery web component demo</h3>
-      <GalleryDemo />
-    </div>
-    <div class="demo-section">
       <h3>InfiniteCarousel component demo</h3>
       <div class="controls">
         <button @click="resetGallery">Reset Gallery</button>
@@ -72,7 +68,6 @@ import { computed, watch, ref, nextTick } from 'vue'
 import { useInfiniteList, InfiniteCarousel } from '@vue-infinity/core'
 import { fetchMockImages } from './mockApi'
 import GhostDemo from './GhostDemo.vue'
-import GalleryDemo from './GalleryDemo.vue'
 import type { GalleryItem } from './mockApi'
 
 const numRowsToShow = ref(3)

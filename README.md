@@ -19,6 +19,7 @@ Whether you’re building infinite feeds, carousels, media galleries, or dashboa
 
 ## Table of Contents
 
+- [Monorepo Structure](#-monorepo-structure)
 - [Gallery Web Component](#-gallery-web-component)
 - [Carousel Component](#-carousel-component)
 - [InfiniteCarousel](#-infinitecarousel)
@@ -26,9 +27,23 @@ Whether you’re building infinite feeds, carousels, media galleries, or dashboa
 - [AutoObserver](#-autoobserver)
 - [Installation](#-installation)
 - [Live Demo](#-live-demo)
-- [Run Playground App](#-run-playground-app)
+- [Development](#-development)
 - [Releases](#releases)
 - [License](#-license)
+
+## 🏗️ Monorepo Structure
+
+This project is organized as an Nx monorepo with two packages and two demo apps:
+
+| Package | npm Name | Description |
+|---------|----------|-------------|
+| `packages/core` | `vue-infinity` (published) / `@vue-infinity/core` (workspace) | Core Vue 3 components: Carousel, InfiniteCarousel, Ghost, AutoObserver, composables |
+| `packages/elements` | `@vue-infinity/elements` | Framework-agnostic custom elements (web components) built on the core package |
+
+| App | Command | Description |
+|-----|---------|-------------|
+| `apps/demo-vue` | `npm run dev:core` | Vue demo showcasing core components with live controls |
+| `apps/demo-elements` | `npm run dev:elements` | Custom elements demo showcasing the `<gallery-ce>` web component |
 
 ## 🖼️ Gallery Web Component
 
@@ -47,7 +62,7 @@ The `gallery-ce` is a web component built on top of the Carousel component that 
 <gallery-ce id="gallery" height="400px" num-cols-to-show="3"></gallery-ce>
 
 <script type="module">
-  import { registerElements } from 'vue-infinity';
+  import { registerElements } from '@vue-infinity/elements';
   registerElements();
   
   const gallery = document.getElementById('gallery');
@@ -63,7 +78,7 @@ The `gallery-ce` is a web component built on top of the Carousel component that 
 
 ```jsx
 import { useEffect, useRef } from 'react';
-import { registerElements } from 'vue-infinity';
+import { registerElements } from '@vue-infinity/elements';
 
 registerElements();
 
@@ -89,7 +104,7 @@ function Gallery() {
 ```svelte
 <script>
   import { onMount } from 'svelte';
-  import { registerElements } from 'vue-infinity';
+  import { registerElements } from '@vue-infinity/elements';
   
   registerElements();
   
@@ -116,7 +131,7 @@ function Gallery() {
 
 <script setup>
 import { ref, onMounted } from 'vue';
-import { registerElements } from 'vue-infinity';
+import { registerElements } from '@vue-infinity/elements';
 
 registerElements();
 
@@ -151,7 +166,7 @@ onMounted(() => {
 | `updateImages` | `newItems` (Array or JSON string) | Update the gallery with new images |
 | `scrollToItem` | `itemIndex` (Number) | Scroll to a specific item by index |
 
-**Note:** The `registerElements()` function must be called once before using any vue-infinity web components.
+**Note:** The `registerElements()` function must be called once before using any `@vue-infinity/elements` web components.
 
 ## 🎠 Carousel Component
 
@@ -319,19 +334,33 @@ const { disconnect } = useAutoObserver(
 ## 📦 Installation
 
 ```bash
+# Core Vue components (for use within Vue apps)
 npm install vue-infinity
+
+# Custom elements (for framework-agnostic usage)
+npm install @vue-infinity/elements
 ```
 
 ## 🧪 Live Demo
 
 Explore the live demo here: [https://tewolde.co/vueInfinity/](https://tewolde.co/vueInfinity/)
 
-## 🧑‍💻 Run Playground App
+## 🧑‍💻 Development
 
-To run the playground application locally:
+To run the demos and build the packages locally:
 
 ```bash
-npm run playground
+# Core Vue demo (Carousel, Ghost, InfiniteCarousel)
+npm run dev:core
+
+# Custom elements demo (Gallery web component)
+npm run dev:elements
+
+# Build all packages
+npm run build
+
+# Run all tests
+npm test
 ```
 
 ## Releases
@@ -339,10 +368,13 @@ npm run playground
 ### v0.8.0 (2025-08-11)
 
 #### New Components and Features
+
 **Gallery Web Component**:
+
 - Simple: Easy to use web component for displaying image galleries with lazy loading, responsive layout and memory efficiency.
 - Framework Agnostic: Use in any frontend framework or even plain JavaScript.
 - Flexible: Methods to update images and scroll to specific items
+- Package: The Gallery Web Component now lives in the `@vue-infinity/elements` package.
 - Playground App: Added a demo for the Gallery component in the playground app.
 - Documentation Updates: Added comprehensive examples for Vue, React, Svelte, and plain JavaScript
 **Carousel Component**:
