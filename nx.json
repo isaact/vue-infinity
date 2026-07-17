@@ -15,7 +15,12 @@
   ],
   "release": {
     "projectsRelationship": "independent",
-    "releaseTagPattern": "{projectName}-v{version}"
+    "releaseTagPattern": "{projectName}-v{version}",
+    "changelog": {
+      "workspaceChangelog": false,
+      "projectChangelogs": true,
+      "automaticFromRef": true
+    }
   },
   "targetDefaults": {
     "test": {

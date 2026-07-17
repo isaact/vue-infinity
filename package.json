@@ -25,12 +25,14 @@
     "@vueuse/components": "^13.1.0"
   },
   "devDependencies": {
-    "nx": "^20.0.0",
     "@nx/vite": "^20.0.0",
+    "@swc-node/register": "^1.12.0",
+    "@swc/core": "^1.15.43",
     "@types/node": "^22.14.0",
     "@vitejs/plugin-vue": "^5.2.3",
     "@vitest/ui": "^3.1.1",
     "happy-dom": "^17.4.4",
+    "nx": "^20.0.0",
     "typescript": "^5.8.3",
     "vite": "^6.3.4",
     "vite-plugin-dts": "^4.5.3",
