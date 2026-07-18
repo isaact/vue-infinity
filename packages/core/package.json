@@ -6,6 +6,9 @@
   "module": "dist/vue-infinity.es.js",
   "style": "dist/vue-infinity.css",
   "types": "dist/index.d.ts",
+  "publishConfig": {
+    "access": "public"
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",

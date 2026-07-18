@@ -5,6 +5,9 @@
   "main": "dist/gallery-ce.js",
   "module": "dist/gallery-ce.js",
   "types": "dist/index.d.ts",
+  "publishConfig": {
+    "access": "public"
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
