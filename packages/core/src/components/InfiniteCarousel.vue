@@ -9,7 +9,8 @@
       '--num-rows-to-show': adjustedNumRowsToShow,
       '--gap-in-px': `${gapInPixels}px`,
       '--container-height': props.height,
-      '--container-width': props.width
+      '--container-width': props.width,
+      '--scroll-snap-type': props.scrollSnapping ? (props.verticalScroll ? 'y mandatory' : 'x mandatory') : 'none'
     }"
     v-resize-observer="updateDimensions"
   >
@@ -30,7 +31,7 @@
             :data-load-page="index === 0 ? i - 1 : ''"
             :style="getItemStyle(item, i - 1, index)"
           >
-            <slot name="item" v-if="visibleImages.has(getItemId(index, i - 1))" :item="item" :index="index" :page="i - 1">
+            <slot name="item" v-if="loadableItems.has(getItemId(index, i - 1))" :item="item" :index="index" :page="i - 1">
               <div>Page: {{ i - 1 }}, Item {{ index }}</div>
             </slot>
             <slot name="loading" v-else :index="`${item.index}`" :page="item.page">
@@ -64,6 +65,7 @@ import { useThrottleFn, useDebounceFn } from '@vueuse/core'
 import { vResizeObserver } from '@vueuse/components'
 import { InfiniteList, type InfiniteListPage } from '../composables/useInfiniteList'
 import { useAutoObserver, type AutoObserver } from '../composables/useAutoObserver'
+import { useSortedElements } from '../composables/useSortedElements'
 
 type ItemSpan = {
   colSpan: number
@@ -83,15 +85,36 @@ const props = withDefaults(
     verticalScroll?: boolean
     carouselStyle?: any
     onGetItemAspectRatio?: ItemAspectRatioFn
+    /**
+     * Index of the item to start at (legacy prop). Retained for backward compatibility.
+     */
+    startingIndex?: number
+    /**
+     * Fractional scroll position (0‑1) representing the current scroll offset.
+     * This prop is two‑way bound via the `update:scrollPosition` event.
+     */
+    scrollPosition?: number
+    /**
+     * Enable or disable CSS scroll snapping. When false, scroll snapping is turned off.
+     */
+    scrollSnapping?: boolean
   }>(),
   {
     gap: '1rem',
     numColsToShow: 1,
     numRowsToShow: 1,
     maxPagesToCache: 5,
-    verticalScroll: false
+    verticalScroll: false,
+    startingIndex: 0,
+    scrollPosition: 0,
+    scrollSnapping: true
   }
 )
+
+const emit = defineEmits<{
+  (e: 'update:startingIndex', value: number): void
+  (e: 'update:scrollPosition', value: number): void
+}>()
 
 const carouselContainer = useTemplateRef('carousel')
 const carouselIdPrefix = `infinite-carousel-${Math.random().toString(36).substring(2, 9)}`;
@@ -99,10 +122,13 @@ const container_size = ref({ width: 0, height: 0 })
 const itemsPerPage = props.infiniteList.itemsPerPage
 const loading = ref(false)
 const error = ref(false)
-const visibleImages = ref(new Set<string>())
+const loadableItems = ref(new Set<string>())
+const topLeftItemIndex = ref(0)
+const { sortedElements, insert, remove, clear } = useSortedElements()
 
 let pageObserver: AutoObserver
-let carouselItemObserver: AutoObserver
+let carouselItemPreloadObserver: AutoObserver
+let visibleItemsObserver: AutoObserver
 
 const { pages, getItem, fetchPage: realfetchPage, updateMaxPagesToCache } = props.infiniteList
 const initialNextPage = (pages[0] && (pages[0].status === 'resolved' || pages[0].status === 'pending')) ? 1 : 0;
@@ -280,7 +306,7 @@ const setupObserver = () => {
     rootMargin: '300%'
   })
   pageObserver.observeContainer(carouselContainer.value)
-  carouselItemObserver = useAutoObserver((entries) => {
+  carouselItemPreloadObserver = useAutoObserver((entries) => {
     entries.forEach(entry => {
       const itemIndex = entry.target.getAttribute('data-item-index') || ''
       const pageIndex = entry.target.getAttribute('data-page-index') || ''
@@ -295,14 +321,14 @@ const setupObserver = () => {
           if (itemIndex && pageIndex && pages[+pageIndex] && pages[+pageIndex].items) {
             const itemData = pages[+pageIndex].items[+itemIndex]
             if (itemData) {
-              visibleImages.value.add(itemId)
+              loadableItems.value.add(itemId)
             }
           }
         } else {
           // console.log('Image is not in view:', entry)
           // const imgIndex = entry.target.getAttribute('data-img-index') || ''
           // visibleImages.value.delete(imgIndex)
-          visibleImages.value.delete(itemId)
+          loadableItems.value.delete(itemId)
         }
 
       }
@@ -314,21 +340,68 @@ const setupObserver = () => {
     },
     rootMargin: "200%"
   })
-  carouselItemObserver.observeContainer(carouselContainer.value)
+  carouselItemPreloadObserver.observeContainer(carouselContainer.value)
+
+  visibleItemsObserver = useAutoObserver((entries) => {
+    // Update sorted elements with intersecting items
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        insert(entry.target);
+      } else {
+        remove(entry.target);
+      }
+    });
+    
+    // Update topLeftItemIndex with the index of the top-left most intersecting item
+    const topMostElement = sortedElements.value[0];
+    if (topMostElement) {
+      const itemIndex = topMostElement.getAttribute('data-item-index');
+      const pageIndex = topMostElement.getAttribute('data-page-index');
+      if (itemIndex && pageIndex) {
+        topLeftItemIndex.value = (parseInt(pageIndex) * itemsPerPage) + parseInt(itemIndex);
+      }
+    } else {
+      // If no elements are intersecting, reset to 0
+      topLeftItemIndex.value = 0;
+    }
+  }, {
+    root: carouselContainer.value,
+    filter: el => {
+      return el.classList.contains('carousel-item') && el.classList.contains('resolved')
+    },
+  })
+  visibleItemsObserver.observeContainer(carouselContainer.value)
+  
+  // Watch for changes to topLeftItemIndex and emit update:startingIndex event
+  watch(topLeftItemIndex, (newIndex) => {
+    emit('update:startingIndex', newIndex);
+  });
 }
 
 
 const initFirstPage = async () => {
-  if (!pages[0] || (pages[0].status !== 'resolved')) {
-    // console.log('Fetching first page')
-    await fetchPage(0)
+  let startPage = 0
+  if (props.startingIndex > 0) {
+    startPage = Math.floor(props.startingIndex / itemsPerPage)
   }
+  if (!pages[startPage] || (pages[startPage].status !== 'resolved')) {
+    // console.log('Fetching first page')
+    await fetchPage(startPage)
+  }
+  
+  // If startingIndex is specified and greater than 0, scroll to that item
+  if (props.startingIndex > 0) {
+    nextTick(() => {
+      scrollToItem(props.startingIndex);
+    });
+  }
+  
   // Seed visibleImages for SSR
   const numVisible = props.numColsToShow * props.numRowsToShow
   for (let i = 0; i < numVisible; i++) {
-    const itemData = pages[0].items[i]
+    // const itemData = pages[0].items[i]
     // console.log('Seeding visible image:', itemData.id, 'at index:', i)
-    visibleImages.value.add(getItemId(i, 0));
+    loadableItems.value.add(getItemId(i, 0));
   }
   // console.log('Initial visible images:', visibleImages.value)
 }
@@ -398,11 +471,23 @@ const fixCacheSize = () => {
   updateMaxPagesToCache(newMaxPagesToCache);
 }
 
+// Helper to emit the current scroll position whenever the carousel scrolls
+const emitScrollPosition = () => {
+  if (!carouselContainer.value) return
+  const el = carouselContainer.value
+  const maxScroll = props.verticalScroll ? (el.scrollHeight - el.clientHeight) : (el.scrollWidth - el.clientWidth)
+  const current = props.verticalScroll ? el.scrollTop : el.scrollLeft
+  const fraction = maxScroll > 0 ? current / maxScroll : 0
+  emit('update:scrollPosition', fraction)
+}
+
 onMounted(async () => {
   fixCacheSize()
   await initFirstPage()
   if (carouselContainer.value) {
     gapInPixels.value = parseFloat(getComputedStyle(carouselContainer.value).gap)
+    // Attach scroll listener for two‑way binding of scrollPosition
+    carouselContainer.value.addEventListener('scroll', emitScrollPosition, { passive: true })
   }
   nextTick(() => {
     setupObserver()
@@ -430,9 +515,34 @@ watch(
   { immediate: true }
 )
 
+// Watch for changes to startingIndex prop and scroll to that item
+watch(() => props.startingIndex, (newIndex) => {
+  if (newIndex !== undefined && newIndex !== topLeftItemIndex.value) {
+    nextTick(() => {
+      scrollToItem(newIndex);
+    });
+  }
+})
+
+watch(() => props.scrollPosition, (newPosition) => {
+  if (!carouselContainer.value) return
+  const el = carouselContainer.value
+  const maxScroll = props.verticalScroll ? (el.scrollHeight - el.clientHeight) : (el.scrollWidth - el.clientWidth)
+  const targetScroll = newPosition * maxScroll
+  const currentScroll = props.verticalScroll ? el.scrollTop : el.scrollLeft
+  if (Math.abs(targetScroll - currentScroll) > 1) { // Only scroll if the difference is significant
+    if (props.verticalScroll) {
+      el.scrollTo({ top: targetScroll, behavior: 'instant' })
+    } else {
+      el.scrollTo({ left: targetScroll,  behavior: 'instant' })
+    }
+  }
+})
+
 onUnmounted(() => {
   pageObserver?.disconnect()
-  carouselItemObserver?.disconnect()
+  carouselItemPreloadObserver?.disconnect()
+  visibleItemsObserver?.disconnect()
 })
 
 defineExpose({
@@ -455,7 +565,7 @@ defineExpose({
   gap: var(--gap-in-px);
   overflow-x: scroll;
   overflow-y: scroll;
-  scroll-snap-type: x mandatory;
+  scroll-snap-type: var(--scroll-snap-type);
   height: var(--container-height);
   width: var(--container-width);
 }
@@ -465,7 +575,7 @@ defineExpose({
   /* grid-auto-rows: calc(
     (var(--container-height) - (var(--gap-in-px) * (var(--num-rows-to-show) - 1))) / var(--num-rows-to-show)
   ); */
-  scroll-snap-type: y mandatory;
+  scroll-snap-type: var(--scroll-snap-type);
 }
 
 .carousel-item {

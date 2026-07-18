@@ -12,11 +12,6 @@
       <h3>InfiniteCarousel component demo</h3>
       <div class="controls">
         <button @click="resetGallery">Reset Gallery</button>
-        <label>
-          Scroll to item:
-          <input type="number" v-model.number="scrollToIndex" :min="0" :max="numItems - 1" />
-          <button @click="scrollToItem">Go</button>
-        </label>
         <label class="slider-label">
           Slides to show per row: <span>{{ numColsToShow.toFixed(1) }}</span>
           <input type="range" v-model.number="numColsToShow" :min="1" :max="3" step="0.1" />
@@ -41,6 +36,25 @@
           <input type="checkbox" v-model="verticalScroll" />
           Vertical Scroll
         </label>
+        <label>
+          <input type="checkbox" v-model="scrollSnapping" />
+          Enable Scroll Snapping
+        </label>
+      </div>
+      <div class="controls">
+        <!-- <label>
+          Scroll to item:
+          <input type="number" v-model.number="scrollToIndex" :min="0" :max="numItems - 1" />
+          <button @click="scrollToItem">Go</button>
+        </label> -->
+        <label>
+          Top-left item index:
+          <input type="number" v-model.number="startingIndex" :min="0" :max="numItems - 1" />
+        </label>
+        <label>
+          Scroll position (0‑1):
+          <input type="number" v-model.number="scrollPosition" :min="0" :max="1" step="0.01" />
+        </label>
       </div>
       <InfiniteCarousel
         ref="carouselRef"
@@ -52,7 +66,9 @@
         :gap="gapValue"
         :items-per-page="itemsPerPage"
         :verticalScroll="verticalScroll"
-        :onGetItemAspectRatio="getItemAspectRatio"
+        :scrollSnapping="scrollSnapping"
+        v-model:startingIndex="startingIndex"
+        v-model:scrollPosition="scrollPosition"
       >
         <template #item="{ item, index }: { item: GalleryItem, index: number }">
           <img :src="item.url" :alt="item.title || `Image ${index}`" class="carousel-img"/>
@@ -79,6 +95,9 @@ const numItems = ref(3000)
 const verticalScroll = ref(false)
 const itemsPerPage = ref(37)
 const scrollToIndex = ref(0)
+const startingIndex = ref(342)
+// Fractional scroll position (0‑1) bound to the carousel via v-model
+const scrollPosition = ref(0)
 const carouselRef = ref<InstanceType<typeof InfiniteCarousel>>()
 
 const scrollToItem = () => {
