@@ -8,7 +8,14 @@
 
 - Isaac Tewolde @isaact
 
-## 0.9.2 (2026-07-17)
+## 0.9.3 (2026-07-21)
+
+### 🧱 Updated Dependencies
+
+- Updated vue-infinity to 0.9.3
+- Applied security updates across dependencies.
+
+## 0.9.2 (2026-07-21)
 
 ### 🧱 Updated Dependencies
 

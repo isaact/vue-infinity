@@ -8,7 +8,11 @@
 
 - Isaac Tewolde @isaact
 
-## 0.9.2 (2026-07-17)
+## 0.9.3 (2026-07-21)
+
+This release includes security and dependency updates to align vue-infinity with other projects.
+
+## 0.9.2 (2026-07-21)
 
 This was a version bump only for vue-infinity to align it with other projects, there were no code changes.
 

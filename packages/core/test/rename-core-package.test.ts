@@ -24,7 +24,7 @@ describe("rename core package", () => {
 		);
 
 		expect(pkg.name).toBe("vue-infinity");
-		expect(pkg.version).toBe("0.9.0");
+		expect(pkg.version).toBe("0.9.3");
 	});
 
 	it("updates elements package dependency on core", () => {
